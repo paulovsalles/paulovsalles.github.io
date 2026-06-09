@@ -1,797 +1,938 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
+<!-- saved from url=(0058)file:///C:/Users/lais_/Downloads/painelfin_firebase_2.html -->
+<html lang="pt-BR"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PainelFin — Planejamento Financeiro</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="./PainelFin — Planejamento Financeiro_files/css2" rel="stylesheet">
+
+<!-- ══════════ FIREBASE SDK ══════════ -->
+<script type="module">
+import { initializeApp }        from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInWithPopup, signOut, onAuthStateChanged,
+         GoogleAuthProvider }   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, onSnapshot }
+                                from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// ─── COLE AQUI AS SUAS CREDENCIAIS DO FIREBASE ───────────────────────────
+// Acesse: https://console.firebase.google.com → Seu projeto → ⚙️ → Config do app
+const firebaseConfig = {
+  apiKey:            "COLE_AQUI",
+  authDomain:        "COLE_AQUI",
+  projectId:         "COLE_AQUI",
+  storageBucket:     "COLE_AQUI",
+  messagingSenderId: "COLE_AQUI",
+  appId:             "COLE_AQUI"
+};
+// ─────────────────────────────────────────────────────────────────────────
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+let currentUser = null;
+let unsubscribe = null;
+
+/* ── AUTH ── */
+window.loginGoogle = async () => {
+  try {
+    await signInWithPopup(auth, provider);
+  } catch(e) { showToast("❌ Erro no login: " + e.message, true); }
+};
+
+window.logout = async () => {
+  if (!confirm("Sair da conta?")) return;
+  if (unsubscribe) unsubscribe();
+  await signOut(auth);
+};
+
+onAuthStateChanged(auth, user => {
+  currentUser = user;
+  if (user) {
+    // Esconde tela de login, mostra app
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("app-shell").style.display    = "flex";
+    // Avatar e nome
+    document.getElementById("user-name").textContent  = user.displayName?.split(" ")[0] || "Usuário";
+    document.getElementById("user-email").textContent = user.email;
+    const avatarEl = document.getElementById("user-avatar");
+    if (user.photoURL) {
+      avatarEl.style.backgroundImage = `url(${user.photoURL})`;
+      avatarEl.textContent = "";
+    } else {
+      avatarEl.textContent = user.displayName?.[0] || "U";
+    }
+    // Carrega dados em tempo real
+    listenData(user.uid);
+  } else {
+    document.getElementById("login-screen").style.display = "flex";
+    document.getElementById("app-shell").style.display    = "none";
+    if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+  }
+});
+
+/* ── FIRESTORE: escuta em tempo real ── */
+function listenData(uid) {
+  const docRef = doc(db, "usuarios", uid);
+  unsubscribe = onSnapshot(docRef, snap => {
+    if (snap.exists()) {
+      const data = snap.data();
+      applyData(data);
+      showToast("☁️ Dados sincronizados");
+    }
+  }, err => {
+    showToast("⚠️ Erro ao sincronizar: " + err.message, true);
+  });
+}
+
+/* ── SALVAR NO FIRESTORE ── */
+window.salvarFirestore = async () => {
+  if (!currentUser) { showToast("Faça login primeiro", true); return; }
+  const data = coletarDados();
+  try {
+    await setDoc(doc(db, "usuarios", currentUser.uid), {
+      ...data,
+      updatedAt: new Date().toISOString()
+    });
+    showToast("✅ Salvo na nuvem!");
+  } catch(e) {
+    showToast("❌ Erro ao salvar: " + e.message, true);
+  }
+};
+</script>
+
 <style>
 /* ─────────── TOKENS ─────────── */
 :root {
-  --bg:      #0c0e14;
-  --s1:      #13161f;
-  --s2:      #191d28;
-  --s3:      #1f2433;
-  --bd:      rgba(255,255,255,.07);
-  --bd2:     rgba(255,255,255,.12);
-  --tx:      #eef0f8;
-  --mu:      #7f8ea6;
-  --di:      #404d63;
-  --teal:    #2dd4bf;
-  --tbg:     rgba(45,212,191,.1);
-  --tbd:     rgba(45,212,191,.25);
-  --blue:    #60a5fa;
-  --purple:  #a78bfa;
-  --amber:   #fbbf24;
-  --green:   #4ade80;
-  --red:     #f87171;
-  --coral:   #fb923c;
-  --pink:    #f472b6;
-  --indigo:  #818cf8;
+  --bg:#0c0e14; --s1:#13161f; --s2:#191d28; --s3:#1f2433;
+  --bd:rgba(255,255,255,.07); --bd2:rgba(255,255,255,.12);
+  --tx:#eef0f8; --mu:#7f8ea6; --di:#404d63;
+  --teal:#2dd4bf; --tbg:rgba(45,212,191,.1); --tbd:rgba(45,212,191,.25);
+  --blue:#60a5fa; --purple:#a78bfa; --amber:#fbbf24;
+  --green:#4ade80; --red:#f87171; --coral:#fb923c;
+  --pink:#f472b6; --indigo:#818cf8;
 }
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
-body {
-  background: var(--bg);
-  color: var(--tx);
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
-  line-height: 1.6;
-  min-height: 100vh;
-}
-::selection { background: var(--tbg); color: var(--teal); }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;font-size:14px;line-height:1.6;min-height:100vh}
+::selection{background:var(--tbg);color:var(--teal)}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--s3);border-radius:3px}
 
-/* ─────────── SCROLLBAR ─────────── */
-::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--s3); border-radius: 3px; }
+/* ─── LOGIN SCREEN ─── */
+#login-screen{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  min-height:100vh; padding:24px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(45,212,191,.12) 0%, transparent 60%), var(--bg);
+}
+.login-card{
+  background:var(--s1); border:1px solid var(--bd);
+  border-radius:20px; padding:40px 36px; max-width:380px; width:100%; text-align:center;
+  box-shadow: 0 0 0 1px rgba(45,212,191,.1), 0 24px 48px rgba(0,0,0,.5);
+}
+.login-logo{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;margin-bottom:8px}
+.login-logo span{color:var(--teal)}
+.login-tagline{font-size:13px;color:var(--mu);margin-bottom:32px;line-height:1.5}
+.login-btn-google{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  width:100%;padding:12px 20px;border-radius:11px;
+  border:1px solid var(--bd2);background:var(--s2);
+  color:var(--tx);font-size:14px;font-weight:600;cursor:pointer;
+  transition:all .2s; font-family:'Inter',sans-serif;
+}
+.login-btn-google:hover{background:var(--s3);border-color:var(--tbd);transform:translateY(-1px)}
+.login-btn-google img{width:18px;height:18px}
+.login-divider{display:flex;align-items:center;gap:12px;margin:24px 0;color:var(--di);font-size:12px}
+.login-divider::before,.login-divider::after{content:'';flex:1;height:1px;background:var(--bd)}
+.login-features{display:flex;flex-direction:column;gap:8px;margin-top:24px}
+.login-feat{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--mu);text-align:left}
+.login-feat-icon{width:28px;height:28px;border-radius:7px;background:var(--tbg);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.login-footer{margin-top:24px;font-size:11px;color:var(--di)}
 
-/* ─────────── LAYOUT ─────────── */
-.app { display: flex; min-height: 100vh; }
+/* ─── SETUP BANNER ─── */
+#setup-banner{
+  display:none;
+  background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.25);
+  border-radius:12px;padding:14px 18px;margin:16px;
+  font-size:13px;color:#fde68a;
+}
+#setup-banner.show{display:flex;gap:10px;align-items:flex-start}
+#setup-banner code{
+  background:rgba(251,191,36,.15);padding:2px 8px;border-radius:5px;
+  font-family:monospace;font-size:12px;color:var(--amber);
+}
 
-/* SIDEBAR */
-.sidebar {
-  width: 220px; flex-shrink: 0;
-  background: var(--s1);
-  border-right: 1px solid var(--bd);
-  display: flex; flex-direction: column;
-  position: fixed; top: 0; left: 0; bottom: 0;
-  z-index: 100;
-}
-.sidebar-logo {
-  padding: 20px 20px 16px;
-  border-bottom: 1px solid var(--bd);
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 16px; font-weight: 700;
-}
-.sidebar-logo span { color: var(--teal); }
-.sidebar-logo small {
-  display: block; font-size: 10px; font-weight: 400;
-  color: var(--di); margin-top: 2px; letter-spacing: .04em;
-}
-.nav { flex: 1; padding: 12px 10px; display: flex; flex-direction: column; gap: 2px; }
-.nav-item {
-  display: flex; align-items: center; gap: 9px;
-  padding: 8px 10px; border-radius: 8px;
-  cursor: pointer; font-size: 13px; color: var(--mu);
-  transition: all .15s; border: none; background: none;
-  width: 100%; text-align: left;
-}
-.nav-item:hover { background: var(--s2); color: var(--tx); }
-.nav-item.active { background: var(--tbg); color: var(--teal); }
-.nav-item .nav-icon { font-size: 15px; width: 18px; text-align: center; }
-.nav-status {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--di); margin-left: auto; flex-shrink: 0;
-}
-.nav-status.done { background: var(--green); }
-.nav-status.active-dot { background: var(--teal); }
-.sidebar-footer {
-  padding: 12px 16px;
-  border-top: 1px solid var(--bd);
-  font-size: 11px; color: var(--di);
-}
-.saldo-sidebar {
-  background: var(--s2); border-radius: 8px; padding: 10px 12px; margin-top: 8px;
-}
-.saldo-label { font-size: 10px; color: var(--di); margin-bottom: 2px; }
-.saldo-value { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 700; }
+/* ─── APP SHELL ─── */
+#app-shell{display:none;min-height:100vh}
+.app{display:flex;min-height:100vh}
 
-/* MAIN */
-.main {
-  margin-left: 220px;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+/* ─── SIDEBAR ─── */
+.sidebar{
+  width:220px;flex-shrink:0;background:var(--s1);
+  border-right:1px solid var(--bd);
+  display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;bottom:0;z-index:100;
 }
+.sidebar-logo{
+  padding:18px 20px 14px;border-bottom:1px solid var(--bd);
+  font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;
+}
+.sidebar-logo span{color:var(--teal)}
+.sidebar-logo small{display:block;font-size:10px;font-weight:400;color:var(--di);margin-top:2px;letter-spacing:.04em}
+.nav{flex:1;padding:10px 10px;display:flex;flex-direction:column;gap:2px}
+.nav-item{
+  display:flex;align-items:center;gap:9px;
+  padding:8px 10px;border-radius:8px;
+  cursor:pointer;font-size:13px;color:var(--mu);
+  transition:all .15s;border:none;background:none;
+  width:100%;text-align:left;
+}
+.nav-item:hover{background:var(--s2);color:var(--tx)}
+.nav-item.active{background:var(--tbg);color:var(--teal)}
+.nav-item .nav-icon{font-size:15px;width:18px;text-align:center}
+.nav-status{width:6px;height:6px;border-radius:50%;background:var(--di);margin-left:auto;flex-shrink:0}
+.nav-status.done{background:var(--green)}
+.nav-status.active-dot{background:var(--teal)}
+
+/* USER CARD na sidebar */
+.user-card{
+  margin:10px;border-radius:10px;background:var(--s2);
+  border:1px solid var(--bd);padding:10px 12px;
+  display:flex;align-items:center;gap:9px;
+}
+.user-avatar{
+  width:32px;height:32px;border-radius:50%;
+  background:var(--tbg);border:1px solid var(--tbd);
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;color:var(--teal);
+  flex-shrink:0;background-size:cover;background-position:center;
+  font-family:'Space Grotesk',sans-serif;
+}
+.user-info{flex:1;min-width:0}
+.user-name-el{font-size:12px;font-weight:600;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-email-el{font-size:10px;color:var(--di);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.logout-btn{
+  background:none;border:none;cursor:pointer;
+  color:var(--di);font-size:14px;padding:3px;
+  border-radius:5px;transition:color .15s;flex-shrink:0;
+}
+.logout-btn:hover{color:var(--red)}
+
+.sidebar-footer{
+  padding:10px 12px;border-top:1px solid var(--bd);
+}
+.saldo-sidebar{background:var(--s2);border-radius:8px;padding:9px 11px}
+.saldo-label{font-size:10px;color:var(--di);margin-bottom:2px}
+.saldo-value{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700}
+.cloud-status{
+  display:flex;align-items:center;gap:5px;
+  font-size:10px;color:var(--di);margin-top:8px;
+}
+.cloud-dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+.cloud-dot.saving{background:var(--amber);animation:pulse .8s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ─── MAIN ─── */
+.main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh}
 
 /* TOPBAR */
-.topbar {
-  position: sticky; top: 0; z-index: 90;
-  background: rgba(12,14,20,.9);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--bd);
-  padding: 0 28px;
-  height: 52px;
-  display: flex; align-items: center; justify-content: space-between;
+.topbar{
+  position:sticky;top:0;z-index:90;
+  background:rgba(12,14,20,.9);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--bd);
+  padding:0 24px;height:52px;
+  display:flex;align-items:center;justify-content:space-between;
 }
-.topbar-title { font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 600; }
-.topbar-actions { display: flex; gap: 8px; align-items: center; }
-.btn {
-  border: 1px solid var(--bd2); background: transparent;
-  color: var(--tx); padding: 6px 14px; border-radius: 7px;
-  cursor: pointer; font-size: 12px; font-family: 'Inter', sans-serif;
-  transition: all .15s; white-space: nowrap;
+.topbar-title{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600}
+.topbar-actions{display:flex;gap:7px;align-items:center}
+.btn{
+  border:1px solid var(--bd2);background:transparent;
+  color:var(--tx);padding:6px 13px;border-radius:7px;
+  cursor:pointer;font-size:12px;font-family:'Inter',sans-serif;
+  transition:all .15s;white-space:nowrap;
 }
-.btn:hover { background: var(--s2); border-color: var(--bd2); }
-.btn-primary {
-  background: var(--teal); border-color: var(--teal);
-  color: #0c0e14; font-weight: 600;
-}
-.btn-primary:hover { background: #25bfab; border-color: #25bfab; }
-.btn-sm { padding: 4px 10px; font-size: 11px; }
+.btn:hover{background:var(--s2)}
+.btn-primary{background:var(--teal);border-color:var(--teal);color:#0c0e14;font-weight:600}
+.btn-primary:hover{background:#25bfab;border-color:#25bfab}
+.btn-sm{padding:4px 10px;font-size:11px}
+.btn-save{background:var(--tbg);border-color:var(--tbd);color:var(--teal)}
+.btn-save:hover{background:rgba(45,212,191,.18)}
 
-/* CONTENT */
-.content { flex: 1; padding: 28px; max-width: 960px; }
+/* ─── CONTENT ─── */
+.content{flex:1;padding:24px;max-width:960px}
+.page-section{display:none}
+.page-section.active{display:block;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 
-/* SECTION PAGES */
-.page-section { display: none; }
-.page-section.active { display: block; }
+.section-header{margin-bottom:22px}
+.section-eyebrow{font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--teal);margin-bottom:5px}
+.section-title{font-family:'Space Grotesk',sans-serif;font-size:21px;font-weight:700;color:var(--tx)}
+.section-desc{font-size:13px;color:var(--mu);margin-top:4px}
 
-/* SECTION HEADER */
-.section-header { margin-bottom: 24px; }
-.section-eyebrow {
-  font-size: 11px; font-weight: 600; letter-spacing: .09em;
-  text-transform: uppercase; color: var(--teal); margin-bottom: 6px;
-}
-.section-title {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 22px; font-weight: 700; color: var(--tx);
-}
-.section-desc { font-size: 13px; color: var(--mu); margin-top: 4px; }
+/* FORM */
+.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:11px;margin-bottom:18px}
+.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:18px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-label{font-size:11px;font-weight:600;color:var(--mu);letter-spacing:.03em;text-transform:uppercase}
+.form-sublabel{font-size:11px;color:var(--di)}
+.input-wrap{display:flex;align-items:center;background:var(--s2);border:1px solid var(--bd);border-radius:9px;overflow:hidden;transition:border-color .15s}
+.input-wrap:focus-within{border-color:var(--tbd)}
+.input-prefix,.input-suffix{padding:0 10px;font-size:12px;color:var(--di);background:var(--s3);height:38px;display:flex;align-items:center;flex-shrink:0}
+.input-prefix{border-right:1px solid var(--bd)}
+.input-suffix{border-left:1px solid var(--bd)}
+.form-input{background:transparent;border:none;outline:none;color:var(--tx);font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600;width:100%;padding:0 12px;height:38px;-moz-appearance:textfield}
+.form-input::-webkit-inner-spin-button,.form-input::-webkit-outer-spin-button{-webkit-appearance:none}
+.form-input::placeholder{color:var(--di);font-weight:400}
 
-/* FORM GROUPS */
-.form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 12px; margin-bottom: 20px; }
-.form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-.form-group { display: flex; flex-direction: column; gap: 5px; }
-.form-label {
-  font-size: 11px; font-weight: 600; color: var(--mu);
-  letter-spacing: .03em; text-transform: uppercase;
-}
-.form-sublabel { font-size: 11px; color: var(--di); }
-.input-wrap {
-  display: flex; align-items: center;
-  background: var(--s2); border: 1px solid var(--bd);
-  border-radius: 9px; overflow: hidden;
-  transition: border-color .15s;
-}
-.input-wrap:focus-within { border-color: var(--tbd); }
-.input-prefix {
-  padding: 0 10px; font-size: 12px; color: var(--di);
-  background: var(--s3); border-right: 1px solid var(--bd);
-  height: 38px; display: flex; align-items: center;
-  flex-shrink: 0;
-}
-.input-suffix {
-  padding: 0 10px; font-size: 12px; color: var(--di);
-  background: var(--s3); border-left: 1px solid var(--bd);
-  height: 38px; display: flex; align-items: center;
-  flex-shrink: 0;
-}
-.form-input {
-  background: transparent; border: none; outline: none;
-  color: var(--tx); font-family: 'Space Grotesk', sans-serif;
-  font-size: 14px; font-weight: 600;
-  width: 100%; padding: 0 12px; height: 38px;
-  -moz-appearance: textfield;
-}
-.form-input::-webkit-inner-spin-button,
-.form-input::-webkit-outer-spin-button { -webkit-appearance: none; }
-.form-input::placeholder { color: var(--di); font-weight: 400; }
-
-/* EXPENSE EDITOR */
-.expense-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
-.expense-item {
-  display: flex; align-items: center; gap: 8px;
-  background: var(--s2); border: 1px solid var(--bd);
-  border-radius: 10px; padding: 8px 12px;
-  transition: border-color .15s;
-}
-.expense-item:hover { border-color: var(--bd2); }
-.expense-icon {
-  width: 30px; height: 30px; border-radius: 7px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 14px; flex-shrink: 0;
-}
-.expense-name-input {
-  background: transparent; border: none; outline: none;
-  color: var(--tx); font-size: 13px; flex: 1; min-width: 0;
-  font-family: 'Inter', sans-serif;
-}
-.expense-name-input::placeholder { color: var(--di); }
-.expense-val-wrap {
-  display: flex; align-items: center;
-  background: var(--s3); border: 1px solid var(--bd);
-  border-radius: 7px; overflow: hidden; flex-shrink: 0;
-}
-.expense-prefix { padding: 0 8px; font-size: 11px; color: var(--di); }
-.expense-val-input {
-  background: transparent; border: none; outline: none;
-  color: var(--teal); font-family: 'Space Grotesk', sans-serif;
-  font-weight: 600; font-size: 13px;
-  width: 90px; padding: 5px 8px 5px 0;
-  -moz-appearance: textfield; text-align: right;
-}
-.expense-val-input::-webkit-inner-spin-button,
-.expense-val-input::-webkit-outer-spin-button { -webkit-appearance: none; }
-.expense-cat {
-  font-size: 10px; padding: 2px 8px; border-radius: 20px;
-  font-weight: 600; flex-shrink: 0; border: 1px solid;
-}
-.del-btn {
-  background: none; border: none; cursor: pointer;
-  color: var(--di); font-size: 16px; padding: 2px 4px;
-  border-radius: 5px; transition: all .15s; flex-shrink: 0;
-}
-.del-btn:hover { color: var(--red); background: rgba(248,113,113,.1); }
-.add-expense-btn {
-  display: flex; align-items: center; gap: 8px;
-  background: var(--s2); border: 1px dashed var(--bd);
-  border-radius: 10px; padding: 9px 14px;
-  cursor: pointer; color: var(--mu); font-size: 13px;
-  width: 100%; transition: all .15s;
-}
-.add-expense-btn:hover { border-color: var(--tbd); color: var(--teal); background: var(--tbg); }
+/* EXPENSES */
+.expense-list{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.expense-item{display:flex;align-items:center;gap:7px;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:7px 11px;transition:border-color .15s}
+.expense-item:hover{border-color:var(--bd2)}
+.expense-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.expense-name-input{background:transparent;border:none;outline:none;color:var(--tx);font-size:13px;flex:1;min-width:0;font-family:'Inter',sans-serif}
+.expense-name-input::placeholder{color:var(--di)}
+.expense-val-wrap{display:flex;align-items:center;background:var(--s3);border:1px solid var(--bd);border-radius:7px;overflow:hidden;flex-shrink:0}
+.expense-prefix{padding:0 7px;font-size:11px;color:var(--di)}
+.expense-val-input{background:transparent;border:none;outline:none;color:var(--teal);font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;width:85px;padding:5px 7px 5px 0;-moz-appearance:textfield;text-align:right}
+.expense-val-input::-webkit-inner-spin-button,.expense-val-input::-webkit-outer-spin-button{-webkit-appearance:none}
+.cat-select{background:var(--s3);border:1px solid var(--bd);border-radius:6px;color:var(--mu);font-size:10px;padding:3px 5px;cursor:pointer;outline:none;flex-shrink:0}
+.cat-select option{background:var(--s1)}
+.del-btn{background:none;border:none;cursor:pointer;color:var(--di);font-size:16px;padding:2px 4px;border-radius:5px;transition:all .15s;flex-shrink:0}
+.del-btn:hover{color:var(--red);background:rgba(248,113,113,.1)}
+.add-expense-btn{display:flex;align-items:center;gap:8px;background:var(--s2);border:1px dashed var(--bd);border-radius:10px;padding:9px 14px;cursor:pointer;color:var(--mu);font-size:13px;width:100%;transition:all .15s}
+.add-expense-btn:hover{border-color:var(--tbd);color:var(--teal);background:var(--tbg)}
 
 /* CARDS */
-.card { background: var(--s1); border: 1px solid var(--bd); border-radius: 14px; }
-.card-body { padding: 16px 18px; }
-.card-header {
-  padding: 12px 18px; border-bottom: 1px solid var(--bd);
-  display: flex; justify-content: space-between; align-items: center;
-}
-.card-title { font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 600; }
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:14px}
+.card-body{padding:15px 17px}
+.card-header{padding:11px 17px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center}
+.card-title{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600}
 
 /* STATS */
-.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 10px; margin-bottom: 20px; }
-.stat-card {
-  background: var(--s1); border: 1px solid var(--bd);
-  border-radius: 12px; padding: 14px 16px;
-}
-.stat-label { font-size: 11px; color: var(--mu); margin-bottom: 4px; }
-.stat-value {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 20px; font-weight: 700;
-}
-.stat-sub { font-size: 11px; color: var(--di); margin-top: 3px; }
-.stat-delta {
-  display: inline-flex; align-items: center; gap: 3px;
-  font-size: 11px; font-weight: 600;
-  padding: 1px 7px; border-radius: 20px; margin-top: 4px;
-}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:9px;margin-bottom:18px}
+.stat-card{background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:13px 15px}
+.stat-label{font-size:11px;color:var(--mu);margin-bottom:3px}
+.stat-value{font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:700}
+.stat-sub{font-size:11px;color:var(--di);margin-top:2px}
 
-/* PLAN ROWS */
-.plan-table { width: 100%; border-collapse: collapse; }
-.plan-table th {
-  font-size: 11px; color: var(--mu); font-weight: 600;
-  text-align: left; padding: 8px 12px;
-  background: var(--s2); border-bottom: 1px solid var(--bd);
-}
-.plan-table th:not(:first-child) { text-align: right; }
-.plan-table td {
-  padding: 9px 12px; border-bottom: 1px solid var(--bd);
-  font-size: 13px; vertical-align: middle;
-}
-.plan-table tr:last-child td { border-bottom: none; }
-.plan-table td:not(:first-child) {
-  text-align: right;
-  font-family: 'Space Grotesk', sans-serif; font-weight: 600;
-}
-.plan-table tr.cat-header td {
-  background: var(--s3); font-size: 10px; font-weight: 700;
-  letter-spacing: .07em; text-transform: uppercase;
-  color: var(--di); padding: 5px 12px;
-}
-.plan-table tr.total-row td {
-  background: rgba(45,212,191,.05); font-weight: 700; font-size: 14px;
-}
+/* PLAN TABLE */
+.plan-table{width:100%;border-collapse:collapse}
+.plan-table th{font-size:11px;color:var(--mu);font-weight:600;text-align:left;padding:7px 11px;background:var(--s2);border-bottom:1px solid var(--bd)}
+.plan-table th:not(:first-child){text-align:right}
+.plan-table td{padding:8px 11px;border-bottom:1px solid var(--bd);font-size:13px;vertical-align:middle}
+.plan-table tr:last-child td{border-bottom:none}
+.plan-table td:not(:first-child){text-align:right;font-family:'Space Grotesk',sans-serif;font-weight:600}
+.plan-table tr.cat-header td{background:var(--s3);font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--di);padding:4px 11px}
+.plan-table tr.total-row td{background:rgba(45,212,191,.05);font-weight:700;font-size:14px}
 
 /* DONUT */
-.donut-section { display: flex; align-items: center; gap: 24px; }
-.donut-svg { flex-shrink: 0; }
-.donut-legend { flex: 1; display: flex; flex-direction: column; gap: 8px; }
-.legend-row {
-  display: flex; align-items: center; gap: 8px; font-size: 12px;
-}
-.legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
-.legend-name { color: var(--mu); flex: 1; }
-.legend-pct { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 13px; }
-.legend-val { font-size: 11px; color: var(--di); }
+.donut-section{display:flex;align-items:center;gap:20px}
+.donut-legend{flex:1;display:flex;flex-direction:column;gap:7px}
+.legend-row{display:flex;align-items:center;gap:7px;font-size:12px}
+.legend-dot{width:9px;height:9px;border-radius:3px;flex-shrink:0}
+.legend-name{color:var(--mu);flex:1}
+.legend-pct{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:13px}
 
-/* ALERTS */
-.alert {
-  border-radius: 10px; padding: 10px 14px;
-  display: flex; gap: 10px; align-items: flex-start;
-  margin-bottom: 10px; border: 1px solid; font-size: 13px; line-height: 1.5;
-}
-.alert-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
-.alert-red    { background: rgba(248,113,113,.08); border-color: rgba(248,113,113,.25); color: #fca5a5; }
-.alert-amber  { background: rgba(251,191,36,.08);  border-color: rgba(251,191,36,.25);  color: #fde68a; }
-.alert-green  { background: rgba(74,222,128,.08);  border-color: rgba(74,222,128,.25);  color: #bbf7d0; }
-.alert-teal   { background: rgba(45,212,191,.08);  border-color: rgba(45,212,191,.25);  color: #99f6e4; }
-.alert-purple { background: rgba(167,139,250,.08); border-color: rgba(167,139,250,.25); color: #c4b5fd; }
+/* ALERT */
+.alert{border-radius:10px;padding:10px 13px;display:flex;gap:9px;align-items:flex-start;margin-bottom:9px;border:1px solid;font-size:13px;line-height:1.5}
+.alert-icon{font-size:14px;flex-shrink:0;margin-top:1px}
+.alert-red{background:rgba(248,113,113,.08);border-color:rgba(248,113,113,.25);color:#fca5a5}
+.alert-amber{background:rgba(251,191,36,.08);border-color:rgba(251,191,36,.25);color:#fde68a}
+.alert-green{background:rgba(74,222,128,.08);border-color:rgba(74,222,128,.25);color:#bbf7d0}
+.alert-teal{background:rgba(45,212,191,.08);border-color:rgba(45,212,191,.25);color:#99f6e4}
+.alert-purple{background:rgba(167,139,250,.08);border-color:rgba(167,139,250,.25);color:#c4b5fd}
 
-/* GOAL CARDS */
-.goal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.goal-card {
-  background: var(--s2); border: 1px solid var(--bd);
-  border-radius: 12px; padding: 14px 16px;
-}
-.goal-icon { font-size: 20px; margin-bottom: 6px; }
-.goal-name { font-size: 12px; font-weight: 600; color: var(--tx); margin-bottom: 2px; }
-.goal-desc { font-size: 11px; color: var(--mu); line-height: 1.4; margin-bottom: 8px; }
-.goal-bar-bg { height: 4px; background: var(--bd); border-radius: 3px; margin-bottom: 5px; }
-.goal-bar-fg { height: 4px; border-radius: 3px; transition: width .6s ease; }
-.goal-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--di); }
-.goal-meta strong { font-family: 'Space Grotesk', sans-serif; }
+/* GOALS */
+.goal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.goal-card{background:var(--s2);border:1px solid var(--bd);border-radius:12px;padding:13px 15px}
+.goal-icon{font-size:19px;margin-bottom:5px}
+.goal-name{font-size:12px;font-weight:600;color:var(--tx);margin-bottom:2px}
+.goal-desc{font-size:11px;color:var(--mu);line-height:1.4;margin-bottom:7px}
+.goal-bar-bg{height:4px;background:var(--bd);border-radius:3px;margin-bottom:4px}
+.goal-bar-fg{height:4px;border-radius:3px;transition:width .6s ease}
+.goal-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--di)}
 
 /* INVEST */
-.invest-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: 10px; }
-.invest-card {
-  background: var(--s2); border: 1px solid var(--bd);
-  border-radius: 12px; padding: 12px 14px;
-}
-.invest-icon { font-size: 18px; margin-bottom: 5px; }
-.invest-name { font-size: 12px; font-weight: 700; color: var(--tx); margin-bottom: 2px; }
-.invest-desc { font-size: 10.5px; color: var(--mu); line-height: 1.4; margin-bottom: 8px; }
-.invest-pct-row { display: flex; justify-content: space-between; align-items: center; }
-.invest-pct { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 14px; }
-.invest-bar-bg { height: 3px; background: var(--bd); border-radius: 2px; margin: 5px 0; }
-.invest-bar-fg { height: 3px; border-radius: 2px; }
-.invest-amount { font-size: 10.5px; color: var(--di); }
+.invest-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:9px}
+.invest-card{background:var(--s2);border:1px solid var(--bd);border-radius:12px;padding:11px 13px}
+.invest-icon{font-size:17px;margin-bottom:5px}
+.invest-name{font-size:12px;font-weight:700;color:var(--tx);margin-bottom:2px}
+.invest-desc{font-size:10.5px;color:var(--mu);line-height:1.4;margin-bottom:7px}
+.invest-pct{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:14px}
+.invest-bar-bg{height:3px;background:var(--bd);border-radius:2px;margin:4px 0}
+.invest-bar-fg{height:3px;border-radius:2px}
+.invest-amount{font-size:10.5px;color:var(--di)}
 
-/* TAB */
-.tabs { display: flex; gap: 4px; margin-bottom: 16px; }
-.tab {
-  padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 500;
-  cursor: pointer; border: 1px solid var(--bd); background: transparent;
-  color: var(--mu); transition: all .15s;
-}
-.tab.active { background: var(--tbg); border-color: var(--tbd); color: var(--teal); }
-
-/* DIVIDER */
-.divider { height: 1px; background: var(--bd); margin: 20px 0; }
+/* TABS */
+.tabs{display:flex;gap:4px;margin-bottom:14px}
+.tab{padding:6px 13px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--bd);background:transparent;color:var(--mu);transition:all .15s}
+.tab.active{background:var(--tbg);border-color:var(--tbd);color:var(--teal)}
 
 /* PROGRESS */
-.progress-item { margin-bottom: 12px; }
-.progress-header { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 12px; }
-.progress-name { color: var(--mu); }
-.progress-vals { font-family: 'Space Grotesk', sans-serif; font-weight: 600; }
-.progress-bar-bg { height: 5px; background: var(--bd); border-radius: 3px; }
-.progress-bar-fg { height: 5px; border-radius: 3px; transition: width .6s ease; }
+.progress-item{margin-bottom:11px}
+.progress-header{display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px}
+.progress-name{color:var(--mu)}
+.progress-vals{font-family:'Space Grotesk',sans-serif;font-weight:600}
+.progress-bar-bg{height:5px;background:var(--bd);border-radius:3px}
+.progress-bar-fg{height:5px;border-radius:3px;transition:width .6s ease}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--bd);margin:18px 0}
 
 /* TOAST */
-.toast {
-  position: fixed; bottom: 24px; right: 24px;
-  background: var(--s1); border: 1px solid var(--tbd);
-  border-radius: 10px; padding: 12px 18px;
-  font-size: 13px; color: var(--teal);
-  transform: translateY(80px); opacity: 0;
-  transition: all .3s; z-index: 999;
-  box-shadow: 0 4px 24px rgba(0,0,0,.4);
-}
-.toast.show { transform: translateY(0); opacity: 1; }
-
-/* BADGE */
-.badge {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 2px 9px; border-radius: 20px; font-size: 10.5px; font-weight: 700;
-  border: 1px solid;
-}
-
-/* CATEGORY SELECT */
-.cat-select {
-  background: var(--s3); border: 1px solid var(--bd); border-radius: 6px;
-  color: var(--mu); font-size: 11px; padding: 3px 6px; cursor: pointer;
-  outline: none; flex-shrink: 0;
-}
-.cat-select option { background: var(--s1); }
+.toast{position:fixed;bottom:22px;right:22px;background:var(--s1);border:1px solid var(--tbd);border-radius:10px;padding:11px 17px;font-size:13px;color:var(--teal);transform:translateY(70px);opacity:0;transition:all .3s;z-index:999;box-shadow:0 4px 24px rgba(0,0,0,.4)}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.error{border-color:rgba(248,113,113,.4);color:var(--red)}
 
 /* RESPONSIVE */
-@media (max-width: 768px) {
-  .sidebar { width: 60px; }
-  .sidebar-logo small, .nav-item span, .sidebar-footer { display: none; }
-  .main { margin-left: 60px; }
-  .form-grid { grid-template-columns: 1fr; }
-  .goal-grid { grid-template-columns: 1fr; }
+@media(max-width:768px){
+  .sidebar{width:56px}
+  .sidebar-logo small,.nav-item span,.user-info,.sidebar-footer{display:none}
+  .main{margin-left:56px}
+  .form-grid,.form-grid-2{grid-template-columns:1fr}
+  .goal-grid{grid-template-columns:1fr}
 }
-
-/* TRANSITIONS */
-.page-section { animation: fadeIn .2s ease; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 </head>
 <body>
+
+<!-- ═══════════════ TELA DE LOGIN ═══════════════ -->
+<div id="login-screen" style="display: flex;">
+  <div class="login-card">
+    <div class="login-logo">painel<span>fin</span></div>
+    <div class="login-tagline">
+      Organize suas finanças, acompanhe suas metas<br>e invista com inteligência.
+    </div>
+
+    <button class="login-btn-google" onclick="loginGoogle()">
+      <svg width="18" height="18" viewBox="0 0 18 18">
+        <path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 002.38-5.88c0-.57-.05-.66-.15-1.17z"></path>
+        <path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 01-7.18-2.54H1.83v2.07A8 8 0 008.98 17z"></path>
+        <path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 010-3.04V5.41H1.83a8 8 0 000 7.18l2.67-2.07z"></path>
+        <path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 001.83 5.4L4.5 7.49a4.77 4.77 0 014.48-3.3z"></path>
+      </svg>
+      Entrar com Google
+    </button>
+
+    <div class="login-divider">ou veja o que te espera</div>
+
+    <div class="login-features">
+      <div class="login-feat">
+        <div class="login-feat-icon">☁️</div>
+        <div>Seus dados salvos na nuvem — acesse de qualquer dispositivo</div>
+      </div>
+      <div class="login-feat">
+        <div class="login-feat-icon">📊</div>
+        <div>Diagnóstico financeiro completo com plano de ação</div>
+      </div>
+      <div class="login-feat">
+        <div class="login-feat-icon">🎯</div>
+        <div>Metas, reserva de emergência e guia de investimentos</div>
+      </div>
+      <div class="login-feat">
+        <div class="login-feat-icon">🙏</div>
+        <div>Controle do dízimo e missões integrado ao orçamento</div>
+      </div>
+    </div>
+
+    <div class="login-footer">Seus dados ficam no Firebase (Google). Ninguém mais tem acesso.</div>
+  </div>
+</div>
+
+<!-- ═══════════════ APP (só aparece após login) ═══════════════ -->
+<div id="app-shell" style="display: none;">
+
+<!-- BANNER DE CONFIGURAÇÃO (aparece se apiKey não foi trocada) -->
+<div id="setup-banner">
+  <span style="font-size:16px;flex-shrink:0">⚙️</span>
+  <div>
+    <strong style="color:var(--amber)">Configure o Firebase:</strong>
+    abra o arquivo HTML, localize o bloco <code>firebaseConfig</code> e cole as credenciais do seu projeto.
+    <a href="https://console.firebase.google.com/" target="_blank" style="color:var(--teal);text-decoration:none;font-weight:600">→ Abrir console Firebase</a>
+    &nbsp;·&nbsp;
+    <a href="file:///C:/Users/lais_/Downloads/painelfin_firebase_2.html#" onclick="document.getElementById(&#39;setup-banner&#39;).classList.remove(&#39;show&#39;)" style="color:var(--di)">fechar</a>
+  </div>
+</div>
+
 <div class="app">
 
-<!-- ═══ SIDEBAR ═══ -->
+<!-- SIDEBAR -->
 <nav class="sidebar">
   <div class="sidebar-logo">
     painel<span>fin</span>
     <small>Planejamento Financeiro</small>
   </div>
   <div class="nav">
-    <button class="nav-item active" onclick="goTo('renda')" id="nav-renda">
-      <span class="nav-icon">💰</span><span>Renda</span>
-      <span class="nav-status active-dot" id="dot-renda"></span>
-    </button>
-    <button class="nav-item" onclick="goTo('despesas')" id="nav-despesas">
-      <span class="nav-icon">📋</span><span>Despesas</span>
-      <span class="nav-status" id="dot-despesas"></span>
-    </button>
-    <button class="nav-item" onclick="goTo('dizimo')" id="nav-dizimo">
-      <span class="nav-icon">🙏</span><span>Dízimo</span>
-      <span class="nav-status" id="dot-dizimo"></span>
-    </button>
-    <button class="nav-item" onclick="goTo('plano')" id="nav-plano">
-      <span class="nav-icon">📊</span><span>Plano</span>
-      <span class="nav-status" id="dot-plano"></span>
-    </button>
-    <button class="nav-item" onclick="goTo('metas')" id="nav-metas">
-      <span class="nav-icon">🎯</span><span>Metas</span>
-      <span class="nav-status" id="dot-metas"></span>
-    </button>
-    <button class="nav-item" onclick="goTo('investir')" id="nav-investir">
-      <span class="nav-icon">📈</span><span>Investir</span>
-      <span class="nav-status" id="dot-investir"></span>
-    </button>
+    <button class="nav-item active" onclick="goTo(&#39;renda&#39;)" id="nav-renda">    <span class="nav-icon">💰</span><span>Renda</span>    <span class="nav-status active-dot" id="dot-renda"></span></button>
+    <button class="nav-item" onclick="goTo(&#39;despesas&#39;)" id="nav-despesas"> <span class="nav-icon">📋</span><span>Despesas</span> <span class="nav-status" id="dot-despesas"></span></button>
+    <button class="nav-item" onclick="goTo(&#39;dizimo&#39;)" id="nav-dizimo">   <span class="nav-icon">🙏</span><span>Dízimo</span>   <span class="nav-status done" id="dot-dizimo"></span></button>
+    <button class="nav-item" onclick="goTo(&#39;plano&#39;)" id="nav-plano">    <span class="nav-icon">📊</span><span>Plano</span>    <span class="nav-status" id="dot-plano"></span></button>
+    <button class="nav-item" onclick="goTo(&#39;metas&#39;)" id="nav-metas">    <span class="nav-icon">🎯</span><span>Metas</span>    <span class="nav-status" id="dot-metas"></span></button>
+    <button class="nav-item" onclick="goTo(&#39;investir&#39;)" id="nav-investir"> <span class="nav-icon">📈</span><span>Investir</span> <span class="nav-status" id="dot-investir"></span></button>
   </div>
+
+  <!-- USER CARD -->
+  <div class="user-card">
+    <div class="user-avatar" id="user-avatar">U</div>
+    <div class="user-info">
+      <div class="user-name-el" id="user-name">Usuário</div>
+      <div class="user-email-el" id="user-email">—</div>
+    </div>
+    <button class="logout-btn" onclick="logout()" title="Sair">↩</button>
+  </div>
+
   <div class="sidebar-footer">
-    <div style="color:var(--di);margin-bottom:6px">saldo disponível</div>
     <div class="saldo-sidebar">
-      <div class="saldo-label">Após gastos</div>
+      <div class="saldo-label">saldo disponível</div>
       <div class="saldo-value" id="sidebar-saldo" style="color:var(--teal)">R$ —</div>
+    </div>
+    <div class="cloud-status">
+      <div class="cloud-dot" id="cloud-dot"></div>
+      <span id="cloud-label">Sincronizado</span>
     </div>
   </div>
 </nav>
 
-<!-- ═══ MAIN ═══ -->
+<!-- MAIN -->
 <div class="main">
-
-<!-- TOPBAR -->
 <div class="topbar">
   <div class="topbar-title" id="topbar-title">Renda mensal</div>
   <div class="topbar-actions">
-    <button class="btn btn-sm" onclick="resetAll()">Limpar tudo</button>
-    <button class="btn btn-primary btn-sm" onclick="calcular(); goTo('plano')">Ver plano →</button>
+    <button class="btn btn-sm" onclick="resetAll()">Limpar</button>
+    <button class="btn btn-save btn-sm" onclick="salvarFirestore()">☁️ Salvar</button>
+    <button class="btn btn-primary btn-sm" onclick="calcular();goTo(&#39;plano&#39;)">Ver plano →</button>
   </div>
 </div>
 
-<!-- CONTENT -->
 <div class="content">
 
-<!-- ═══ RENDA ═══ -->
+<!-- ── RENDA ── -->
 <div class="page-section active" id="sec-renda">
   <div class="section-header">
     <div class="section-eyebrow">passo 1</div>
     <div class="section-title">Qual é a sua renda?</div>
-    <div class="section-desc">Informe todas as fontes de renda mensal. Valores líquidos (já descontado imposto).</div>
+    <div class="section-desc">Valores líquidos (já descontado impostos).</div>
   </div>
-
-  <div class="form-grid" id="renda-grid">
-    <div class="form-group">
-      <label class="form-label">Salário 1</label>
-      <div class="input-wrap">
-        <div class="input-prefix">R$</div>
-        <input type="number" class="form-input renda-input" id="sal1" placeholder="0,00" value="" oninput="calcular()">
-      </div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Salário 2</label>
-      <div class="input-wrap">
-        <div class="input-prefix">R$</div>
-        <input type="number" class="form-input renda-input" id="sal2" placeholder="0,00" value="" oninput="calcular()">
-      </div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Salário 3</label>
-      <div class="input-wrap">
-        <div class="input-prefix">R$</div>
-        <input type="number" class="form-input renda-input" id="sal3" placeholder="0,00" value="" oninput="calcular()">
-      </div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Renda extra / aulas</label>
-      <div class="input-wrap">
-        <div class="input-prefix">R$</div>
-        <input type="number" class="form-input renda-input" id="extra" placeholder="0,00" value="" oninput="calcular()">
-      </div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Ticket alimentação</label>
-      <div class="input-wrap">
-        <div class="input-prefix">R$</div>
-        <input type="number" class="form-input renda-input" id="ticket" placeholder="0,00" value="" oninput="calcular()">
-      </div>
-      <span class="form-sublabel">bônus, não entra no fluxo</span>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Outras rendas</label>
-      <div class="input-wrap">
-        <div class="input-prefix">R$</div>
-        <input type="number" class="form-input renda-input" id="outras" placeholder="0,00" value="" oninput="calcular()">
-      </div>
-    </div>
+  <div class="form-grid">
+    <div class="form-group"><label class="form-label">Salário 1</label><div class="input-wrap"><div class="input-prefix">R$</div><input type="number" class="form-input" id="sal1" placeholder="0" oninput="calcular()"></div></div>
+    <div class="form-group"><label class="form-label">Salário 2</label><div class="input-wrap"><div class="input-prefix">R$</div><input type="number" class="form-input" id="sal2" placeholder="0" oninput="calcular()"></div></div>
+    <div class="form-group"><label class="form-label">Salário 3</label><div class="input-wrap"><div class="input-prefix">R$</div><input type="number" class="form-input" id="sal3" placeholder="0" oninput="calcular()"></div></div>
+    <div class="form-group"><label class="form-label">Renda extra / aulas</label><div class="input-wrap"><div class="input-prefix">R$</div><input type="number" class="form-input" id="extra" placeholder="0" oninput="calcular()"></div></div>
+    <div class="form-group"><label class="form-label">Ticket alimentação</label><div class="input-wrap"><div class="input-prefix">R$</div><input type="number" class="form-input" id="ticket" placeholder="0" oninput="calcular()"></div><span class="form-sublabel">bônus, separado do fluxo</span></div>
+    <div class="form-group"><label class="form-label">Outras rendas</label><div class="input-wrap"><div class="input-prefix">R$</div><input type="number" class="form-input" id="outras" placeholder="0" oninput="calcular()"></div></div>
   </div>
-
-  <div class="stats-grid" id="renda-stats">
-    <div class="stat-card">
-      <div class="stat-label">Renda total</div>
-      <div class="stat-value" id="st-total" style="color:var(--teal)">R$ —</div>
-      <div class="stat-sub">todos os ingressos</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Ticket (bônus)</div>
-      <div class="stat-value" id="st-ticket" style="color:var(--blue)">R$ —</div>
-      <div class="stat-sub">exclusivo alimentação</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Base de distribuição</div>
-      <div class="stat-value" id="st-base" style="color:var(--tx)">R$ —</div>
-      <div class="stat-sub">sem ticket</div>
-    </div>
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-label">Renda total</div><div class="stat-value" id="st-total" style="color:var(--teal)">R$ 0</div><div class="stat-sub">todos os ingressos</div></div>
+    <div class="stat-card"><div class="stat-label">Ticket bônus</div><div class="stat-value" id="st-ticket" style="color:var(--blue)">R$ 0</div><div class="stat-sub">exclusivo alimentação</div></div>
+    <div class="stat-card"><div class="stat-label">Base de distribuição</div><div class="stat-value" id="st-base" style="color:var(--tx)">R$ 0</div><div class="stat-sub">sem ticket</div></div>
   </div>
-
-  <div style="display:flex;justify-content:flex-end">
-    <button class="btn btn-primary" onclick="goTo('despesas')">Próximo: Despesas →</button>
-  </div>
+  <div style="display:flex;justify-content:flex-end"><button class="btn btn-primary" onclick="goTo(&#39;despesas&#39;)">Próximo →</button></div>
 </div>
 
-<!-- ═══ DESPESAS ═══ -->
+<!-- ── DESPESAS ── -->
 <div class="page-section" id="sec-despesas">
   <div class="section-header">
     <div class="section-eyebrow">passo 2</div>
     <div class="section-title">Quais são suas despesas?</div>
-    <div class="section-desc">Adicione, edite ou remova cada gasto. Organize por categoria.</div>
+    <div class="section-desc">Edite nome, categoria e valor de cada gasto.</div>
   </div>
-
-  <!-- Categorias e listas -->
-  <div id="expense-categories"></div>
-
-  <div style="display:flex;gap:8px;margin-top:16px;justify-content:space-between;align-items:center">
-    <button class="add-expense-btn" onclick="addExpense()" style="max-width:220px">
-      <span style="font-size:18px">+</span> Adicionar despesa
-    </button>
-    <div style="font-size:13px;color:var(--mu)">
-      Total: <strong class="plan-val" id="total-desp" style="color:var(--red);font-family:'Space Grotesk',sans-serif">R$ —</strong>
-    </div>
+  <div id="expense-categories"><div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--di)">Moradia</div>
+        <div style="font-family:&#39;Space Grotesk&#39;,sans-serif;font-size:12px;font-weight:700;color:var(--teal)">R$ 0</div>
+      </div><div class="expense-list"><div class="expense-item" id="exp-1">
+        <div class="expense-icon" style="background:rgba(45,212,191,.12)">🏠</div>
+        <input class="expense-name-input" type="text" value="Aluguel" placeholder="Nome" onchange="updateExpName(1,this.value)">
+        <select class="cat-select" onchange="updateExpCat(1,this.value)">
+          <option value="moradia" selected="">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte">Transporte</option><option value="saude">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
+        </select>
+        <div class="expense-val-wrap">
+          <span class="expense-prefix">R$</span>
+          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(1,this.value)">
+        </div>
+        <button class="del-btn" onclick="delExpense(1)">×</button>
+      </div><div class="expense-item" id="exp-2">
+        <div class="expense-icon" style="background:rgba(45,212,191,.12)">🏢</div>
+        <input class="expense-name-input" type="text" value="Condomínio" placeholder="Nome" onchange="updateExpName(2,this.value)">
+        <select class="cat-select" onchange="updateExpCat(2,this.value)">
+          <option value="moradia" selected="">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte">Transporte</option><option value="saude">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
+        </select>
+        <div class="expense-val-wrap">
+          <span class="expense-prefix">R$</span>
+          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(2,this.value)">
+        </div>
+        <button class="del-btn" onclick="delExpense(2)">×</button>
+      </div><div class="expense-item" id="exp-3">
+        <div class="expense-icon" style="background:rgba(45,212,191,.12)">💡</div>
+        <input class="expense-name-input" type="text" value="Luz" placeholder="Nome" onchange="updateExpName(3,this.value)">
+        <select class="cat-select" onchange="updateExpCat(3,this.value)">
+          <option value="moradia" selected="">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte">Transporte</option><option value="saude">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
+        </select>
+        <div class="expense-val-wrap">
+          <span class="expense-prefix">R$</span>
+          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(3,this.value)">
+        </div>
+        <button class="del-btn" onclick="delExpense(3)">×</button>
+      </div><div class="expense-item" id="exp-4">
+        <div class="expense-icon" style="background:rgba(45,212,191,.12)">📡</div>
+        <input class="expense-name-input" type="text" value="Internet" placeholder="Nome" onchange="updateExpName(4,this.value)">
+        <select class="cat-select" onchange="updateExpCat(4,this.value)">
+          <option value="moradia" selected="">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte">Transporte</option><option value="saude">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
+        </select>
+        <div class="expense-val-wrap">
+          <span class="expense-prefix">R$</span>
+          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(4,this.value)">
+        </div>
+        <button class="del-btn" onclick="delExpense(4)">×</button>
+      </div></div></div><div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--di)">Alimentação</div>
+        <div style="font-family:&#39;Space Grotesk&#39;,sans-serif;font-size:12px;font-weight:700;color:var(--blue)">R$ 0</div>
+      </div><div class="expense-list"><div class="expense-item" id="exp-5">
+        <div class="expense-icon" style="background:rgba(96,165,250,.12)">🛒</div>
+        <input class="expense-name-input" type="text" value="Mercado / Feira" placeholder="Nome" onchange="updateExpName(5,this.value)">
+        <select class="cat-select" onchange="updateExpCat(5,this.value)">
+          <option value="moradia">Moradia</option><option value="alimentacao" selected="">Alimentação</option><option value="transporte">Transporte</option><option value="saude">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
+        </select>
+        <div class="expense-val-wrap">
+          <span class="expense-prefix">R$</span>
+          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(5,this.value)">
+        </div>
+        <button class="del-btn" onclick="delExpense(5)">×</button>
+      </div></div></div><div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--di)">Transporte</div>
+        <div style="font-family:&#39;Space Grotesk&#39;,sans-serif;font-size:12px;font-weight:700;color:var(--amber)">R$ 0</div>
+      </div><div class="expense-list"><div class="expense-item" id="exp-6">
+        <div class="expense-icon" style="background:rgba(251,191,36,.12)">⛽</div>
+        <input class="expense-name-input" type="text" value="Gasolina" placeholder="Nome" onchange="updateExpName(6,this.value)">
+        <select class="cat-select" onchange="updateExpCat(6,this.value)">
+          <option value="moradia">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte" selected="">Transporte</option><option value="saude">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
+        </select>
+        <div class="expense-val-wrap">
+          <span class="expense-prefix">R$</span>
+          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(6,this.value)">
+        </div>
+        <button class="del-btn" onclick="delExpense(6)">×</button>
+      </div><div class="expense-item" id="exp-7">
+        <div class="expense-icon" style="background:rgba(251,191,36,.12)">🚗</div>
+        <input class="expense-name-input" type="text" value="IPVA" placeholder="Nome" onchange="updateExpName(7,this.value)">
+        <select class="cat-select" onchange="updateExpCat(7,this.value)">
+          <option value="moradia">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte" selected="">Transporte</option><option value="saude">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
+        </select>
+        <div class="expense-val-wrap">
+          <span class="expense-prefix">R$</span>
+          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(7,this.value)">
+        </div>
+        <button class="del-btn" onclick="delExpense(7)">×</button>
+      </div><div class="expense-item" id="exp-8">
+        <div class="expense-icon" style="background:rgba(251,191,36,.12)">🔧</div>
+        <input class="expense-name-input" type="text" value="Manutenção carro" placeholder="Nome" onchange="updateExpName(8,this.value)">
+        <select class="cat-select" onchange="updateExpCat(8,this.value)">
+          <option value="moradia">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte" selected="">Transporte</option><option value="saude">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
+        </select>
+        <div class="expense-val-wrap">
+          <span class="expense-prefix">R$</span>
+          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(8,this.value)">
+        </div>
+        <button class="del-btn" onclick="delExpense(8)">×</button>
+      </div></div></div><div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--di)">Saúde</div>
+        <div style="font-family:&#39;Space Grotesk&#39;,sans-serif;font-size:12px;font-weight:700;color:var(--indigo)">R$ 0</div>
+      </div><div class="expense-list"><div class="expense-item" id="exp-9">
+        <div class="expense-icon" style="background:rgba(129,140,248,.12)">💊</div>
+        <input class="expense-name-input" type="text" value="Plano de saúde" placeholder="Nome" onchange="updateExpName(9,this.value)">
+        <select class="cat-select" onchange="updateExpCat(9,this.value)">
+          <option value="moradia">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte">Transporte</option><option value="saude" selected="">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
+        </select>
+        <div class="expense-val-wrap">
+          <span class="expense-prefix">R$</span>
+          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(9,this.value)">
+        </div>
+        <button class="del-btn" onclick="delExpense(9)">×</button>
+      </div></div></div><div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--di)">Lazer / Pessoal</div>
+        <div style="font-family:&#39;Space Grotesk&#39;,sans-serif;font-size:12px;font-weight:700;color:var(--pink)">R$ 0</div>
+      </div><div class="expense-list"><div class="expense-item" id="exp-10">
+        <div class="expense-icon" style="background:rgba(244,114,182,.12)">📺</div>
+        <input class="expense-name-input" type="text" value="Assinaturas" placeholder="Nome" onchange="updateExpName(10,this.value)">
+        <select class="cat-select" onchange="updateExpCat(10,this.value)">
+          <option value="moradia">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte">Transporte</option><option value="saude">Saúde</option><option value="lazer" selected="">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
+        </select>
+        <div class="expense-val-wrap">
+          <span class="expense-prefix">R$</span>
+          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(10,this.value)">
+        </div>
+        <button class="del-btn" onclick="delExpense(10)">×</button>
+      </div><div class="expense-item" id="exp-11">
+        <div class="expense-icon" style="background:rgba(244,114,182,.12)">💸</div>
+        <input class="expense-name-input" type="text" value="Gastos semanais" placeholder="Nome" onchange="updateExpName(11,this.value)">
+        <select class="cat-select" onchange="updateExpCat(11,this.value)">
+          <option value="moradia">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte">Transporte</option><option value="saude">Saúde</option><option value="lazer" selected="">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
+        </select>
+        <div class="expense-val-wrap">
+          <span class="expense-prefix">R$</span>
+          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(11,this.value)">
+        </div>
+        <button class="del-btn" onclick="delExpense(11)">×</button>
+      </div></div></div><div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--di)">Dívidas</div>
+        <div style="font-family:&#39;Space Grotesk&#39;,sans-serif;font-size:12px;font-weight:700;color:var(--red)">R$ 0</div>
+      </div><div class="expense-list"><div class="expense-item" id="exp-12">
+        <div class="expense-icon" style="background:rgba(248,113,113,.12)">🏗️</div>
+        <input class="expense-name-input" type="text" value="Financiamento" placeholder="Nome" onchange="updateExpName(12,this.value)">
+        <select class="cat-select" onchange="updateExpCat(12,this.value)">
+          <option value="moradia">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte">Transporte</option><option value="saude">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas" selected="">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
+        </select>
+        <div class="expense-val-wrap">
+          <span class="expense-prefix">R$</span>
+          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(12,this.value)">
+        </div>
+        <button class="del-btn" onclick="delExpense(12)">×</button>
+      </div></div></div><div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--di)">Obrigações</div>
+        <div style="font-family:&#39;Space Grotesk&#39;,sans-serif;font-size:12px;font-weight:700;color:var(--mu)">R$ 0</div>
+      </div><div class="expense-list"><div class="expense-item" id="exp-13">
+        <div class="expense-icon" style="background:rgba(127,142,164,.12)">📋</div>
+        <input class="expense-name-input" type="text" value="Imposto de Renda" placeholder="Nome" onchange="updateExpName(13,this.value)">
+        <select class="cat-select" onchange="updateExpCat(13,this.value)">
+          <option value="moradia">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte">Transporte</option><option value="saude">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes" selected="">Obrigações</option><option value="outros">Outros</option>
+        </select>
+        <div class="expense-val-wrap">
+          <span class="expense-prefix">R$</span>
+          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(13,this.value)">
+        </div>
+        <button class="del-btn" onclick="delExpense(13)">×</button>
+      </div><div class="expense-item" id="exp-14">
+        <div class="expense-icon" style="background:rgba(127,142,164,.12)">🏢</div>
+        <input class="expense-name-input" type="text" value="MEI" placeholder="Nome" onchange="updateExpName(14,this.value)">
+        <select class="cat-select" onchange="updateExpCat(14,this.value)">
+          <option value="moradia">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte">Transporte</option><option value="saude">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes" selected="">Obrigações</option><option value="outros">Outros</option>
+        </select>
+        <div class="expense-val-wrap">
+          <span class="expense-prefix">R$</span>
+          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(14,this.value)">
+        </div>
+        <button class="del-btn" onclick="delExpense(14)">×</button>
+      </div></div></div></div>
+  <div style="display:flex;gap:8px;margin-top:14px;justify-content:space-between;align-items:center">
+    <button class="add-expense-btn" onclick="addExpense()" style="max-width:200px"><span style="font-size:18px">+</span> Adicionar</button>
+    <div style="font-size:13px;color:var(--mu)">Total: <strong id="total-desp" style="color:var(--red);font-family:&#39;Space Grotesk&#39;,sans-serif">R$ 0</strong></div>
   </div>
-
   <div class="divider"></div>
   <div style="display:flex;justify-content:space-between">
-    <button class="btn" onclick="goTo('renda')">← Voltar</button>
-    <button class="btn btn-primary" onclick="goTo('dizimo')">Próximo: Dízimo →</button>
+    <button class="btn" onclick="goTo(&#39;renda&#39;)">← Voltar</button>
+    <button class="btn btn-primary" onclick="goTo(&#39;dizimo&#39;)">Próximo →</button>
   </div>
 </div>
 
-<!-- ═══ DÍZIMO ═══ -->
+<!-- ── DÍZIMO ── -->
 <div class="page-section" id="sec-dizimo">
   <div class="section-header">
     <div class="section-eyebrow">passo 3</div>
-    <div class="section-title">Dízimo e ofertas</div>
-    <div class="section-desc">O dízimo sai antes de qualquer distribuição — primeiro a Deus, depois o resto.</div>
+    <div class="section-title">Doações</div>
+    <div class="section-desc">Tudo que você dá a Deus e às pessoas — separado e com destaque.</div>
   </div>
 
-  <div class="form-grid-2">
-    <div class="form-group">
-      <label class="form-label">Percentual do dízimo</label>
-      <div class="input-wrap">
-        <input type="number" class="form-input" id="dizimo-pct" value="10" min="0" max="100" oninput="calcular()">
-        <div class="input-suffix">%</div>
+  <!-- BLOCO 1: DÍZIMO -->
+  <div style="background:rgba(167,139,250,.06);border:1px solid rgba(167,139,250,.2);border-radius:12px;padding:14px 16px;margin-bottom:14px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <span style="font-size:18px">🙏</span>
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--purple)">Dízimo</div>
+        <div style="font-size:11px;color:var(--di)">Percentual da renda — calculado automaticamente</div>
       </div>
-      <span class="form-sublabel">geralmente 10% da renda total</span>
     </div>
-    <div class="form-group">
-      <label class="form-label">Quanto já doa hoje (R$)</label>
-      <div class="input-wrap">
-        <div class="input-prefix">R$</div>
-        <input type="number" class="form-input" id="dizimo-atual" value="0" min="0" oninput="calcular()">
+    <div class="form-grid-2" style="margin-bottom:12px">
+      <div class="form-group">
+        <label class="form-label">Percentual do dízimo</label>
+        <div class="input-wrap">
+          <input type="number" class="form-input" id="dizimo-pct" value="10" min="0" max="100" oninput="calcular();renderDizimo()">
+          <div class="input-suffix">%</div>
+        </div>
+        <span class="form-sublabel">geralmente 10% da renda total</span>
       </div>
-      <span class="form-sublabel">ex: missões, projetos, igreja</span>
+      <div class="form-group">
+        <label class="form-label">Quanto já doa à igreja</label>
+        <div class="input-wrap">
+          <div class="input-prefix">R$</div>
+          <input type="number" class="form-input" id="dizimo-atual" value="0" min="0" oninput="calcular();renderDizimo()">
+        </div>
+        <span class="form-sublabel">dízimo entregue atualmente</span>
+      </div>
+    </div>
+    <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:0">
+      <div class="stat-card" style="border-color:rgba(167,139,250,.3);background:rgba(167,139,250,.05)">
+        <div class="stat-label">Meta do dízimo</div>
+        <div class="stat-value" id="diz-meta" style="color:var(--purple)">R$ 0</div>
+        <div class="stat-sub" id="diz-pct-label">10% da renda</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Já doa</div>
+        <div class="stat-value" id="diz-dado" style="color:var(--tx)">R$ 0</div>
+        <div class="stat-sub" id="diz-dado-pct">—</div>
+      </div>
+      <div class="stat-card" style="border-color:rgba(251,191,36,.3)">
+        <div class="stat-label">Falta para 100%</div>
+        <div class="stat-value" id="diz-falta" style="color:var(--amber)">R$ 0</div>
+        <div class="stat-sub">a acrescentar</div>
+      </div>
     </div>
   </div>
 
-  <div class="stats-grid">
-    <div class="stat-card" style="border-color:rgba(167,139,250,.3);background:rgba(167,139,250,.05)">
-      <div class="stat-label">Meta do dízimo</div>
-      <div class="stat-value" id="diz-meta" style="color:var(--purple)">R$ —</div>
-      <div class="stat-sub" id="diz-pct-label">10% da renda</div>
+  <!-- BLOCO 2: MURILO E BRENDA -->
+  <div style="background:rgba(96,165,250,.06);border:1px solid rgba(96,165,250,.2);border-radius:12px;padding:14px 16px;margin-bottom:14px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <span style="font-size:18px">✉️</span>
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--blue)">Apoio a missionários</div>
+        <div style="font-size:11px;color:var(--di)">Valor fixo mensal — não entra no percentual do dízimo</div>
+      </div>
     </div>
-    <div class="stat-card">
-      <div class="stat-label">Já dado</div>
-      <div class="stat-value" id="diz-dado" style="color:var(--tx)">R$ —</div>
-      <div class="stat-sub" id="diz-dado-pct">—</div>
+    <div class="form-grid" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr));margin-bottom:12px" id="missionarios-grid">
+    <div style="display:flex;align-items:center;gap:7px;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:7px 11px">
+      <span style="font-size:14px">✉️</span>
+      <input type="text" value="Murilo e Brenda" placeholder="Nome" style="background:transparent;border:none;outline:none;color:var(--tx);font-size:13px;flex:1;font-family:&#39;Inter&#39;,sans-serif" onchange="updateMiss(&#39;m1&#39;,&#39;nome&#39;,this.value)">
+      <div style="display:flex;align-items:center;background:var(--s3);border:1px solid var(--bd);border-radius:7px;overflow:hidden;flex-shrink:0">
+        <span style="padding:0 7px;font-size:11px;color:var(--di)">R$</span>
+        <input type="number" value="150" placeholder="0" style="background:transparent;border:none;outline:none;color:var(--blue);font-family:&#39;Space Grotesk&#39;,sans-serif;font-weight:600;font-size:13px;width:80px;padding:5px 7px 5px 0;text-align:right;-moz-appearance:textfield" oninput="updateMiss(&#39;m1&#39;,&#39;val&#39;,this.value)">
+      </div>
+      <button onclick="delMiss(&#39;m1&#39;)" style="background:none;border:none;cursor:pointer;color:var(--di);font-size:16px;padding:2px 4px;border-radius:5px;transition:color .15s" onmouseover="this.style.color=&#39;var(--red)&#39;" onmouseout="this.style.color=&#39;var(--di)&#39;">×</button>
+    </div></div>
+    <button class="add-expense-btn" onclick="addMissionario()" style="max-width:220px">
+      <span style="font-size:16px">+</span> Adicionar missionário
+    </button>
+  </div>
+
+  <!-- BLOCO 3: OUTRAS DOAÇÕES -->
+  <div style="background:rgba(74,222,128,.05);border:1px solid rgba(74,222,128,.15);border-radius:12px;padding:14px 16px;margin-bottom:14px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <span style="font-size:18px">💚</span>
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--green)">Outras doações / ofertas</div>
+        <div style="font-size:11px;color:var(--di)">Projetos, necessitados, ofertas eventuais</div>
+      </div>
     </div>
-    <div class="stat-card" style="border-color:rgba(251,191,36,.3)">
-      <div class="stat-label">Falta para completar</div>
-      <div class="stat-value" id="diz-falta" style="color:var(--amber)">R$ —</div>
-      <div class="stat-sub">a acrescentar no orçamento</div>
+    <div class="form-grid-2" style="margin-bottom:0">
+      <div class="form-group">
+        <label class="form-label">Valor fixo mensal</label>
+        <div class="input-wrap">
+          <div class="input-prefix">R$</div>
+          <input type="number" class="form-input" id="outras-doacoes" value="0" min="0" oninput="calcular();renderDizimo()">
+        </div>
+        <span class="form-sublabel">projetos sociais, necessitados</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descrição</label>
+        <div class="input-wrap">
+          <input type="text" class="form-input" id="outras-doacoes-desc" placeholder="ex: projeto social" style="font-family:&#39;Inter&#39;;font-weight:400">
+        </div>
+      </div>
     </div>
   </div>
 
-  <div id="alert-dizimo"></div>
+  <!-- RESUMO TOTAL DOAÇÕES -->
+  <div id="resumo-doacoes"></div>
+  <div id="alert-dizimo"><div class="alert alert-amber"><span class="alert-icon">🙏</span><div>Informe quanto já entrega de dízimo à igreja mensalmente.</div></div></div>
 
   <div class="divider"></div>
   <div style="display:flex;justify-content:space-between">
-    <button class="btn" onclick="goTo('despesas')">← Voltar</button>
-    <button class="btn btn-primary" onclick="calcular(); goTo('plano')">Gerar plano →</button>
+    <button class="btn" onclick="goTo(&#39;despesas&#39;)">← Voltar</button>
+    <button class="btn btn-primary" onclick="calcular();goTo(&#39;plano&#39;)">Gerar plano →</button>
   </div>
 </div>
 
-<!-- ═══ PLANO ═══ -->
+<!-- ── PLANO ── -->
 <div class="page-section" id="sec-plano">
   <div class="section-header">
     <div class="section-eyebrow">seu plano</div>
     <div class="section-title">Diagnóstico financeiro</div>
-    <div class="section-desc">Tudo calculado com base nos seus dados. Edite qualquer valor nas seções anteriores e o plano atualiza.</div>
+    <div class="section-desc">Baseado nos seus dados. Edite qualquer campo e o plano atualiza.</div>
   </div>
-
-  <div id="plano-alertas" style="margin-bottom:16px"></div>
-
-  <!-- STATS PLANO -->
+  <div id="plano-alertas" style="margin-bottom:14px"></div>
   <div class="stats-grid" id="plano-stats"></div>
-
-  <!-- DONUT + TABELA -->
-  <div style="display:grid;grid-template-columns:1fr 280px;gap:16px;margin-bottom:20px;align-items:start">
-    <div class="card">
-      <div class="card-header"><span class="card-title">Distribuição completa</span></div>
-      <div style="padding:0;overflow:hidden">
-        <table class="plan-table" id="plano-tabela"></table>
-      </div>
-    </div>
+  <div style="display:grid;grid-template-columns:1fr 270px;gap:14px;margin-bottom:18px;align-items:start">
+    <div class="card"><div class="card-header"><span class="card-title">Distribuição completa</span></div><div style="padding:0;overflow:hidden"><table class="plan-table" id="plano-tabela"></table></div></div>
     <div>
-      <div class="card" style="margin-bottom:12px">
+      <div class="card" style="margin-bottom:10px">
         <div class="card-header"><span class="card-title">Pilares</span></div>
         <div class="card-body">
           <div class="donut-section">
-            <svg class="donut-svg" id="donut-svg" width="120" height="120" viewBox="0 0 120 120"></svg>
+            <svg id="donut-svg" width="110" height="110" viewBox="0 0 110 110"></svg>
             <div class="donut-legend" id="donut-legend"></div>
           </div>
         </div>
       </div>
-      <div class="card">
-        <div class="card-header"><span class="card-title">Projeção anual</span></div>
-        <div class="card-body" id="proj-anual"></div>
-      </div>
+      <div class="card"><div class="card-header"><span class="card-title">Projeção anual</span></div><div class="card-body" id="proj-anual"></div></div>
     </div>
   </div>
-
-  <!-- PROGRESSO METAS -->
-  <div class="card">
-    <div class="card-header"><span class="card-title">Metas de progresso</span></div>
-    <div class="card-body" id="progress-section"></div>
-  </div>
-
+  <div class="card"><div class="card-header"><span class="card-title">Progresso das metas</span></div><div class="card-body" id="progress-section"></div></div>
   <div class="divider"></div>
   <div style="display:flex;justify-content:space-between">
-    <button class="btn" onclick="goTo('dizimo')">← Ajustar</button>
-    <button class="btn btn-primary" onclick="goTo('metas')">Definir metas →</button>
+    <button class="btn" onclick="goTo(&#39;dizimo&#39;)">← Ajustar</button>
+    <button class="btn btn-primary" onclick="goTo(&#39;metas&#39;)">Metas →</button>
   </div>
 </div>
 
-<!-- ═══ METAS ═══ -->
+<!-- ── METAS ── -->
 <div class="page-section" id="sec-metas">
   <div class="section-header">
     <div class="section-eyebrow">metas</div>
     <div class="section-title">Quanto tempo para cada objetivo?</div>
-    <div class="section-desc">Informe o valor de cada meta e veja o prazo com base no seu aporte mensal atual.</div>
   </div>
-
   <div class="goal-grid" id="metas-grid"></div>
-
   <div class="divider"></div>
   <div class="card" style="margin-bottom:16px">
     <div class="card-header"><span class="card-title">Calculadora livre</span></div>
     <div class="card-body">
       <div class="form-grid-2" style="margin-bottom:10px">
-        <div class="form-group">
-          <label class="form-label">Nome da meta</label>
-          <div class="input-wrap">
-            <input type="text" class="form-input" id="meta-nome" placeholder="ex: viagem" style="font-family:'Inter',sans-serif;font-weight:400" oninput="calcMeta()">
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Valor da meta</label>
-          <div class="input-wrap">
-            <div class="input-prefix">R$</div>
-            <input type="number" class="form-input" id="meta-valor" placeholder="50000" oninput="calcMeta()">
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Aporte mensal</label>
-          <div class="input-wrap">
-            <div class="input-prefix">R$</div>
-            <input type="number" class="form-input" id="meta-aporte" placeholder="500" oninput="calcMeta()">
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Taxa de juros (a.a.)</label>
-          <div class="input-wrap">
-            <input type="number" class="form-input" id="meta-juros" placeholder="10" value="10" oninput="calcMeta()">
-            <div class="input-suffix">%</div>
-          </div>
-        </div>
+        <div class="form-group"><label class="form-label">Nome</label><div class="input-wrap"><input type="text" class="form-input" id="meta-nome" placeholder="ex: viagem" style="font-family:&#39;Inter&#39;;font-weight:400" oninput="calcMeta()"></div></div>
+        <div class="form-group"><label class="form-label">Valor da meta</label><div class="input-wrap"><div class="input-prefix">R$</div><input type="number" class="form-input" id="meta-valor" placeholder="50000" oninput="calcMeta()"></div></div>
+        <div class="form-group"><label class="form-label">Aporte mensal</label><div class="input-wrap"><div class="input-prefix">R$</div><input type="number" class="form-input" id="meta-aporte" placeholder="500" oninput="calcMeta()"></div></div>
+        <div class="form-group"><label class="form-label">Juros ao ano</label><div class="input-wrap"><input type="number" class="form-input" id="meta-juros" value="10" oninput="calcMeta()"><div class="input-suffix">%</div></div></div>
       </div>
-      <div class="alert alert-teal" id="meta-resultado">
-        Preencha os campos acima para calcular.
-      </div>
+      <div class="alert alert-teal" id="meta-resultado">Preencha os campos para calcular.</div>
     </div>
   </div>
-
   <div style="display:flex;justify-content:space-between">
-    <button class="btn" onclick="goTo('plano')">← Plano</button>
-    <button class="btn btn-primary" onclick="goTo('investir')">Como investir →</button>
+    <button class="btn" onclick="goTo(&#39;plano&#39;)">← Plano</button>
+    <button class="btn btn-primary" onclick="goTo(&#39;investir&#39;)">Como investir →</button>
   </div>
 </div>
 
-<!-- ═══ INVESTIR ═══ -->
+<!-- ── INVESTIR ── -->
 <div class="page-section" id="sec-investir">
   <div class="section-header">
     <div class="section-eyebrow">investimentos</div>
     <div class="section-title">Onde alocar o dinheiro poupado</div>
-    <div class="section-desc">Escolha o perfil e veja a sugestão de alocação com os valores do seu orçamento.</div>
+    <div class="section-desc">Escolha o perfil e veja a sugestão com os seus números reais.</div>
   </div>
-
   <div class="tabs">
-    <button class="tab active" onclick="setPerfilTab('conservador',this)">🛡️ Conservador</button>
-    <button class="tab" onclick="setPerfilTab('moderado',this)">⚖️ Moderado</button>
-    <button class="tab" onclick="setPerfilTab('arrojado',this)">🚀 Arrojado</button>
+    <button class="tab active" onclick="setPerfilTab(&#39;conservador&#39;,this)">🛡️ Conservador</button>
+    <button class="tab" onclick="setPerfilTab(&#39;moderado&#39;,this)">⚖️ Moderado</button>
+    <button class="tab" onclick="setPerfilTab(&#39;arrojado&#39;,this)">🚀 Arrojado</button>
   </div>
-
-  <div class="alert alert-teal" id="invest-base-alert" style="margin-bottom:16px"></div>
+  <div class="alert alert-teal" id="invest-base-alert" style="margin-bottom:14px"></div>
   <div class="invest-grid" id="invest-grid"></div>
-
   <div class="divider"></div>
-
-  <!-- DICAS -->
-  <div class="section-title" style="font-size:16px;margin-bottom:12px">Regras de ouro</div>
   <div id="dicas-list"></div>
 </div>
 
 </div><!-- /content -->
 </div><!-- /main -->
 </div><!-- /app -->
+</div><!-- /app-shell -->
 
 <div class="toast" id="toast"></div>
 
+<!-- ═══════════ SCRIPT PRINCIPAL ═══════════ -->
 <script>
-/* ═══════════════════════════════════════
-   ESTADO GLOBAL
-═══════════════════════════════════════ */
-let state = {
-  sal1:0, sal2:0, sal3:0, extra:0, ticket:0, outras:0,
-  dizimoPct:10, dizimoAtual:0,
-  expenses: [
-    {id:1, name:'Aluguel',            cat:'moradia',    val:0,  icon:'🏠'},
-    {id:2, name:'Condomínio',         cat:'moradia',    val:0,  icon:'🏢'},
-    {id:3, name:'Luz',                cat:'moradia',    val:0,  icon:'💡'},
-    {id:4, name:'Internet',           cat:'moradia',    val:0,  icon:'📡'},
-    {id:5, name:'Mercado / Feira',    cat:'alimentacao',val:0,  icon:'🛒'},
-    {id:6, name:'Gasolina',           cat:'transporte', val:0,  icon:'⛽'},
-    {id:7, name:'IPVA',               cat:'transporte', val:0,  icon:'🚗'},
-    {id:8, name:'Manutenção carro',   cat:'transporte', val:0,  icon:'🔧'},
-    {id:9, name:'Plano de saúde',     cat:'saude',      val:0,  icon:'💊'},
-    {id:10,name:'Assinaturas',        cat:'lazer',      val:0,  icon:'📺'},
-    {id:11,name:'Gastos semanais',    cat:'lazer',      val:0,  icon:'💸'},
-    {id:12,name:'Financiamento',      cat:'dividas',    val:0,  icon:'🏗️'},
-    {id:13,name:'Imposto de Renda',   cat:'obrigacoes', val:0,  icon:'📋'},
-    {id:14,name:'MEI',                cat:'obrigacoes', val:0,  icon:'🏢'},
-  ],
-  perfil: 'conservador',
-  nextId: 15
-};
-
 const CATS = {
   moradia:    {label:'Moradia',          color:'var(--teal)',   bg:'rgba(45,212,191,.12)'},
   alimentacao:{label:'Alimentação',      color:'var(--blue)',   bg:'rgba(96,165,250,.12)'},
@@ -802,524 +943,530 @@ const CATS = {
   obrigacoes: {label:'Obrigações',       color:'var(--mu)',     bg:'rgba(127,142,164,.12)'},
   outros:     {label:'Outros',           color:'var(--coral)',  bg:'rgba(251,146,60,.12)'},
 };
-
-const ICONS = {'moradia':'🏠','alimentacao':'🛒','transporte':'🚗','saude':'💊','lazer':'🎮','dividas':'💳','obrigacoes':'📋','outros':'📦'};
+const ICONS = {moradia:'🏠',alimentacao:'🛒',transporte:'🚗',saude:'💊',lazer:'🎮',dividas:'💳',obrigacoes:'📋',outros:'📦'};
 
 const PERFIS = {
   conservador:[
-    {icon:'🏦',name:'Tesouro Selic',      desc:'100% seguro, liquidez D+1, ≈ Selic (10,5%a.a.)',      pct:40,cor:'var(--teal)'},
-    {icon:'💰',name:'CDB 110%+ CDI',      desc:'Bancos médios, FGC até R$250k, 6–24 meses',            pct:30,cor:'var(--blue)'},
-    {icon:'📊',name:'Tesouro IPCA+',      desc:'Proteção da inflação, objetivos 5+ anos',              pct:20,cor:'var(--purple)'},
-    {icon:'🐷',name:'LCI / LCA',          desc:'Isento de IR, letras de crédito imobiliário/agrícola', pct:10,cor:'var(--green)'},
+    {icon:'🏦',name:'Tesouro Selic',      desc:'100% seguro, liquidez D+1, ≈ Selic (10,5%a.a.)',       pct:40,cor:'var(--teal)'},
+    {icon:'💰',name:'CDB 110%+ CDI',      desc:'Bancos médios, FGC até R$250k',                         pct:30,cor:'var(--blue)'},
+    {icon:'📊',name:'Tesouro IPCA+',      desc:'Proteção da inflação, 5+ anos',                         pct:20,cor:'var(--purple)'},
+    {icon:'🐷',name:'LCI / LCA',          desc:'Isento de IR, letras de crédito',                       pct:10,cor:'var(--green)'},
   ],
   moderado:[
-    {icon:'🏦',name:'Renda fixa (CDB/Tesouro)',desc:'Base segura da carteira, liquidez e prazo',       pct:35,cor:'var(--teal)'},
-    {icon:'🏢',name:'FII',                desc:'Renda mensal isenta de IR, HGLG11/KNRI11',              pct:25,cor:'var(--amber)'},
-    {icon:'📈',name:'Ações BR (BOVA11)',  desc:'ETF do Ibovespa, diversificação automática',            pct:25,cor:'var(--coral)'},
-    {icon:'🌍',name:'IVVB11 (S&P 500)',   desc:'500 maiores empresas dos EUA, proteção cambial',       pct:15,cor:'var(--indigo)'},
+    {icon:'🏦',name:'Renda fixa',         desc:'CDB/Tesouro — base segura',                             pct:35,cor:'var(--teal)'},
+    {icon:'🏢',name:'FII',               desc:'Renda mensal isenta de IR',                              pct:25,cor:'var(--amber)'},
+    {icon:'📈',name:'Ações BR (BOVA11)', desc:'ETF do Ibovespa, automático',                            pct:25,cor:'var(--coral)'},
+    {icon:'🌍',name:'IVVB11 (S&P500)',   desc:'EUA, proteção cambial',                                  pct:15,cor:'var(--indigo)'},
   ],
   arrojado:[
-    {icon:'📈',name:'Ações BR',           desc:'Empresas sólidas: WEGE3, ITUB4, VALE3',                pct:30,cor:'var(--coral)'},
-    {icon:'🌍',name:'ETFs internacionais',desc:'IVVB11 + NASD11, diversificação global',               pct:25,cor:'var(--indigo)'},
-    {icon:'🏢',name:'FII de tijolo',      desc:'Shoppings, galpões, BRCO11/XPML11',                    pct:20,cor:'var(--amber)'},
-    {icon:'🏦',name:'Tesouro IPCA+',      desc:'Reserva estratégica, proteção inflação',               pct:15,cor:'var(--teal)'},
-    {icon:'₿', name:'Cripto (BTC/ETH)',   desc:'Máx 10% da carteira, DCA mensal, nunca FOMO',         pct:10,cor:'var(--pink)'},
+    {icon:'📈',name:'Ações BR',          desc:'WEGE3, ITUB4, VALE3',                                    pct:30,cor:'var(--coral)'},
+    {icon:'🌍',name:'ETFs internac.',    desc:'IVVB11 + NASD11',                                        pct:25,cor:'var(--indigo)'},
+    {icon:'🏢',name:'FII de tijolo',     desc:'BRCO11/XPML11',                                          pct:20,cor:'var(--amber)'},
+    {icon:'🏦',name:'Tesouro IPCA+',     desc:'Proteção inflação',                                      pct:15,cor:'var(--teal)'},
+    {icon:'₿', name:'Cripto (BTC/ETH)', desc:'Máx 10%, nunca FOMO',                                    pct:10,cor:'var(--pink)'},
   ]
 };
 
 const DICAS = [
-  {n:'var(--purple)',t:'<strong>Dízimo primeiro.</strong> Antes de qualquer gasto ou investimento, separe o dízimo. Ordem: dízimo → reserva → investimento → gastos.'},
-  {n:'var(--green)', t:'<strong>Reserva de emergência = 6 meses.</strong> Mantenha no Tesouro Selic ou CDB com liquidez diária. Só depois invista em renda variável.'},
-  {n:'var(--red)',   t:'<strong>Dívidas caras primeiro.</strong> Cartão de crédito rotativo (12%+/mês) anula qualquer investimento. Quite antes de tudo.'},
-  {n:'var(--amber)', t:'<strong>DCA — aporte todo mês sem exceção.</strong> Dollar Cost Averaging: compre independente do mercado. O tempo é o maior aliado.'},
-  {n:'var(--teal)',  t:'<strong>Diversifique de verdade.</strong> Renda fixa + FII + ações + exterior. Nunca concentre mais de 20% em um único ativo.'},
-  {n:'var(--coral)', t:'<strong>Reinvista os dividendos.</strong> FIIs pagam mensalmente. Reinvestir cria uma bola de neve de renda passiva ao longo dos anos.'},
+  {c:'var(--purple)',t:'<strong>Dízimo primeiro.</strong> Antes de qualquer gasto: dízimo → reserva → investimento → gastos.'},
+  {c:'var(--green)', t:'<strong>Reserva de emergência = 6 meses.</strong> Tesouro Selic ou CDB com liquidez diária.'},
+  {c:'var(--red)',   t:'<strong>Dívidas caras primeiro.</strong> Cartão rotativo (12%+/mês) anula qualquer investimento.'},
+  {c:'var(--amber)', t:'<strong>DCA — aporte todo mês.</strong> Compre independente do mercado. O tempo é o aliado.'},
+  {c:'var(--teal)',  t:'<strong>Diversifique de verdade.</strong> Renda fixa + FII + ações + exterior.'},
+  {c:'var(--coral)', t:'<strong>Reinvista os dividendos.</strong> FIIs pagam mensalmente — reinvestir cria bola de neve.'},
 ];
 
-/* ═══════════════════════════════════════
-   NAVEGAÇÃO
-═══════════════════════════════════════ */
-const titles = {renda:'Renda mensal',despesas:'Despesas',dizimo:'Dízimo e ofertas',plano:'Diagnóstico financeiro',metas:'Metas financeiras',investir:'Guia de investimentos'};
+let state = {
+  sal1:0,sal2:0,sal3:0,extra:0,ticket:0,outras:0,
+  dizimoPct:10, dizimoAtual:0,
+  // Missionários: lista de {id, nome, val}
+  missionarios:[
+    {id:'m1', nome:'Murilo e Brenda', val:150},
+  ],
+  nextMissId: 2,
+  // Outras doações
+  outrasDoacoes: 0,
+  outrasDoacoesDesc: '',
+  expenses:[
+    {id:1,name:'Aluguel',         cat:'moradia',    val:0,icon:'🏠'},
+    {id:2,name:'Condomínio',      cat:'moradia',    val:0,icon:'🏢'},
+    {id:3,name:'Luz',             cat:'moradia',    val:0,icon:'💡'},
+    {id:4,name:'Internet',        cat:'moradia',    val:0,icon:'📡'},
+    {id:5,name:'Mercado / Feira', cat:'alimentacao',val:0,icon:'🛒'},
+    {id:6,name:'Gasolina',        cat:'transporte', val:0,icon:'⛽'},
+    {id:7,name:'IPVA',            cat:'transporte', val:0,icon:'🚗'},
+    {id:8,name:'Manutenção carro',cat:'transporte', val:0,icon:'🔧'},
+    {id:9,name:'Plano de saúde',  cat:'saude',      val:0,icon:'💊'},
+    {id:10,name:'Assinaturas',    cat:'lazer',      val:0,icon:'📺'},
+    {id:11,name:'Gastos semanais',cat:'lazer',      val:0,icon:'💸'},
+    {id:12,name:'Financiamento',  cat:'dividas',    val:0,icon:'🏗️'},
+    {id:13,name:'Imposto de Renda',cat:'obrigacoes',val:0,icon:'📋'},
+    {id:14,name:'MEI',            cat:'obrigacoes', val:0,icon:'🏢'},
+  ],
+  perfil:'conservador',
+  nextId:15
+};
 
+/* ── MISSIONÁRIOS ── */
+function renderMissionarios() {
+  const grid = document.getElementById('missionarios-grid');
+  if (!grid) return;
+  grid.innerHTML = state.missionarios.map(m => `
+    <div style="display:flex;align-items:center;gap:7px;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:7px 11px">
+      <span style="font-size:14px">✉️</span>
+      <input type="text" value="${m.nome}" placeholder="Nome"
+        style="background:transparent;border:none;outline:none;color:var(--tx);font-size:13px;flex:1;font-family:'Inter',sans-serif"
+        onchange="updateMiss('${m.id}','nome',this.value)">
+      <div style="display:flex;align-items:center;background:var(--s3);border:1px solid var(--bd);border-radius:7px;overflow:hidden;flex-shrink:0">
+        <span style="padding:0 7px;font-size:11px;color:var(--di)">R$</span>
+        <input type="number" value="${m.val||''}" placeholder="0"
+          style="background:transparent;border:none;outline:none;color:var(--blue);font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;width:80px;padding:5px 7px 5px 0;text-align:right;-moz-appearance:textfield"
+          oninput="updateMiss('${m.id}','val',this.value)">
+      </div>
+      <button onclick="delMiss('${m.id}')"
+        style="background:none;border:none;cursor:pointer;color:var(--di);font-size:16px;padding:2px 4px;border-radius:5px;transition:color .15s"
+        onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--di)'">×</button>
+    </div>`).join('');
+}
+
+function updateMiss(id, field, val) {
+  const m = state.missionarios.find(x=>x.id===id);
+  if (!m) return;
+  m[field] = field==='val' ? (parseFloat(val)||0) : val;
+  calcular(); renderDizimo();
+}
+
+function delMiss(id) {
+  state.missionarios = state.missionarios.filter(m=>m.id!==id);
+  renderMissionarios(); calcular(); renderDizimo();
+}
+
+window.addMissionario = () => {
+  state.missionarios.push({id:'m'+state.nextMissId++, nome:'Novo missionário', val:0});
+  renderMissionarios();
+  const inputs = document.querySelectorAll('#missionarios-grid input[type="text"]');
+  const last = inputs[inputs.length-1];
+  if(last){last.focus();last.select();}
+};
+
+/* ── COLETAR/APLICAR dados ── */
+window.coletarDados = () => ({
+  sal1:   +document.getElementById('sal1').value||0,
+  sal2:   +document.getElementById('sal2').value||0,
+  sal3:   +document.getElementById('sal3').value||0,
+  extra:  +document.getElementById('extra').value||0,
+  ticket: +document.getElementById('ticket').value||0,
+  outras: +document.getElementById('outras').value||0,
+  dizimoPct:        +document.getElementById('dizimo-pct').value||10,
+  dizimoAtual:      +document.getElementById('dizimo-atual').value||0,
+  outrasDoacoes:    +document.getElementById('outras-doacoes').value||0,
+  outrasDoacoesDesc: document.getElementById('outras-doacoes-desc').value||'',
+  missionarios:  state.missionarios,
+  nextMissId:    state.nextMissId,
+  expenses:      state.expenses,
+  nextId:        state.nextId,
+});
+
+window.applyData = (d) => {
+  const fields = ['sal1','sal2','sal3','extra','ticket','outras'];
+  fields.forEach(f => { if(d[f]!==undefined) document.getElementById(f).value = d[f]||''; });
+  if(d.dizimoPct)         document.getElementById('dizimo-pct').value        = d.dizimoPct;
+  if(d.dizimoAtual)       document.getElementById('dizimo-atual').value      = d.dizimoAtual;
+  if(d.outrasDoacoes)     document.getElementById('outras-doacoes').value    = d.outrasDoacoes;
+  if(d.outrasDoacoesDesc) document.getElementById('outras-doacoes-desc').value = d.outrasDoacoesDesc;
+  if(d.missionarios)  { state.missionarios = d.missionarios; state.nextMissId = d.nextMissId||state.nextMissId; }
+  if(d.expenses)   state.expenses = d.expenses;
+  if(d.nextId)     state.nextId   = d.nextId;
+  renderExpenses(); renderMissionarios(); calcular();
+};
+
+/* ── NAVEGAÇÃO ── */
+const titles = {renda:'Renda mensal',despesas:'Despesas',dizimo:'Doações',plano:'Diagnóstico',metas:'Metas',investir:'Investimentos'};
 function goTo(id) {
-  document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.page-section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('sec-'+id).classList.add('active');
   document.getElementById('nav-'+id).classList.add('active');
   document.getElementById('topbar-title').textContent = titles[id];
-  if (id === 'plano') calcular();
-  if (id === 'metas') renderMetas();
-  if (id === 'investir') renderInvestir();
-  if (id === 'dizimo') renderDizimo();
+  if(id==='plano')   calcular();
+  if(id==='metas')   renderMetas();
+  if(id==='investir')renderInvestir();
+  if(id==='dizimo')  renderDizimo();
   window.scrollTo(0,0);
 }
 
-/* ═══════════════════════════════════════
-   RENDA
-═══════════════════════════════════════ */
+/* ── CÁLCULO ── */
 function getRenda() {
-  state.sal1   = +document.getElementById('sal1').value   || 0;
-  state.sal2   = +document.getElementById('sal2').value   || 0;
-  state.sal3   = +document.getElementById('sal3').value   || 0;
-  state.extra  = +document.getElementById('extra').value  || 0;
-  state.ticket = +document.getElementById('ticket').value || 0;
-  state.outras = +document.getElementById('outras').value || 0;
-  return state.sal1 + state.sal2 + state.sal3 + state.extra + state.outras;
+  return (+document.getElementById('sal1').value||0)
+       + (+document.getElementById('sal2').value||0)
+       + (+document.getElementById('sal3').value||0)
+       + (+document.getElementById('extra').value||0)
+       + (+document.getElementById('outras').value||0);
 }
 
-/* ═══════════════════════════════════════
-   DESPESAS — RENDER
-═══════════════════════════════════════ */
-function renderExpenses() {
-  const container = document.getElementById('expense-categories');
-  const grouped = {};
-  state.expenses.forEach(e => {
-    if (!grouped[e.cat]) grouped[e.cat] = [];
-    grouped[e.cat].push(e);
+function calcular() {
+  const renda     = getRenda();
+  const ticket    = +document.getElementById('ticket').value||0;
+  const totalDesp = state.expenses.reduce((s,e)=>s+e.val,0);
+  const saldo     = renda - totalDesp;
+  const dizPct    = +document.getElementById('dizimo-pct').value||10;
+  const dizMeta   = renda*(dizPct/100);
+  const dizAtual  = +document.getElementById('dizimo-atual').value||0;
+  const missTotal = state.missionarios.reduce((s,m)=>s+m.val,0);
+  const outrasDoa = +document.getElementById('outras-doacoes').value||0;
+  const totalDoa  = dizAtual + missTotal + outrasDoa;  // total já dado em doações
+  const dizFalta  = Math.max(0, dizMeta - dizAtual);
+  const saldoReal = Math.max(0, saldo - dizFalta);
+
+  // Sidebar saldo
+  const sEl = document.getElementById('sidebar-saldo');
+  sEl.textContent = renda>0 ? fmt(saldo) : 'R$ —';
+  sEl.style.color = saldo>=0 ? 'var(--teal)' : 'var(--red)';
+
+  // Renda stats
+  document.getElementById('st-total').textContent  = fmt(renda);
+  document.getElementById('st-ticket').textContent = fmt(ticket);
+  document.getElementById('st-base').textContent   = fmt(renda);
+
+  // Marks
+  if(renda>0)                         markDone('renda');
+  if(totalDesp>0)                     markDone('despesas');
+  if(totalDoa>0||dizMeta>0)           markDone('dizimo');
+  if(renda>0&&totalDesp>0)            markDone('plano');
+
+  renderPlano(renda,ticket,totalDesp,saldo,saldoReal,dizMeta,dizAtual,dizFalta,missTotal,outrasDoa);
+  renderDizimo();
+}
+
+function markDone(id){document.getElementById('dot-'+id).className='nav-status done';}
+
+function renderDizimo(){
+  const renda      = getRenda();
+  const pct        = +document.getElementById('dizimo-pct').value||10;
+  const dado       = +document.getElementById('dizimo-atual').value||0;
+  const missTotal  = state.missionarios.reduce((s,m)=>s+m.val,0);
+  const outrasDoa  = +document.getElementById('outras-doacoes').value||0;
+  const meta       = renda*(pct/100);
+  const falta      = Math.max(0,meta-dado);
+  const totalDoa   = dado + missTotal + outrasDoa;
+
+  // Dízimo stats
+  document.getElementById('diz-meta').textContent        = fmt(meta);
+  document.getElementById('diz-pct-label').textContent   = `${pct}% da renda`;
+  document.getElementById('diz-dado').textContent        = fmt(dado);
+  document.getElementById('diz-dado-pct').textContent    = renda>0 ? `${(dado/renda*100).toFixed(1)}% da renda` : '—';
+  document.getElementById('diz-falta').textContent       = fmt(falta);
+
+  // Missionários
+  renderMissionarios();
+
+  // Resumo total doações
+  const resumoEl = document.getElementById('resumo-doacoes');
+  if(resumoEl && renda>0) {
+    resumoEl.innerHTML = `
+      <div style="background:var(--s2);border:1px solid var(--bd);border-radius:12px;padding:13px 16px;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--di);margin-bottom:10px">📊 Total de doações mensais</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px">
+          <div style="background:var(--s3);border-radius:9px;padding:9px 12px">
+            <div style="font-size:11px;color:var(--mu);margin-bottom:2px">🙏 Dízimo</div>
+            <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;color:var(--purple)">${fmt(dado)}</div>
+            <div style="font-size:10px;color:var(--di)">${renda>0?(dado/renda*100).toFixed(1):'0'}% da renda</div>
+          </div>
+          ${state.missionarios.filter(m=>m.val>0).map(m=>`
+          <div style="background:var(--s3);border-radius:9px;padding:9px 12px">
+            <div style="font-size:11px;color:var(--mu);margin-bottom:2px">✉️ ${m.nome}</div>
+            <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;color:var(--blue)">${fmt(m.val)}</div>
+            <div style="font-size:10px;color:var(--di)">fixo mensal</div>
+          </div>`).join('')}
+          ${outrasDoa>0?`
+          <div style="background:var(--s3);border-radius:9px;padding:9px 12px">
+            <div style="font-size:11px;color:var(--mu);margin-bottom:2px">💚 ${document.getElementById('outras-doacoes-desc').value||'Outras'}</div>
+            <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;color:var(--green)">${fmt(outrasDoa)}</div>
+            <div style="font-size:10px;color:var(--di)">fixo mensal</div>
+          </div>`:''}
+          <div style="background:rgba(45,212,191,.07);border:1px solid rgba(45,212,191,.2);border-radius:9px;padding:9px 12px">
+            <div style="font-size:11px;color:var(--mu);margin-bottom:2px">Total doações</div>
+            <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;color:var(--teal)">${fmt(totalDoa)}</div>
+            <div style="font-size:10px;color:var(--di)">${renda>0?(totalDoa/renda*100).toFixed(1):'0'}% da renda</div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // Alertas dízimo
+  const aEl = document.getElementById('alert-dizimo');
+  if(!aEl) return;
+  if(falta===0&&meta>0) aEl.innerHTML=`<div class="alert alert-green"><span class="alert-icon">✅</span><div>Dízimo completo! Glória a Deus!</div></div>`;
+  else if(dado===0)     aEl.innerHTML=`<div class="alert alert-amber"><span class="alert-icon">🙏</span><div>Informe quanto já entrega de dízimo à igreja mensalmente.</div></div>`;
+  else                  aEl.innerHTML=`<div class="alert alert-purple"><span class="alert-icon">🙏</span><div>Faltam <strong style="color:var(--purple)">${fmt(falta)}</strong> para o dízimo completo de ${pct}%. Aumente progressivamente.</div></div>`;
+}
+
+/* ── PLANO ── */
+function renderPlano(renda,ticket,totalDesp,saldo,saldoReal,dizMeta,dizAtual,dizFalta,missTotal,outrasDoa){
+  missTotal  = missTotal  || state.missionarios.reduce((s,m)=>s+m.val,0);
+  outrasDoa  = outrasDoa  || +document.getElementById('outras-doacoes').value||0;
+  const totalDoa = dizAtual + missTotal + outrasDoa;
+  if(!renda) return;
+  const reserva=saldoReal*.55, invest=saldoReal*.45;
+  const pctDesp=totalDesp/renda*100;
+
+  // Alertas
+  let al='';
+  if(saldo<0)        al+=`<div class="alert alert-red"><span class="alert-icon">🚨</span><div><strong style="color:var(--red)">Déficit de ${fmt(Math.abs(saldo))}/mês.</strong> Gastos superam a renda. Revise as despesas.</div></div>`;
+  else if(pctDesp>90)al+=`<div class="alert alert-amber"><span class="alert-icon">⚠️</span><div><strong style="color:var(--amber)">Orçamento apertado (${pctDesp.toFixed(0)}%).</strong> Sobram apenas ${fmt(saldo)}.</div></div>`;
+  else               al+=`<div class="alert alert-green"><span class="alert-icon">✅</span><div><strong style="color:var(--green)">Saldo positivo de ${fmt(saldo)}/mês.</strong> Direcione para dízimo e reserva.</div></div>`;
+  if(dizFalta>0)     al+=`<div class="alert alert-purple"><span class="alert-icon">🙏</span><div>Faltam <strong style="color:var(--purple)">${fmt(dizFalta)}</strong> para o dízimo completo de ${+document.getElementById('dizimo-pct').value||10}%. Total dado hoje (dízimo + missões + doações): <strong style="color:var(--purple)">${fmt(totalDoa)}</strong>.</div></div>`;
+  document.getElementById('plano-alertas').innerHTML=al;
+
+  // Stats
+  document.getElementById('plano-stats').innerHTML=`
+    <div class="stat-card"><div class="stat-label">Renda total</div><div class="stat-value" style="color:var(--teal)">${fmt(renda)}</div><div class="stat-sub">+ ticket ${fmt(ticket)}</div></div>
+    <div class="stat-card" style="border-color:${saldo<0?'rgba(248,113,113,.3)':'rgba(74,222,128,.25)'}"><div class="stat-label">Saldo livre</div><div class="stat-value" style="color:${saldo<0?'var(--red)':'var(--green)'}">${fmt(saldo)}</div><div class="stat-sub">${(saldo/renda*100).toFixed(1)}% da renda</div></div>
+    <div class="stat-card" style="border-color:rgba(167,139,250,.3)"><div class="stat-label">Doações totais</div><div class="stat-value" style="color:var(--purple)">${fmt(totalDoa)}</div><div class="stat-sub">dízimo + missões + outras</div></div>
+    <div class="stat-card" style="border-color:rgba(74,222,128,.25)"><div class="stat-label">Para reserva/mês</div><div class="stat-value" style="color:var(--green)">${fmt(reserva)}</div></div>
+    <div class="stat-card" style="border-color:rgba(251,146,60,.25)"><div class="stat-label">Para investir/mês</div><div class="stat-value" style="color:var(--coral)">${fmt(invest)}</div></div>`;
+
+  // Tabela
+  const grouped={};
+  state.expenses.forEach(e=>{if(!grouped[e.cat])grouped[e.cat]=[];grouped[e.cat].push(e);});
+  let tbl=`<tr><th style="width:42%">Item</th><th>Valor</th><th>% renda</th></tr>`;
+  if(dizAtual>0||dizMeta>0||missTotal>0||outrasDoa>0){
+    tbl+=`<tr class="cat-header"><td colspan="3">🙏 Doações</td></tr>`;
+    if(dizAtual>0||dizMeta>0)
+      tbl+=`<tr style="background:rgba(167,139,250,.04)"><td><span style="margin-right:5px">🙏</span>Dízimo (${+document.getElementById('dizimo-pct').value||10}%)</td><td style="color:var(--purple)">${fmt(dizAtual)}</td><td style="color:var(--mu)">${(dizAtual/renda*100).toFixed(1)}%</td></tr>`;
+    state.missionarios.filter(m=>m.val>0).forEach(m=>{
+      tbl+=`<tr style="background:rgba(96,165,250,.04)"><td><span style="margin-right:5px">✉️</span>${m.nome}</td><td style="color:var(--blue)">${fmt(m.val)}</td><td style="color:var(--mu)">${(m.val/renda*100).toFixed(1)}%</td></tr>`;
+    });
+    if(outrasDoa>0){
+      const desc = document.getElementById('outras-doacoes-desc').value||'Outras doações';
+      tbl+=`<tr style="background:rgba(74,222,128,.04)"><td><span style="margin-right:5px">💚</span>${desc}</td><td style="color:var(--green)">${fmt(outrasDoa)}</td><td style="color:var(--mu)">${(outrasDoa/renda*100).toFixed(1)}%</td></tr>`;
+    }
+  }
+  Object.keys(CATS).forEach(cat=>{
+    const items=grouped[cat]||[];
+    if(!items.length)return;
+    const ct=items.reduce((s,i)=>s+i.val,0);
+    tbl+=`<tr class="cat-header"><td colspan="3">${ICONS[cat]} ${CATS[cat].label} — ${fmt(ct)}</td></tr>`;
+    items.forEach(e=>{
+      if(!e.val&&e.name==='Nova despesa')return;
+      tbl+=`<tr><td><span style="margin-right:5px">${e.icon}</span>${e.name}</td><td ${e.val/renda>.15?'style="color:var(--red)"':''}>${fmt(e.val)}</td><td style="color:var(--mu)">${(e.val/renda*100).toFixed(1)}%</td></tr>`;
+    });
   });
-  let html = '';
-  Object.keys(CATS).forEach(cat => {
-    const items = grouped[cat] || [];
-    if (!items.length) return;
-    const total = items.reduce((s,i) => s+i.val, 0);
-    html += `<div style="margin-bottom:16px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
-        <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--di)">${CATS[cat].label}</div>
+  if(ticket>0) tbl+=`<tr style="background:rgba(96,165,250,.04)"><td><span style="margin-right:5px">🎫</span>Ticket (bônus)</td><td style="color:var(--blue)">+ ${fmt(ticket)}</td><td style="color:var(--mu)">—</td></tr>`;
+  tbl+=`<tr class="total-row"><td><strong>Total</strong></td><td style="color:${saldo<0?'var(--red)':'var(--teal)'}">${fmt(totalDesp)}</td><td style="color:${saldo<0?'var(--red)':'var(--teal)'};">${(totalDesp/renda*100).toFixed(1)}%</td></tr>`;
+  document.getElementById('plano-tabela').innerHTML=tbl;
+
+  // Donut
+  const catT={};
+  state.expenses.forEach(e=>{catT[e.cat]=(catT[e.cat]||0)+e.val;});
+  const viver=(catT.moradia||0)+(catT.alimentacao||0)+(catT.transporte||0)+(catT.saude||0)+(catT.lazer||0)+(catT.outros||0);
+  renderDonut([
+    {label:'Doações', val:totalDoa, color:'#a78bfa'},
+    {label:'Viver',   val:viver+(catT.obrigacoes||0), color:'#2dd4bf'},
+    {label:'Dívidas', val:catT.dividas||0, color:'#f87171'},
+    {label:'Guardar', val:reserva, color:'#4ade80'},
+    {label:'Crescer', val:invest,  color:'#fb923c'},
+  ].filter(d=>d.val>0), renda);
+
+  // Projeção
+  document.getElementById('proj-anual').innerHTML=`
+    <div class="progress-item"><div class="progress-header"><span class="progress-name">Doações (12m)</span><span class="progress-vals" style="color:var(--purple)">${fmt(totalDoa*12)}</span></div></div>
+    <div class="progress-item"><div class="progress-header"><span class="progress-name">Reserva (12m)</span><span class="progress-vals" style="color:var(--green)">${fmt(reserva*12)}</span></div></div>
+    <div class="progress-item"><div class="progress-header"><span class="progress-name">Investido (12m)</span><span class="progress-vals" style="color:var(--coral)">${fmt(invest*12)}</span></div></div>
+    <div style="border-top:1px solid var(--bd);padding-top:9px;margin-top:3px;display:flex;justify-content:space-between">
+      <span style="font-size:12px;color:var(--mu)">Total poupado</span>
+      <span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:14px;color:var(--teal)">${fmt((reserva+invest)*12)}</span>
+    </div>`;
+
+  // Progresso
+  const essenciais=(catT.moradia||0)+(catT.alimentacao||0)+ticket+(catT.transporte||0)+(catT.saude||0)+(catT.obrigacoes||0);
+  const metaRes=essenciais*6;
+  document.getElementById('progress-section').innerHTML=reserva>0?`
+    <div class="progress-item">
+      <div class="progress-header"><span class="progress-name">Reserva emergência — meta: ${fmt(metaRes)}</span><span class="progress-vals" style="color:var(--green)">${fmt(reserva)}/mês → ${metaRes>0?Math.ceil(metaRes/reserva):0} meses</span></div>
+      <div class="progress-bar-bg"><div class="progress-bar-fg" style="width:${Math.min(reserva/metaRes*100,100).toFixed(1)}%;background:var(--green)"></div></div>
+    </div>
+    <div class="progress-item">
+      <div class="progress-header"><span class="progress-name">Dízimo — meta: ${fmt(dizMeta)}</span><span class="progress-vals" style="color:var(--purple)">${dizMeta>0?((dizAtual/dizMeta)*100).toFixed(0):0}% alcançado</span></div>
+      <div class="progress-bar-bg"><div class="progress-bar-fg" style="width:${dizMeta>0?Math.min(dizAtual/dizMeta*100,100).toFixed(1):0}%;background:var(--purple)"></div></div>
+    </div>`:
+    `<div style="color:var(--di);font-size:13px;text-align:center;padding:10px">Sem saldo disponível para poupança ainda.</div>`;
+}
+
+/* ── DONUT ── */
+function renderDonut(data,total){
+  const svg=document.getElementById('donut-svg');
+  const leg=document.getElementById('donut-legend');
+  const cx=55,cy=55,r=42,ri=27,circ=2*Math.PI*r;
+  const sum=data.reduce((s,d)=>s+d.val,0);
+  let offset=0,paths='';
+  data.forEach(d=>{
+    const pct=d.val/sum;
+    const dash=pct*circ;
+    paths+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${d.color}" stroke-width="14" stroke-dasharray="${dash.toFixed(2)} ${(circ-dash).toFixed(2)}" stroke-dashoffset="${(-offset*circ).toFixed(2)}" transform="rotate(-90 ${cx} ${cy})"/>`;
+    offset+=pct;
+  });
+  svg.innerHTML=paths+`<circle cx="${cx}" cy="${cy}" r="${ri}" fill="var(--s1)"/>
+    <text x="${cx}" y="${cy-3}" text-anchor="middle" font-family="Space Grotesk" font-weight="700" font-size="8" fill="#eef0f8">${fmt(sum)}</text>
+    <text x="${cx}" y="${cy+8}" text-anchor="middle" font-family="Inter" font-size="6.5" fill="#7f8ea6">/mês</text>`;
+  leg.innerHTML=data.map(d=>`<div class="legend-row"><div class="legend-dot" style="background:${d.color}"></div><span class="legend-name">${d.label}</span><span class="legend-pct" style="color:${d.color}">${sum>0?(d.val/sum*100).toFixed(0):0}%</span></div>`).join('');
+}
+
+/* ── EXPENSES ── */
+function renderExpenses(){
+  const container=document.getElementById('expense-categories');
+  const grouped={};
+  state.expenses.forEach(e=>{if(!grouped[e.cat])grouped[e.cat]=[];grouped[e.cat].push(e);});
+  let html='';
+  Object.keys(CATS).forEach(cat=>{
+    const items=grouped[cat]||[];
+    if(!items.length)return;
+    const total=items.reduce((s,i)=>s+i.val,0);
+    html+=`<div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--di)">${CATS[cat].label}</div>
         <div style="font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;color:${CATS[cat].color}">${fmt(total)}</div>
-      </div>
-      <div class="expense-list">`;
-    items.forEach(exp => {
-      html += `<div class="expense-item" id="exp-${exp.id}">
+      </div><div class="expense-list">`;
+    items.forEach(exp=>{
+      html+=`<div class="expense-item" id="exp-${exp.id}">
         <div class="expense-icon" style="background:${CATS[exp.cat].bg}">${exp.icon}</div>
-        <input class="expense-name-input" type="text" value="${exp.name}" placeholder="Nome do gasto"
-          onchange="updateExpName(${exp.id},this.value)">
+        <input class="expense-name-input" type="text" value="${exp.name}" placeholder="Nome" onchange="updateExpName(${exp.id},this.value)">
         <select class="cat-select" onchange="updateExpCat(${exp.id},this.value)">
           ${Object.keys(CATS).map(c=>`<option value="${c}" ${c===exp.cat?'selected':''}>${CATS[c].label}</option>`).join('')}
         </select>
         <div class="expense-val-wrap">
           <span class="expense-prefix">R$</span>
-          <input class="expense-val-input" type="number" value="${exp.val||''}" placeholder="0"
-            oninput="updateExpVal(${exp.id},this.value)">
+          <input class="expense-val-input" type="number" value="${exp.val||''}" placeholder="0" oninput="updateExpVal(${exp.id},this.value)">
         </div>
-        <button class="del-btn" onclick="delExpense(${exp.id})" title="Remover">×</button>
+        <button class="del-btn" onclick="delExpense(${exp.id})">×</button>
       </div>`;
     });
-    html += '</div></div>';
+    html+='</div></div>';
   });
-  container.innerHTML = html;
-  const total = state.expenses.reduce((s,e) => s+e.val, 0);
-  document.getElementById('total-desp').textContent = fmt(total);
+  container.innerHTML=html;
+  document.getElementById('total-desp').textContent=fmt(state.expenses.reduce((s,e)=>s+e.val,0));
 }
 
-function updateExpName(id, v) { state.expenses.find(e=>e.id===id).name = v; }
-function updateExpCat(id, v) {
-  const exp = state.expenses.find(e=>e.id===id);
-  exp.cat = v; exp.icon = ICONS[v]||'📦';
-  renderExpenses(); calcular();
-}
-function updateExpVal(id, v) {
-  state.expenses.find(e=>e.id===id).val = parseFloat(v)||0;
-  const total = state.expenses.reduce((s,e) => s+e.val, 0);
-  document.getElementById('total-desp').textContent = fmt(total);
+function updateExpName(id,v){state.expenses.find(e=>e.id===id).name=v;}
+function updateExpCat(id,v){const e=state.expenses.find(e=>e.id===id);e.cat=v;e.icon=ICONS[v]||'📦';renderExpenses();calcular();}
+function updateExpVal(id,v){state.expenses.find(e=>e.id===id).val=parseFloat(v)||0;document.getElementById('total-desp').textContent=fmt(state.expenses.reduce((s,e)=>s+e.val,0));calcular();}
+function delExpense(id){state.expenses=state.expenses.filter(e=>e.id!==id);renderExpenses();calcular();}
+function addExpense(){state.expenses.push({id:state.nextId++,name:'Nova despesa',cat:'outros',val:0,icon:'📦'});renderExpenses();const l=document.querySelector('.expense-item:last-child .expense-name-input');if(l){l.focus();l.select();}}
+
+/* ── METAS ── */
+function renderMetas(){
   calcular();
-}
-function delExpense(id) {
-  state.expenses = state.expenses.filter(e=>e.id!==id);
-  renderExpenses(); calcular();
-}
-function addExpense() {
-  state.expenses.push({id:state.nextId++,name:'Nova despesa',cat:'outros',val:0,icon:'📦'});
-  renderExpenses();
-  // focus no novo item
-  const last = document.querySelector('.expense-item:last-child .expense-name-input');
-  if (last) { last.focus(); last.select(); }
-}
-
-/* ═══════════════════════════════════════
-   DÍZIMO — RENDER
-═══════════════════════════════════════ */
-function renderDizimo() {
-  const renda = getRenda();
-  state.dizimoPct   = +document.getElementById('dizimo-pct').value || 10;
-  state.dizimoAtual = +document.getElementById('dizimo-atual').value || 0;
-  const meta  = renda * (state.dizimoPct/100);
-  const falta = Math.max(0, meta - state.dizimoAtual);
-  document.getElementById('diz-meta').textContent  = fmt(meta);
-  document.getElementById('diz-pct-label').textContent = `${state.dizimoPct}% da renda`;
-  document.getElementById('diz-dado').textContent  = fmt(state.dizimoAtual);
-  document.getElementById('diz-dado-pct').textContent = renda>0 ? `${(state.dizimoAtual/renda*100).toFixed(1)}% da renda` : '—';
-  document.getElementById('diz-falta').textContent = fmt(falta);
-  const alertEl = document.getElementById('alert-dizimo');
-  if (falta === 0) alertEl.innerHTML = `<div class="alert alert-green"><span class="alert-icon">✅</span><div>Parabéns! Você já alcançou a meta do dízimo. Glória a Deus!</div></div>`;
-  else if (state.dizimoAtual === 0) alertEl.innerHTML = `<div class="alert alert-amber"><span class="alert-icon">🙏</span><div>Nenhum dízimo registrado. Informe quanto já doa mensalmente para Murilo, Brenda, igreja ou missões.</div></div>`;
-  else alertEl.innerHTML = `<div class="alert alert-purple"><span class="alert-icon">🙏</span><div>Faltam <strong style="color:var(--purple)">${fmt(falta)}</strong> para completar o dízimo de ${state.dizimoPct}%. Aumente progressivamente conforme o orçamento permite.</div></div>`;
-}
-
-/* ═══════════════════════════════════════
-   CÁLCULO PRINCIPAL
-═══════════════════════════════════════ */
-function calcular() {
-  const renda  = getRenda();
-  const ticket = state.ticket;
-  const totalDesp = state.expenses.reduce((s,e) => s+e.val, 0);
-  const saldo  = renda - totalDesp;
-  const dizMeta  = renda * ((+document.getElementById('dizimo-pct').value||10)/100);
-  const dizAtual = +document.getElementById('dizimo-atual').value||0;
-  const dizFalta = Math.max(0, dizMeta - dizAtual);
-  const saldoReal = saldo - dizFalta;
-
-  // SIDEBAR
-  const saldoEl = document.getElementById('sidebar-saldo');
-  saldoEl.textContent = renda>0 ? fmt(saldo) : 'R$ —';
-  saldoEl.style.color = saldo>=0 ? 'var(--teal)' : 'var(--red)';
-
-  // RENDA STATS
-  document.getElementById('st-total').textContent  = fmt(renda);
-  document.getElementById('st-ticket').textContent = fmt(ticket);
-  document.getElementById('st-base').textContent   = fmt(renda);
-
-  // DOTS
-  if (renda>0) markDone('renda');
-  if (totalDesp>0) markDone('despesas');
-  if (dizAtual>0||dizMeta>0) markDone('dizimo');
-  if (renda>0&&totalDesp>0) markDone('plano');
-
-  // PLANO
-  renderPlano(renda, ticket, totalDesp, saldo, saldoReal, dizMeta, dizAtual, dizFalta);
-  renderDizimo();
-}
-
-function markDone(id) {
-  document.getElementById('dot-'+id).className = 'nav-status done';
-}
-
-/* ═══════════════════════════════════════
-   RENDER PLANO
-═══════════════════════════════════════ */
-function renderPlano(renda, ticket, totalDesp, saldo, saldoReal, dizMeta, dizAtual, dizFalta) {
-  if (renda === 0) return;
-
-  // ALERTAS
-  const alertEl = document.getElementById('plano-alertas');
-  let alerts = '';
-  const pctDesp = totalDesp/renda*100;
-  if (saldo < 0) alerts += `<div class="alert alert-red"><span class="alert-icon">🚨</span><div><strong style="color:var(--red)">Déficit de ${fmt(Math.abs(saldo))}/mês.</strong> Seus gastos superam a renda. Revise as despesas ou aumente a renda.</div></div>`;
-  else if (pctDesp > 90) alerts += `<div class="alert alert-amber"><span class="alert-icon">⚠️</span><div><strong style="color:var(--amber)">Orçamento muito apertado (${pctDesp.toFixed(0)}% comprometido).</strong> Sobram apenas ${fmt(saldo)}. Procure cortar variáveis como assinaturas e gastos semanais.</div></div>`;
-  else if (saldo > 0) alerts += `<div class="alert alert-green"><span class="alert-icon">✅</span><div><strong style="color:var(--green)">Saldo positivo de ${fmt(saldo)}/mês.</strong> Você tem espaço para poupar. Direcione para reserva de emergência e dízimo completo.</div></div>`;
-  if (dizFalta > 0) alerts += `<div class="alert alert-purple"><span class="alert-icon">🙏</span><div>Faltam <strong style="color:var(--purple)">${fmt(dizFalta)}</strong> para o dízimo completo de ${(+document.getElementById('dizimo-pct').value||10)}%.</div></div>`;
-  alertEl.innerHTML = alerts;
-
-  // STATS
-  const reserva  = Math.max(0, saldoReal * 0.55);
-  const invest   = Math.max(0, saldoReal * 0.45);
-  const statsEl = document.getElementById('plano-stats');
-  statsEl.innerHTML = `
-    <div class="stat-card"><div class="stat-label">Renda total</div><div class="stat-value" style="color:var(--teal)">${fmt(renda)}</div><div class="stat-sub">+ ticket ${fmt(ticket)}</div></div>
-    <div class="stat-card" style="border-color:${saldo<0?'rgba(248,113,113,.3)':'rgba(74,222,128,.25)'}"><div class="stat-label">Saldo livre</div><div class="stat-value" style="color:${saldo<0?'var(--red)':'var(--green)'}">${fmt(saldo)}</div><div class="stat-sub">${(saldo/renda*100).toFixed(1)}% da renda</div></div>
-    <div class="stat-card" style="border-color:rgba(167,139,250,.3)"><div class="stat-label">Dízimo meta</div><div class="stat-value" style="color:var(--purple)">${fmt(dizMeta)}</div><div class="stat-sub">dado: ${fmt(dizAtual)}</div></div>
-    <div class="stat-card" style="border-color:rgba(74,222,128,.25)"><div class="stat-label">Para reserva</div><div class="stat-value" style="color:var(--green)">${fmt(reserva)}</div><div class="stat-sub">/mês</div></div>
-    <div class="stat-card" style="border-color:rgba(251,146,60,.25)"><div class="stat-label">Para investir</div><div class="stat-value" style="color:var(--coral)">${fmt(invest)}</div><div class="stat-sub">/mês</div></div>`;
-
-  // TABELA
-  const grouped = {};
-  state.expenses.forEach(e => { if (!grouped[e.cat]) grouped[e.cat]=[]; grouped[e.cat].push(e); });
-  let tbl = `<tr><th style="width:40%">Item</th><th>Valor</th><th>% renda</th></tr>`;
-  // Dízimo primeiro
-  if (dizAtual > 0 || dizMeta > 0) {
-    tbl += `<tr class="cat-header"><td colspan="3">🙏 Dízimo / Missões</td></tr>`;
-    tbl += `<tr style="background:rgba(167,139,250,.04)"><td><span style="margin-right:6px">🙏</span>Dízimo (${dizAtual>0?'dado '+fmt(dizAtual):'meta '+fmt(dizMeta)})</td><td style="color:var(--purple)">${fmt(dizMeta)}</td><td style="color:var(--mu)">${(dizMeta/renda*100).toFixed(1)}%</td></tr>`;
-  }
-  Object.keys(CATS).forEach(cat => {
-    const items = grouped[cat]||[];
-    if (!items.length) return;
-    const catTotal = items.reduce((s,i)=>s+i.val,0);
-    const c = CATS[cat];
-    tbl += `<tr class="cat-header"><td colspan="3">${ICONS[cat]} ${c.label} — ${fmt(catTotal)}</td></tr>`;
-    items.forEach(e => {
-      if (e.val === 0 && e.name === 'Nova despesa') return;
-      const pct = renda>0 ? (e.val/renda*100).toFixed(1) : '0.0';
-      const warn = e.val/renda > 0.15 ? `style="color:var(--red)"` : '';
-      tbl += `<tr><td><span style="margin-right:6px">${e.icon}</span>${e.name}</td><td ${warn}>${fmt(e.val)}</td><td style="color:var(--mu)">${pct}%</td></tr>`;
-    });
-  });
-  if (ticket > 0) {
-    tbl += `<tr style="background:rgba(96,165,250,.04)"><td><span style="margin-right:6px">🎫</span>Ticket alimentação (bônus)</td><td style="color:var(--blue)">+ ${fmt(ticket)}</td><td style="color:var(--mu)">—</td></tr>`;
-  }
-  tbl += `<tr class="total-row"><td><strong>Total</strong></td><td style="color:${saldo<0?'var(--red)':'var(--teal)'}">${fmt(totalDesp)}</td><td style="color:${saldo<0?'var(--red)':'var(--teal)'};">${(totalDesp/renda*100).toFixed(1)}%</td></tr>`;
-  document.getElementById('plano-tabela').innerHTML = tbl;
-
-  // DONUT
-  const catTotals = {};
-  state.expenses.forEach(e => { catTotals[e.cat] = (catTotals[e.cat]||0)+e.val; });
-  const viver = (catTotals.moradia||0)+(catTotals.alimentacao||0)+(catTotals.transporte||0)+(catTotals.saude||0)+(catTotals.lazer||0)+(catTotals.outros||0);
-  const guardar = Math.max(0,reserva);
-  const crescer = Math.max(0,invest);
-  const dividas_total = catTotals.dividas||0;
-  const obrig_total = catTotals.obrigacoes||0;
-  const donutData = [
-    {label:'Dízimo', val:dizAtual||dizMeta, color:'#a78bfa'},
-    {label:'Viver',  val:viver+obrig_total, color:'#2dd4bf'},
-    {label:'Dívidas',val:dividas_total,     color:'#f87171'},
-    {label:'Guardar',val:guardar,           color:'#4ade80'},
-    {label:'Crescer',val:crescer,           color:'#fb923c'},
-  ].filter(d=>d.val>0);
-  renderDonut(donutData, renda);
-
-  // PROJEÇÃO
-  const projEl = document.getElementById('proj-anual');
-  projEl.innerHTML = `
-    <div class="progress-item"><div class="progress-header"><span class="progress-name">Dízimo dado (12m)</span><span class="progress-vals" style="color:var(--purple)">${fmt((dizAtual||0)*12)}</span></div></div>
-    <div class="progress-item"><div class="progress-header"><span class="progress-name">Reserva (12m)</span><span class="progress-vals" style="color:var(--green)">${fmt(reserva*12)}</span></div></div>
-    <div class="progress-item"><div class="progress-header"><span class="progress-name">Investido (12m)</span><span class="progress-vals" style="color:var(--coral)">${fmt(invest*12)}</span></div></div>
-    <div style="border-top:1px solid var(--bd);padding-top:10px;margin-top:4px;display:flex;justify-content:space-between">
-      <span style="font-size:12px;color:var(--mu)">Total poupado 12m</span>
-      <span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:14px;color:var(--teal)">${fmt((reserva+invest)*12)}</span>
-    </div>`;
-
-  // PROGRESSO
-  const essenciais = (catTotals.moradia||0)+(catTotals.alimentacao||0)+ticket+(catTotals.transporte||0)+(catTotals.saude||0)+(catTotals.obrigacoes||0);
-  const metaReserva = essenciais * 6;
-  const progEl = document.getElementById('progress-section');
-  progEl.innerHTML = reserva > 0 ? `
-    <div class="progress-item">
-      <div class="progress-header">
-        <span class="progress-name">Reserva emergência — meta: ${fmt(metaReserva)}</span>
-        <span class="progress-vals" style="color:var(--green)">${fmt(reserva)}/mês → ${metaReserva>0?Math.ceil(metaReserva/reserva):0} meses</span>
-      </div>
-      <div class="progress-bar-bg"><div class="progress-bar-fg" style="width:${Math.min(reserva/metaReserva*100,100).toFixed(1)}%;background:var(--green)"></div></div>
-    </div>
-    <div class="progress-item">
-      <div class="progress-header">
-        <span class="progress-name">Dízimo completo — meta: ${fmt(dizMeta)}</span>
-        <span class="progress-vals" style="color:var(--purple)">${dizMeta>0?((dizAtual/dizMeta)*100).toFixed(0):0}% alcançado</span>
-      </div>
-      <div class="progress-bar-bg"><div class="progress-bar-fg" style="width:${dizMeta>0?Math.min(dizAtual/dizMeta*100,100).toFixed(1):0}%;background:var(--purple)"></div></div>
-    </div>` : `<div style="color:var(--di);font-size:13px;text-align:center;padding:12px">Nenhum saldo disponível para poupança ainda.</div>`;
-}
-
-/* ═══════════════════════════════════════
-   DONUT SVG
-═══════════════════════════════════════ */
-function renderDonut(data, total) {
-  const svg = document.getElementById('donut-svg');
-  const leg = document.getElementById('donut-legend');
-  const cx=60, cy=60, r=46, ri=30;
-  const circ = 2*Math.PI*r;
-  let offset = 0;
-  const sum = data.reduce((s,d)=>s+d.val,0);
-  let paths = '';
-  data.forEach(d => {
-    const pct = d.val/sum;
-    const dash = pct*circ;
-    paths += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${d.color}" stroke-width="16" stroke-dasharray="${dash.toFixed(2)} ${(circ-dash).toFixed(2)}" stroke-dashoffset="${(-offset*circ).toFixed(2)}" transform="rotate(-90 ${cx} ${cy})"/>`;
-    offset += pct;
-  });
-  svg.innerHTML = paths + `<circle cx="${cx}" cy="${cy}" r="${ri}" fill="var(--s1)"/>
-    <text x="${cx}" y="${cy-4}" text-anchor="middle" font-family="Space Grotesk" font-weight="700" font-size="9" fill="#eef0f8">${fmt(sum)}</text>
-    <text x="${cx}" y="${cy+8}" text-anchor="middle" font-family="Inter" font-size="7" fill="#7f8ea6">/mês</text>`;
-  leg.innerHTML = data.map(d=>`
-    <div class="legend-row">
-      <div class="legend-dot" style="background:${d.color}"></div>
-      <span class="legend-name">${d.label}</span>
-      <span class="legend-pct" style="color:${d.color}">${sum>0?(d.val/sum*100).toFixed(0):0}%</span>
-    </div>`).join('');
-}
-
-/* ═══════════════════════════════════════
-   METAS
-═══════════════════════════════════════ */
-function renderMetas() {
-  calcular();
-  const renda = getRenda();
-  const totalDesp = state.expenses.reduce((s,e)=>s+e.val,0);
-  const saldo = Math.max(0, renda - totalDesp);
-  const dizFalta = Math.max(0, renda*(+document.getElementById('dizimo-pct').value||10)/100 - (+document.getElementById('dizimo-atual').value||0));
-  const saldoReal = Math.max(0, saldo - dizFalta);
-  const reservaMensal = saldoReal * 0.55;
-  const catTotals = {};
-  state.expenses.forEach(e => { catTotals[e.cat]=(catTotals[e.cat]||0)+e.val; });
-  const essenciais = (catTotals.moradia||0)+(catTotals.alimentacao||0)+state.ticket+(catTotals.transporte||0)+(catTotals.saude||0)+(catTotals.obrigacoes||0);
-  const metaReserva = essenciais*6;
-  const metaDizimo  = renda*(+document.getElementById('dizimo-pct').value||10)/100;
-
-  const goals = [
-    {icon:'🐷',name:'Reserva de emergência',desc:'6 meses dos gastos essenciais. Mantenha no Tesouro Selic.',meta:metaReserva,aporte:reservaMensal,cor:'var(--green)'},
-    {icon:'🙏',name:'Dízimo completo',desc:'10% da renda. Aumentar progressivamente.',meta:metaDizimo*12,aporte:(+document.getElementById('dizimo-atual').value||0),cor:'var(--purple)'},
-    {icon:'🚗',name:'Troca de carro',desc:'Etios 2014 — planejamento de substituição.',meta:40000,aporte:reservaMensal*0.2,cor:'var(--amber)'},
-    {icon:'✈️',name:'Viagem dos sonhos',desc:'Uma viagem especial para a família.',meta:15000,aporte:reservaMensal*0.1,cor:'var(--blue)'},
+  const renda=getRenda();
+  const totalDesp=state.expenses.reduce((s,e)=>s+e.val,0);
+  const saldo=Math.max(0,renda-totalDesp);
+  const dizFalta=Math.max(0,renda*(+document.getElementById('dizimo-pct').value||10)/100-(+document.getElementById('dizimo-atual').value||0));
+  const saldoReal=Math.max(0,saldo-dizFalta);
+  const reservaMensal=saldoReal*.55;
+  const catT={};
+  state.expenses.forEach(e=>{catT[e.cat]=(catT[e.cat]||0)+e.val;});
+  const essenciais=(catT.moradia||0)+(catT.alimentacao||0)+state.ticket+(catT.transporte||0)+(catT.saude||0)+(catT.obrigacoes||0);
+  const dizMeta=renda*(+document.getElementById('dizimo-pct').value||10)/100;
+  const goals=[
+    {icon:'🐷',name:'Reserva de emergência',desc:'6 meses dos gastos essenciais. Tesouro Selic.',meta:essenciais*6,aporte:reservaMensal,cor:'var(--green)'},
+    {icon:'🙏',name:'Dízimo completo',desc:'10% da renda. Aumentar progressivamente.',meta:dizMeta*12,aporte:+document.getElementById('dizimo-atual').value||0,cor:'var(--purple)'},
+    {icon:'🚗',name:'Troca de carro',desc:'Planejamento substituição do veículo.',meta:40000,aporte:reservaMensal*.2,cor:'var(--amber)'},
+    {icon:'✈️',name:'Viagem dos sonhos',desc:'Uma viagem especial para a família.',meta:15000,aporte:reservaMensal*.1,cor:'var(--blue)'},
   ];
-
-  const grid = document.getElementById('metas-grid');
-  grid.innerHTML = goals.map(g => {
-    const meses = g.aporte>0 ? Math.ceil(g.meta/g.aporte) : 999;
-    const anos  = Math.floor(meses/12);
-    const resto = meses%12;
-    const prazo = meses>=999 ? 'Sem aporte definido' : anos>0 ? `${anos}a ${resto>0?resto+'m':''}` : `${meses} meses`;
-    const pct   = Math.min(100, g.aporte>0 ? (g.aporte/g.meta)*12*100 : 0).toFixed(0);
-    return `<div class="goal-card">
+  document.getElementById('metas-grid').innerHTML=goals.map(g=>{
+    const meses=g.aporte>0?Math.ceil(g.meta/g.aporte):999;
+    const anos=Math.floor(meses/12),resto=meses%12;
+    const prazo=meses>=999?'Sem aporte':anos>0?`${anos}a ${resto>0?resto+'m':''}`:`${meses} meses`;
+    return`<div class="goal-card">
       <div class="goal-icon">${g.icon}</div>
       <div class="goal-name">${g.name}</div>
       <div class="goal-desc">${g.desc}</div>
-      <div class="goal-bar-bg"><div class="goal-bar-fg" style="width:${pct}%;background:${g.cor}"></div></div>
-      <div class="goal-meta">
-        <span>Meta: <strong style="color:${g.cor}">${fmt(g.meta)}</strong></span>
-        <span>Prazo: <strong style="color:${g.cor};font-family:'Space Grotesk',sans-serif">${prazo}</strong></span>
-      </div>
+      <div class="goal-bar-bg"><div class="goal-bar-fg" style="width:${Math.min(100,g.aporte>0?(g.aporte/g.meta)*12*100:0).toFixed(0)}%;background:${g.cor}"></div></div>
+      <div class="goal-meta"><span>Meta: <strong style="color:${g.cor}">${fmt(g.meta)}</strong></span><span><strong style="color:${g.cor};font-family:'Space Grotesk',sans-serif">${prazo}</strong></span></div>
     </div>`;
   }).join('');
-
-  if (reservaMensal > 0) {
-    document.getElementById('meta-aporte').value = Math.round(reservaMensal);
-    calcMeta();
-  }
+  if(reservaMensal>0){document.getElementById('meta-aporte').value=Math.round(reservaMensal);calcMeta();}
 }
 
-function calcMeta() {
-  const nome   = document.getElementById('meta-nome').value || 'sua meta';
-  const valor  = +document.getElementById('meta-valor').value || 0;
-  const aporte = +document.getElementById('meta-aporte').value || 0;
-  const taxaAA = (+document.getElementById('meta-juros').value||0)/100;
-  const taxaAM = Math.pow(1+taxaAA,1/12)-1;
-  const el = document.getElementById('meta-resultado');
-  if (!valor || !aporte) { el.innerHTML = 'Preencha o valor da meta e o aporte mensal.'; return; }
-  let meses;
-  if (taxaAM === 0) {
-    meses = Math.ceil(valor/aporte);
-  } else {
-    // FV = PMT * ((1+r)^n - 1) / r → resolva para n numericamente
-    meses = 1;
-    let fv = 0;
-    while (fv < valor && meses < 1200) {
-      fv = aporte * (Math.pow(1+taxaAM,meses)-1)/taxaAM;
-      if (fv < valor) meses++;
-    }
-  }
-  const anos  = Math.floor(meses/12);
-  const resto = meses%12;
-  const tempo = anos>0 ? `${anos} ano${anos>1?'s':''} e ${resto} mês${resto!==1?'es':''}` : `${meses} mês${meses!==1?'es':''}`;
-  const taxa  = taxaAA>0 ? ` (com juros ${(taxaAA*100).toFixed(0)}% a.a.)` : '';
-  el.innerHTML = `<span class="alert-icon">🎯</span> Para atingir <strong style="color:var(--teal)">${fmt(valor)}</strong> com aportes de <strong style="color:var(--teal)">${fmt(aporte)}/mês</strong>${taxa}, você levará aproximadamente <strong style="color:var(--teal)">${tempo}</strong>.`;
+function calcMeta(){
+  const nome=document.getElementById('meta-nome').value||'meta';
+  const valor=+document.getElementById('meta-valor').value||0;
+  const aporte=+document.getElementById('meta-aporte').value||0;
+  const taxaAA=(+document.getElementById('meta-juros').value||0)/100;
+  const el=document.getElementById('meta-resultado');
+  if(!valor||!aporte){el.innerHTML='Preencha o valor da meta e o aporte mensal.';return;}
+  const taxaAM=Math.pow(1+taxaAA,1/12)-1;
+  let meses=taxaAM===0?Math.ceil(valor/aporte):1,fv=0;
+  if(taxaAM>0){while(fv<valor&&meses<1200){fv=aporte*(Math.pow(1+taxaAM,meses)-1)/taxaAM;if(fv<valor)meses++;}}
+  const anos=Math.floor(meses/12),resto=meses%12;
+  const tempo=anos>0?`${anos} ano${anos>1?'s':''} e ${resto} mês${resto!==1?'es':''}`:`${meses} mês${meses!==1?'es':''}`;
+  el.innerHTML=`🎯 Para <strong style="color:var(--teal)">${fmt(valor)}</strong> com <strong style="color:var(--teal)">${fmt(aporte)}/mês</strong>${taxaAA>0?` a ${(taxaAA*100).toFixed(0)}%a.a.`:''} → <strong style="color:var(--teal)">${tempo}</strong>.`;
 }
 
-/* ═══════════════════════════════════════
-   INVESTIR
-═══════════════════════════════════════ */
-function setPerfilTab(perfil, btn) {
-  state.perfil = perfil;
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  btn.classList.add('active');
-  renderInvestir();
-}
+/* ── INVESTIR ── */
+function setPerfilTab(p,btn){state.perfil=p;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');renderInvestir();}
 
-function renderInvestir() {
-  const renda = getRenda();
-  const totalDesp = state.expenses.reduce((s,e)=>s+e.val,0);
-  const saldo = Math.max(0, renda - totalDesp);
-  const dizFalta = Math.max(0, renda*(+document.getElementById('dizimo-pct').value||10)/100 - (+document.getElementById('dizimo-atual').value||0));
-  const base = Math.max(0,(saldo-dizFalta)*0.45);
-
-  const alertEl = document.getElementById('invest-base-alert');
-  alertEl.innerHTML = base>0
-    ? `<span class="alert-icon">📈</span> Com o seu orçamento atual, você tem <strong style="color:var(--teal)">${fmt(base)}/mês</strong> disponível para investimentos. Aporte todo mês, sem exceção.`
-    : `<span class="alert-icon">💡</span> Seu orçamento ainda não tem sobra para investimentos. Foque em quitar dívidas e criar reserva de emergência primeiro.`;
-
-  const grid = document.getElementById('invest-grid');
-  const itens = PERFIS[state.perfil];
-  grid.innerHTML = itens.map(item => {
-    const val = base*(item.pct/100);
-    return `<div class="invest-card">
-      <div class="invest-icon">${item.icon}</div>
-      <div class="invest-name">${item.name}</div>
-      <div class="invest-desc">${item.desc}</div>
-      <div class="invest-pct-row">
-        <span style="font-size:11px;color:var(--di)">alocação</span>
-        <span class="invest-pct" style="color:${item.cor}">${item.pct}%</span>
-      </div>
-      <div class="invest-bar-bg"><div class="invest-bar-fg" style="width:${item.pct}%;background:${item.cor}"></div></div>
-      <div class="invest-amount" style="margin-top:5px">
-        ${fmt(val)}/mês · ${fmt(val*12)}/ano
-      </div>
+function renderInvestir(){
+  const renda=getRenda(),totalDesp=state.expenses.reduce((s,e)=>s+e.val,0);
+  const saldo=Math.max(0,renda-totalDesp);
+  const dizFalta=Math.max(0,renda*(+document.getElementById('dizimo-pct').value||10)/100-(+document.getElementById('dizimo-atual').value||0));
+  const base=Math.max(0,(saldo-dizFalta)*.45);
+  document.getElementById('invest-base-alert').innerHTML=base>0
+    ?`<span class="alert-icon">📈</span> Você tem <strong style="color:var(--teal)">${fmt(base)}/mês</strong> para investimentos. Aporte todo mês, sem exceção.`
+    :`<span class="alert-icon">💡</span> Foque em quitar dívidas e criar reserva de emergência primeiro.`;
+  document.getElementById('invest-grid').innerHTML=PERFIS[state.perfil].map(i=>{
+    const v=base*(i.pct/100);
+    return`<div class="invest-card">
+      <div class="invest-icon">${i.icon}</div>
+      <div class="invest-name">${i.name}</div>
+      <div class="invest-desc">${i.desc}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:10px;color:var(--di)">alocação</span><span class="invest-pct" style="color:${i.cor}">${i.pct}%</span></div>
+      <div class="invest-bar-bg"><div class="invest-bar-fg" style="width:${i.pct}%;background:${i.cor}"></div></div>
+      <div class="invest-amount">${fmt(v)}/mês · ${fmt(v*12)}/ano</div>
     </div>`;
   }).join('');
-
-  const dicasEl = document.getElementById('dicas-list');
-  dicasEl.innerHTML = DICAS.map(d=>`
-    <div class="alert alert-teal" style="margin-bottom:8px">
-      <span style="width:20px;height:20px;border-radius:50%;background:rgba(45,212,191,.15);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${d.n};flex-shrink:0">•</span>
-      <div style="font-size:13px;color:var(--mu)">${d.t}</div>
-    </div>`).join('');
+  document.getElementById('dicas-list').innerHTML=DICAS.map(d=>`<div class="alert alert-teal" style="margin-bottom:7px"><span style="width:18px;height:18px;border-radius:50%;background:rgba(45,212,191,.12);display:flex;align-items:center;justify-content:center;font-size:10px;color:${d.c};flex-shrink:0">•</span><div style="font-size:13px;color:var(--mu)">${d.t}</div></div>`).join('');
 }
 
-/* ═══════════════════════════════════════
-   UTILS
-═══════════════════════════════════════ */
-function fmt(v) {
-  if (!v && v!==0) return 'R$ —';
-  return 'R$ ' + Math.round(v).toLocaleString('pt-BR');
-}
+/* ── UTILS ── */
+function fmt(v){if(!v&&v!==0)return'R$ —';return'R$ '+Math.round(v).toLocaleString('pt-BR');}
 
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
-}
+let toastTimer;
+window.showToast = (msg, isError=false) => {
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.className='toast'+(isError?' error':'')+' show';
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2800);
+};
 
-function resetAll() {
-  if (!confirm('Limpar todos os dados?')) return;
-  ['sal1','sal2','sal3','extra','ticket','outras'].forEach(id => document.getElementById(id).value='');
-  state.expenses.forEach(e => e.val=0);
+window.resetAll = () => {
+  if(!confirm('Limpar todos os dados?'))return;
+  ['sal1','sal2','sal3','extra','ticket','outras'].forEach(id=>document.getElementById(id).value='');
+  state.expenses.forEach(e=>e.val=0);
+  state.missionarios = [{id:'m1',nome:'Murilo e Brenda',val:0}];
   document.getElementById('dizimo-pct').value='10';
   document.getElementById('dizimo-atual').value='0';
-  renderExpenses(); calcular();
-  showToast('Dados limpos!');
+  document.getElementById('outras-doacoes').value='0';
+  document.getElementById('outras-doacoes-desc').value='';
+  renderExpenses(); renderMissionarios(); calcular(); showToast('Dados limpos!');
+};
+
+/* ── CLOUD STATUS ── */
+function setCloudStatus(status){
+  const dot=document.getElementById('cloud-dot');
+  const lbl=document.getElementById('cloud-label');
+  if(status==='saving'){dot.className='cloud-dot saving';lbl.textContent='Salvando...';}
+  else if(status==='saved'){dot.className='cloud-dot';lbl.textContent='Sincronizado';}
+  else{dot.className='cloud-dot';dot.style.background='var(--red)';lbl.textContent='Offline';}
 }
 
-/* SALVAR/CARREGAR localStorage */
-function salvar() {
-  const data = {
-    sal1:document.getElementById('sal1').value,
-    sal2:document.getElementById('sal2').value,
-    sal3:document.getElementById('sal3').value,
-    extra:document.getElementById('extra').value,
-    ticket:document.getElementById('ticket').value,
-    outras:document.getElementById('outras').value,
-    dizimoPct:document.getElementById('dizimo-pct').value,
-    dizimoAtual:document.getElementById('dizimo-atual').value,
-    expenses: state.expenses,
-    nextId: state.nextId
-  };
-  localStorage.setItem('painelfin_data', JSON.stringify(data));
-  showToast('💾 Salvo com sucesso!');
-}
-
-function carregar() {
-  const raw = localStorage.getItem('painelfin_data');
-  if (!raw) return;
-  try {
-    const d = JSON.parse(raw);
-    ['sal1','sal2','sal3','extra','ticket','outras'].forEach(k => {
-      if (d[k]) document.getElementById(k).value = d[k];
-    });
-    if (d.dizimoPct)   document.getElementById('dizimo-pct').value   = d.dizimoPct;
-    if (d.dizimoAtual) document.getElementById('dizimo-atual').value = d.dizimoAtual;
-    if (d.expenses)    state.expenses = d.expenses;
-    if (d.nextId)      state.nextId = d.nextId;
-    renderExpenses(); calcular();
-    showToast('✅ Dados carregados!');
-  } catch(e) {}
-}
-
-/* ADICIONAR BOTÃO SALVAR NA TOPBAR */
-document.querySelector('.topbar-actions').insertAdjacentHTML('afterbegin',
-  `<button class="btn btn-sm" onclick="salvar()">💾 Salvar</button>`
-);
-
-/* ═══════════════════════════════════════
-   INIT
-═══════════════════════════════════════ */
-renderExpenses();
-carregar();
-if (!localStorage.getItem('painelfin_data')) calcular();
+// Verifica se firebase foi configurado
+window.addEventListener('DOMContentLoaded',()=>{
+  renderExpenses();
+  renderMissionarios();
+  calcular();
+});
 </script>
-</body>
-</html>
+
+
+</body></html>
