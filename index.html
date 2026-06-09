@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- saved from url=(0045)file:///C:/Users/lais_/Downloads/index_7.html -->
+<!-- saved from url=(0045)file:///C:/Users/lais_/Downloads/index_8.html -->
 <html lang="pt-BR"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PainelFin — Planejamento Financeiro</title>
-<link href="./atualizadopaizao_files/css2" rel="stylesheet">
+<link href="./poulerfinance_files/css2" rel="stylesheet">
 
 <!-- ══════════ FIREBASE SDK ══════════ -->
 <script type="module">
@@ -723,7 +723,7 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
     abra o arquivo HTML, localize o bloco <code>firebaseConfig</code> e cole as credenciais do seu projeto.
     <a href="https://console.firebase.google.com/" target="_blank" style="color:var(--teal);text-decoration:none;font-weight:600">→ Abrir console Firebase</a>
     &nbsp;·&nbsp;
-    <a href="file:///C:/Users/lais_/Downloads/index_7.html#" onclick="document.getElementById(&#39;setup-banner&#39;).classList.remove(&#39;show&#39;)" style="color:var(--di)">fechar</a>
+    <a href="file:///C:/Users/lais_/Downloads/index_8.html#" onclick="document.getElementById(&#39;setup-banner&#39;).classList.remove(&#39;show&#39;)" style="color:var(--di)">fechar</a>
   </div>
 </div>
 
@@ -1439,15 +1439,24 @@ window.applyData = (d) => {
 /* ── NAVEGAÇÃO ── */
 const titles = {renda:'Renda mensal',despesas:'Despesas',dizimo:'Doações',plano:'Diagnóstico',metas:'Metas',investir:'Investimentos'};
 function goTo(id) {
-  document.querySelectorAll('.page-section').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.getElementById('sec-'+id).classList.add('active');
-  document.getElementById('nav-'+id).classList.add('active');
-  document.getElementById('topbar-title').textContent = titles[id];
-  if(id==='plano')   calcular();
-  if(id==='metas')   renderMetas();
-  if(id==='investir')renderInvestir();
-  if(id==='dizimo')  renderDizimo();
+  // Só mexe nas seções gerais — nunca toca nas mensais
+  const secsGerais=['sec-renda','sec-despesas','sec-dizimo','sec-plano','sec-metas','sec-investir','sec-dashboard'];
+  secsGerais.forEach(sid=>{
+    const el=document.getElementById(sid);
+    if(el){el.classList.remove('active');el.style.display='none';}
+  });
+  document.querySelectorAll('#nav-geral .nav-item').forEach(n=>n.classList.remove('active'));
+  const sec=document.getElementById('sec-'+id);
+  if(sec){sec.classList.add('active');sec.style.display='';}
+  const navBtn=document.getElementById('nav-'+id);
+  if(navBtn) navBtn.classList.add('active');
+  const allTitles=Object.assign({renda:'Renda mensal',despesas:'Despesas',dizimo:'Doações',plano:'Diagnóstico',metas:'Metas',investir:'Investimentos',dashboard:'Dashboard Geral'});
+  document.getElementById('topbar-title').textContent=allTitles[id]||id;
+  if(id==='plano')     calcular();
+  if(id==='metas')     renderMetas();
+  if(id==='investir')  renderInvestir();
+  if(id==='dizimo')    renderDizimo();
+  if(id==='dashboard') { if(typeof renderDashGeral==='function') renderDashGeral(); }
   window.scrollTo(0,0);
 }
 
@@ -2141,26 +2150,8 @@ function svgScore(score,cor){
 }
 
 /* ── DASHBOARD GERAL ── */
-const titlesGeral={renda:'Renda mensal',despesas:'Despesas',dizimo:'Doações',plano:'Diagnóstico',metas:'Metas',investir:'Investimentos',dashboard:'Dashboard Geral'};
-window.goTo=(id)=>{
-  // Esconde apenas seções gerais (nunca toca nas mensais)
-  SECS_GERAIS.forEach(sid=>{
-    const el=document.getElementById(sid);
-    if(el){el.classList.remove('active');el.style.display='none';}
-  });
-  document.querySelectorAll('#nav-geral .nav-item').forEach(n=>n.classList.remove('active'));
-  const sec=document.getElementById('sec-'+id);
-  if(sec){sec.classList.add('active');sec.style.display='';}
-  const navBtn=document.getElementById('nav-'+id);
-  if(navBtn) navBtn.classList.add('active');
-  document.getElementById('topbar-title').textContent=titlesGeral[id]||id;
-  if(id==='plano')     calcular();
-  if(id==='metas')     renderMetas();
-  if(id==='investir')  renderInvestir();
-  if(id==='dizimo')    renderDizimo();
-  if(id==='dashboard') renderDashGeral();
-  window.scrollTo(0,0);
-};
+// titlesGeral unificado no goTo acima
+// goTo unificado acima
 
 function renderDashGeral(){
   const renda=getRenda();
@@ -2388,27 +2379,7 @@ function renderDashGeral(){
 }
 
 /* ── DASHBOARD MENSAL ── */
-window.goToMensal=(id)=>{
-  // Esconde apenas seções mensais (nunca toca nas gerais)
-  SECS_MENSAIS.forEach(sid=>{
-    const el=document.getElementById(sid);
-    if(el){el.style.display='none';el.classList.remove('active');}
-  });
-  const sec=document.getElementById('sec-'+id);
-  if(sec){sec.style.display='block';sec.classList.add('active');}
-  document.querySelectorAll('#nav-mensal .nav-item').forEach(n=>n.classList.remove('active'));
-  const nb=document.getElementById('nav-'+id.replace('mes-',''))
-        || document.getElementById('nav-dash-mensal');
-  if(id==='dash-mensal'&&document.getElementById('nav-dash-mensal')) document.getElementById('nav-dash-mensal').classList.add('active');
-  else if(nb) nb.classList.add('active');
-  const tms={'mes-lancamentos':'Lançamentos','mes-resumo':'Resumo do mês','mes-anual':'Visão anual','dash-mensal':'Dashboard do Mês'};
-  document.getElementById('topbar-title').textContent=tms[id]||id;
-  if(id==='mes-lancamentos') renderLancamentos();
-  if(id==='mes-resumo')      renderResumoMes();
-  if(id==='mes-anual')       renderAnual();
-  if(id==='dash-mensal')     renderDashMensal();
-  window.scrollTo(0,0);
-};
+// goToMensal unificado acima
 
 function renderDashMensal(){
   const mes=getMes(anoAtual,mesAtual);
