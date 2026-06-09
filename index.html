@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- saved from url=(0045)file:///C:/Users/lais_/Downloads/index_4.html -->
+<!-- saved from url=(0045)file:///C:/Users/lais_/Downloads/index_5.html -->
 <html lang="pt-BR"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PainelFin — Planejamento Financeiro</title>
-<link href="./jaj_files/css2" rel="stylesheet">
+<link href="./okei_files/css2" rel="stylesheet">
 
 <!-- ══════════ FIREBASE SDK ══════════ -->
 <script type="module">
@@ -499,6 +499,54 @@ body.dark .topbar{
 }
 .toggle-track.on .toggle-thumb{left:16px;background:#fff}
 
+
+/* ─── MÓDULO MENSAL ─── */
+.mode-switcher{display:flex;gap:4px;padding:3px;background:var(--s2);border-radius:10px;margin-bottom:0}
+.mode-btn{flex:1;padding:7px 14px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;background:transparent;color:var(--mu);transition:all .2s}
+.mode-btn.active{background:var(--s1);color:var(--teal);box-shadow:0 1px 6px rgba(0,0,0,.15)}
+body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
+.mes-selector{display:flex;align-items:center;gap:8px;margin-bottom:18px}
+.mes-nav{width:32px;height:32px;border-radius:8px;border:1px solid var(--bd);background:var(--s2);color:var(--mu);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.mes-nav:hover{border-color:var(--tbd);color:var(--teal)}
+.mes-label{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:var(--tx);flex:1;text-align:center}
+.mes-status{font-size:11px;padding:2px 9px;border-radius:20px;border:1px solid;font-weight:600}
+.mes-status.ok{background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.3);color:var(--green)}
+.mes-status.warn{background:rgba(251,191,36,.1);border-color:rgba(251,191,36,.3);color:var(--amber)}
+.mes-status.bad{background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.3);color:var(--red)}
+.mes-block{background:var(--s1);border:1px solid var(--bd);border-radius:14px;margin-bottom:12px;overflow:hidden}
+.mes-block-header{padding:11px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;transition:background .15s}
+.mes-block-header:hover{background:var(--s2)}
+.mes-block-title{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px}
+.mes-block-total{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700}
+.mes-block-body{padding:12px 16px}
+.mes-block-body.collapsed{display:none}
+.mes-item{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--bd)}
+.mes-item:last-child{border-bottom:none}
+.mes-item-icon{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.mes-item-name{flex:1;font-size:13px;color:var(--tx)}
+.mes-item-plan{font-size:11px;color:var(--di);margin-left:4px}
+.mes-item-val-wrap{display:flex;align-items:center;background:var(--s3);border:1px solid var(--bd);border-radius:7px;overflow:hidden;flex-shrink:0}
+.mes-item-prefix{padding:0 7px;font-size:11px;color:var(--di)}
+.mes-item-input{background:transparent;border:none;outline:none;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;width:90px;padding:5px 8px 5px 0;text-align:right;color:var(--tx);-moz-appearance:textfield}
+.mes-item-input::-webkit-inner-spin-button,.mes-item-input::-webkit-outer-spin-button{-webkit-appearance:none}
+.mes-diff{font-size:10px;font-weight:700;font-family:'Space Grotesk',sans-serif;padding:1px 6px;border-radius:4px;flex-shrink:0}
+.mes-diff.pos{background:rgba(74,222,128,.12);color:var(--green)}
+.mes-diff.neg{background:rgba(248,113,113,.12);color:var(--red)}
+.mes-diff.zero{background:var(--s3);color:var(--di)}
+.add-mes-item{display:flex;align-items:center;gap:7px;padding:7px 10px;margin-top:6px;background:var(--s2);border:1px dashed var(--bd);border-radius:8px;cursor:pointer;font-size:12px;color:var(--mu);transition:all .15s;width:100%}
+.add-mes-item:hover{border-color:var(--tbd);color:var(--teal);background:var(--tbg)}
+.ano-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:16px}
+.ano-card{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:10px 12px;cursor:pointer;transition:all .15s}
+.ano-card:hover{border-color:var(--tbd);transform:translateY(-1px)}
+.ano-card.active{border-color:var(--teal);background:var(--tbg)}
+.ano-card.futuro{opacity:.45}
+.ano-card-mes{font-size:11px;font-weight:700;color:var(--mu);margin-bottom:4px}
+.ano-card-saldo{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700}
+.ano-card-bar{height:3px;border-radius:2px;margin-top:5px;background:var(--bd)}
+.ano-card-bar-fill{height:3px;border-radius:2px}
+.resumo-ano-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:9px;margin-bottom:18px}
+@media(max-width:640px){.ano-grid{grid-template-columns:repeat(3,1fr)}}
+
 /* TOAST */
 .toast{position:fixed;bottom:22px;right:22px;background:var(--s1);border:1px solid var(--tbd);border-radius:10px;padding:11px 17px;font-size:13px;color:var(--teal);transform:translateY(70px);opacity:0;transition:all .3s;z-index:999;box-shadow:0 4px 24px rgba(0,0,0,.4)}
 .toast.show{transform:translateY(0);opacity:1}
@@ -635,7 +683,7 @@ body.dark .topbar{
     abra o arquivo HTML, localize o bloco <code>firebaseConfig</code> e cole as credenciais do seu projeto.
     <a href="https://console.firebase.google.com/" target="_blank" style="color:var(--teal);text-decoration:none;font-weight:600">→ Abrir console Firebase</a>
     &nbsp;·&nbsp;
-    <a href="file:///C:/Users/lais_/Downloads/index_4.html#" onclick="document.getElementById(&#39;setup-banner&#39;).classList.remove(&#39;show&#39;)" style="color:var(--di)">fechar</a>
+    <a href="file:///C:/Users/lais_/Downloads/index_5.html#" onclick="document.getElementById(&#39;setup-banner&#39;).classList.remove(&#39;show&#39;)" style="color:var(--di)">fechar</a>
   </div>
 </div>
 
@@ -647,13 +695,29 @@ body.dark .topbar{
     painel<span>fin</span>
     <small>Planejamento Financeiro</small>
   </div>
-  <div class="nav">
+  <!-- MODE SWITCHER -->
+  <div style="padding:10px 10px 4px">
+    <div class="mode-switcher">
+      <button class="mode-btn active" id="mode-geral-btn" onclick="setMode(&#39;geral&#39;)">📊 Geral</button>
+      <button class="mode-btn" id="mode-mensal-btn" onclick="setMode(&#39;mensal&#39;)">📅 Mensal</button>
+    </div>
+  </div>
+
+  <!-- NAV GERAL -->
+  <div class="nav" id="nav-geral">
     <button class="nav-item active" onclick="goTo(&#39;renda&#39;)" id="nav-renda">    <span class="nav-icon">💰</span><span>Renda</span>    <span class="nav-status active-dot" id="dot-renda"></span></button>
     <button class="nav-item" onclick="goTo(&#39;despesas&#39;)" id="nav-despesas"> <span class="nav-icon">📋</span><span>Despesas</span> <span class="nav-status" id="dot-despesas"></span></button>
-    <button class="nav-item" onclick="goTo(&#39;dizimo&#39;)" id="nav-dizimo">   <span class="nav-icon">🙏</span><span>Dízimo</span>   <span class="nav-status done" id="dot-dizimo"></span></button>
+    <button class="nav-item" onclick="goTo(&#39;dizimo&#39;)" id="nav-dizimo">   <span class="nav-icon">🙏</span><span>Dízimo</span>   <span class="nav-status" id="dot-dizimo"></span></button>
     <button class="nav-item" onclick="goTo(&#39;plano&#39;)" id="nav-plano">    <span class="nav-icon">📊</span><span>Plano</span>    <span class="nav-status" id="dot-plano"></span></button>
     <button class="nav-item" onclick="goTo(&#39;metas&#39;)" id="nav-metas">    <span class="nav-icon">🎯</span><span>Metas</span>    <span class="nav-status" id="dot-metas"></span></button>
     <button class="nav-item" onclick="goTo(&#39;investir&#39;)" id="nav-investir"> <span class="nav-icon">📈</span><span>Investir</span> <span class="nav-status" id="dot-investir"></span></button>
+  </div>
+
+  <!-- NAV MENSAL -->
+  <div class="nav" id="nav-mensal" style="display:none">
+    <button class="nav-item active" onclick="goToMensal(&#39;mes-lancamentos&#39;)" id="nav-lancamentos"><span class="nav-icon">📝</span><span>Lançamentos</span></button>
+    <button class="nav-item" onclick="goToMensal(&#39;mes-resumo&#39;)" id="nav-mes-resumo"> <span class="nav-icon">📊</span><span>Resumo do mês</span></button>
+    <button class="nav-item" onclick="goToMensal(&#39;mes-anual&#39;)" id="nav-anual">      <span class="nav-icon">📆</span><span>Visão anual</span></button>
   </div>
 
   <!-- USER CARD -->
@@ -707,27 +771,9 @@ body.dark .topbar{
   <div style="margin-bottom:14px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
       <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--di)">💰 Fontes de renda</div>
-      <div style="font-family:&#39;Space Grotesk&#39;,sans-serif;font-size:13px;font-weight:700;color:var(--teal)" id="total-rendas-label">R$ 0</div>
+      <div style="font-family:&#39;Space Grotesk&#39;,sans-serif;font-size:13px;font-weight:700;color:var(--teal)" id="total-rendas-label">R$ —</div>
     </div>
-    <div id="rendas-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px">
-    <div style="display:flex;align-items:center;gap:7px;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:7px 11px">
-      <span style="font-size:14px">💰</span>
-      <input type="text" value="CLT / Salário" placeholder="Nome (ex: CLT, Freelance...)" style="background:transparent;border:none;outline:none;color:var(--tx);font-size:13px;flex:1;font-family:&#39;Inter&#39;,sans-serif;font-weight:500" onchange="updateRenda(&#39;r1&#39;,&#39;nome&#39;,this.value)">
-      <div style="display:flex;align-items:center;background:var(--s3);border:1px solid var(--bd);border-radius:7px;overflow:hidden;flex-shrink:0">
-        <span style="padding:0 8px;font-size:11px;color:var(--di)">R$</span>
-        <input type="number" value="" placeholder="0" style="background:transparent;border:none;outline:none;color:var(--teal);font-family:&#39;Space Grotesk&#39;,sans-serif;font-weight:700;font-size:14px;width:100px;padding:6px 8px 6px 0;text-align:right;-moz-appearance:textfield" oninput="updateRenda(&#39;r1&#39;,&#39;val&#39;,this.value)">
-      </div>
-      <button onclick="delRenda(&#39;r1&#39;)" style="background:none;border:none;cursor:pointer;color:var(--di);font-size:18px;padding:2px 5px;border-radius:5px;transition:color .15s;flex-shrink:0" onmouseover="this.style.color=&#39;var(--red)&#39;" onmouseout="this.style.color=&#39;var(--di)&#39;" title="Remover">×</button>
-    </div>
-    <div style="display:flex;align-items:center;gap:7px;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:7px 11px">
-      <span style="font-size:14px">💰</span>
-      <input type="text" value="Salário 2" placeholder="Nome (ex: CLT, Freelance...)" style="background:transparent;border:none;outline:none;color:var(--tx);font-size:13px;flex:1;font-family:&#39;Inter&#39;,sans-serif;font-weight:500" onchange="updateRenda(&#39;r2&#39;,&#39;nome&#39;,this.value)">
-      <div style="display:flex;align-items:center;background:var(--s3);border:1px solid var(--bd);border-radius:7px;overflow:hidden;flex-shrink:0">
-        <span style="padding:0 8px;font-size:11px;color:var(--di)">R$</span>
-        <input type="number" value="" placeholder="0" style="background:transparent;border:none;outline:none;color:var(--teal);font-family:&#39;Space Grotesk&#39;,sans-serif;font-weight:700;font-size:14px;width:100px;padding:6px 8px 6px 0;text-align:right;-moz-appearance:textfield" oninput="updateRenda(&#39;r2&#39;,&#39;val&#39;,this.value)">
-      </div>
-      <button onclick="delRenda(&#39;r2&#39;)" style="background:none;border:none;cursor:pointer;color:var(--di);font-size:18px;padding:2px 5px;border-radius:5px;transition:color .15s;flex-shrink:0" onmouseover="this.style.color=&#39;var(--red)&#39;" onmouseout="this.style.color=&#39;var(--di)&#39;" title="Remover">×</button>
-    </div></div>
+    <div id="rendas-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px"></div>
     <button class="add-expense-btn" onclick="addRenda()" style="max-width:220px">
       <span style="font-size:18px">+</span> Adicionar fonte de renda
     </button>
@@ -751,9 +797,9 @@ body.dark .topbar{
   </div>
 
   <div class="stats-grid">
-    <div class="stat-card"><div class="stat-label">Renda total</div><div class="stat-value" id="st-total" style="color:var(--teal)">R$ 0</div><div class="stat-sub">todos os ingressos</div></div>
-    <div class="stat-card"><div class="stat-label">Ticket bônus</div><div class="stat-value" id="st-ticket" style="color:var(--blue)">R$ 0</div><div class="stat-sub">exclusivo alimentação</div></div>
-    <div class="stat-card"><div class="stat-label">Base de distribuição</div><div class="stat-value" id="st-base" style="color:var(--tx)">R$ 0</div><div class="stat-sub">sem ticket</div></div>
+    <div class="stat-card"><div class="stat-label">Renda total</div><div class="stat-value" id="st-total" style="color:var(--teal)">R$ —</div><div class="stat-sub">todos os ingressos</div></div>
+    <div class="stat-card"><div class="stat-label">Ticket bônus</div><div class="stat-value" id="st-ticket" style="color:var(--blue)">R$ —</div><div class="stat-sub">exclusivo alimentação</div></div>
+    <div class="stat-card"><div class="stat-label">Base de distribuição</div><div class="stat-value" id="st-base" style="color:var(--tx)">R$ —</div><div class="stat-sub">sem ticket</div></div>
   </div>
   <div style="display:flex;justify-content:flex-end"><button class="btn btn-primary" onclick="goTo(&#39;despesas&#39;)">Próximo →</button></div>
 </div>
@@ -765,192 +811,10 @@ body.dark .topbar{
     <div class="section-title">Quais são suas despesas?</div>
     <div class="section-desc">Edite nome, categoria e valor de cada gasto.</div>
   </div>
-  <div id="expense-categories"><div style="margin-bottom:14px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--di)">Moradia</div>
-        <div style="font-family:&#39;Space Grotesk&#39;,sans-serif;font-size:12px;font-weight:700;color:var(--teal)">R$ 0</div>
-      </div><div class="expense-list"><div class="expense-item" id="exp-1">
-        <div class="expense-icon" style="background:rgba(45,212,191,.12)">🏠</div>
-        <input class="expense-name-input" type="text" value="Aluguel" placeholder="Nome" onchange="updateExpName(1,this.value)">
-        <select class="cat-select" onchange="updateExpCat(1,this.value)">
-          <option value="moradia" selected="">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte">Transporte</option><option value="saude">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
-        </select>
-        <div class="expense-val-wrap">
-          <span class="expense-prefix">R$</span>
-          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(1,this.value)">
-        </div>
-        <button class="del-btn" onclick="delExpense(1)">×</button>
-      </div><div class="expense-item" id="exp-2">
-        <div class="expense-icon" style="background:rgba(45,212,191,.12)">🏢</div>
-        <input class="expense-name-input" type="text" value="Condomínio" placeholder="Nome" onchange="updateExpName(2,this.value)">
-        <select class="cat-select" onchange="updateExpCat(2,this.value)">
-          <option value="moradia" selected="">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte">Transporte</option><option value="saude">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
-        </select>
-        <div class="expense-val-wrap">
-          <span class="expense-prefix">R$</span>
-          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(2,this.value)">
-        </div>
-        <button class="del-btn" onclick="delExpense(2)">×</button>
-      </div><div class="expense-item" id="exp-3">
-        <div class="expense-icon" style="background:rgba(45,212,191,.12)">💡</div>
-        <input class="expense-name-input" type="text" value="Luz" placeholder="Nome" onchange="updateExpName(3,this.value)">
-        <select class="cat-select" onchange="updateExpCat(3,this.value)">
-          <option value="moradia" selected="">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte">Transporte</option><option value="saude">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
-        </select>
-        <div class="expense-val-wrap">
-          <span class="expense-prefix">R$</span>
-          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(3,this.value)">
-        </div>
-        <button class="del-btn" onclick="delExpense(3)">×</button>
-      </div><div class="expense-item" id="exp-4">
-        <div class="expense-icon" style="background:rgba(45,212,191,.12)">📡</div>
-        <input class="expense-name-input" type="text" value="Internet" placeholder="Nome" onchange="updateExpName(4,this.value)">
-        <select class="cat-select" onchange="updateExpCat(4,this.value)">
-          <option value="moradia" selected="">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte">Transporte</option><option value="saude">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
-        </select>
-        <div class="expense-val-wrap">
-          <span class="expense-prefix">R$</span>
-          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(4,this.value)">
-        </div>
-        <button class="del-btn" onclick="delExpense(4)">×</button>
-      </div></div></div><div style="margin-bottom:14px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--di)">Alimentação</div>
-        <div style="font-family:&#39;Space Grotesk&#39;,sans-serif;font-size:12px;font-weight:700;color:var(--blue)">R$ 0</div>
-      </div><div class="expense-list"><div class="expense-item" id="exp-5">
-        <div class="expense-icon" style="background:rgba(96,165,250,.12)">🛒</div>
-        <input class="expense-name-input" type="text" value="Mercado / Feira" placeholder="Nome" onchange="updateExpName(5,this.value)">
-        <select class="cat-select" onchange="updateExpCat(5,this.value)">
-          <option value="moradia">Moradia</option><option value="alimentacao" selected="">Alimentação</option><option value="transporte">Transporte</option><option value="saude">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
-        </select>
-        <div class="expense-val-wrap">
-          <span class="expense-prefix">R$</span>
-          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(5,this.value)">
-        </div>
-        <button class="del-btn" onclick="delExpense(5)">×</button>
-      </div></div></div><div style="margin-bottom:14px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--di)">Transporte</div>
-        <div style="font-family:&#39;Space Grotesk&#39;,sans-serif;font-size:12px;font-weight:700;color:var(--amber)">R$ 0</div>
-      </div><div class="expense-list"><div class="expense-item" id="exp-6">
-        <div class="expense-icon" style="background:rgba(251,191,36,.12)">⛽</div>
-        <input class="expense-name-input" type="text" value="Gasolina" placeholder="Nome" onchange="updateExpName(6,this.value)">
-        <select class="cat-select" onchange="updateExpCat(6,this.value)">
-          <option value="moradia">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte" selected="">Transporte</option><option value="saude">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
-        </select>
-        <div class="expense-val-wrap">
-          <span class="expense-prefix">R$</span>
-          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(6,this.value)">
-        </div>
-        <button class="del-btn" onclick="delExpense(6)">×</button>
-      </div><div class="expense-item" id="exp-7">
-        <div class="expense-icon" style="background:rgba(251,191,36,.12)">🚗</div>
-        <input class="expense-name-input" type="text" value="IPVA" placeholder="Nome" onchange="updateExpName(7,this.value)">
-        <select class="cat-select" onchange="updateExpCat(7,this.value)">
-          <option value="moradia">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte" selected="">Transporte</option><option value="saude">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
-        </select>
-        <div class="expense-val-wrap">
-          <span class="expense-prefix">R$</span>
-          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(7,this.value)">
-        </div>
-        <button class="del-btn" onclick="delExpense(7)">×</button>
-      </div><div class="expense-item" id="exp-8">
-        <div class="expense-icon" style="background:rgba(251,191,36,.12)">🔧</div>
-        <input class="expense-name-input" type="text" value="Manutenção carro" placeholder="Nome" onchange="updateExpName(8,this.value)">
-        <select class="cat-select" onchange="updateExpCat(8,this.value)">
-          <option value="moradia">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte" selected="">Transporte</option><option value="saude">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
-        </select>
-        <div class="expense-val-wrap">
-          <span class="expense-prefix">R$</span>
-          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(8,this.value)">
-        </div>
-        <button class="del-btn" onclick="delExpense(8)">×</button>
-      </div></div></div><div style="margin-bottom:14px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--di)">Saúde</div>
-        <div style="font-family:&#39;Space Grotesk&#39;,sans-serif;font-size:12px;font-weight:700;color:var(--indigo)">R$ 0</div>
-      </div><div class="expense-list"><div class="expense-item" id="exp-9">
-        <div class="expense-icon" style="background:rgba(129,140,248,.12)">💊</div>
-        <input class="expense-name-input" type="text" value="Plano de saúde" placeholder="Nome" onchange="updateExpName(9,this.value)">
-        <select class="cat-select" onchange="updateExpCat(9,this.value)">
-          <option value="moradia">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte">Transporte</option><option value="saude" selected="">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
-        </select>
-        <div class="expense-val-wrap">
-          <span class="expense-prefix">R$</span>
-          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(9,this.value)">
-        </div>
-        <button class="del-btn" onclick="delExpense(9)">×</button>
-      </div></div></div><div style="margin-bottom:14px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--di)">Lazer / Pessoal</div>
-        <div style="font-family:&#39;Space Grotesk&#39;,sans-serif;font-size:12px;font-weight:700;color:var(--pink)">R$ 0</div>
-      </div><div class="expense-list"><div class="expense-item" id="exp-10">
-        <div class="expense-icon" style="background:rgba(244,114,182,.12)">📺</div>
-        <input class="expense-name-input" type="text" value="Assinaturas" placeholder="Nome" onchange="updateExpName(10,this.value)">
-        <select class="cat-select" onchange="updateExpCat(10,this.value)">
-          <option value="moradia">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte">Transporte</option><option value="saude">Saúde</option><option value="lazer" selected="">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
-        </select>
-        <div class="expense-val-wrap">
-          <span class="expense-prefix">R$</span>
-          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(10,this.value)">
-        </div>
-        <button class="del-btn" onclick="delExpense(10)">×</button>
-      </div><div class="expense-item" id="exp-11">
-        <div class="expense-icon" style="background:rgba(244,114,182,.12)">💸</div>
-        <input class="expense-name-input" type="text" value="Gastos semanais" placeholder="Nome" onchange="updateExpName(11,this.value)">
-        <select class="cat-select" onchange="updateExpCat(11,this.value)">
-          <option value="moradia">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte">Transporte</option><option value="saude">Saúde</option><option value="lazer" selected="">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
-        </select>
-        <div class="expense-val-wrap">
-          <span class="expense-prefix">R$</span>
-          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(11,this.value)">
-        </div>
-        <button class="del-btn" onclick="delExpense(11)">×</button>
-      </div></div></div><div style="margin-bottom:14px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--di)">Dívidas</div>
-        <div style="font-family:&#39;Space Grotesk&#39;,sans-serif;font-size:12px;font-weight:700;color:var(--red)">R$ 0</div>
-      </div><div class="expense-list"><div class="expense-item" id="exp-12">
-        <div class="expense-icon" style="background:rgba(248,113,113,.12)">🏗️</div>
-        <input class="expense-name-input" type="text" value="Financiamento" placeholder="Nome" onchange="updateExpName(12,this.value)">
-        <select class="cat-select" onchange="updateExpCat(12,this.value)">
-          <option value="moradia">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte">Transporte</option><option value="saude">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas" selected="">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
-        </select>
-        <div class="expense-val-wrap">
-          <span class="expense-prefix">R$</span>
-          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(12,this.value)">
-        </div>
-        <button class="del-btn" onclick="delExpense(12)">×</button>
-      </div></div></div><div style="margin-bottom:14px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--di)">Obrigações</div>
-        <div style="font-family:&#39;Space Grotesk&#39;,sans-serif;font-size:12px;font-weight:700;color:var(--mu)">R$ 0</div>
-      </div><div class="expense-list"><div class="expense-item" id="exp-13">
-        <div class="expense-icon" style="background:rgba(127,142,164,.12)">📋</div>
-        <input class="expense-name-input" type="text" value="Imposto de Renda" placeholder="Nome" onchange="updateExpName(13,this.value)">
-        <select class="cat-select" onchange="updateExpCat(13,this.value)">
-          <option value="moradia">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte">Transporte</option><option value="saude">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes" selected="">Obrigações</option><option value="outros">Outros</option>
-        </select>
-        <div class="expense-val-wrap">
-          <span class="expense-prefix">R$</span>
-          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(13,this.value)">
-        </div>
-        <button class="del-btn" onclick="delExpense(13)">×</button>
-      </div><div class="expense-item" id="exp-14">
-        <div class="expense-icon" style="background:rgba(127,142,164,.12)">🏢</div>
-        <input class="expense-name-input" type="text" value="MEI" placeholder="Nome" onchange="updateExpName(14,this.value)">
-        <select class="cat-select" onchange="updateExpCat(14,this.value)">
-          <option value="moradia">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte">Transporte</option><option value="saude">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes" selected="">Obrigações</option><option value="outros">Outros</option>
-        </select>
-        <div class="expense-val-wrap">
-          <span class="expense-prefix">R$</span>
-          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(14,this.value)">
-        </div>
-        <button class="del-btn" onclick="delExpense(14)">×</button>
-      </div></div></div></div>
+  <div id="expense-categories"></div>
   <div style="display:flex;gap:8px;margin-top:14px;justify-content:space-between;align-items:center">
     <button class="add-expense-btn" onclick="addExpense()" style="max-width:200px"><span style="font-size:18px">+</span> Adicionar</button>
-    <div style="font-size:13px;color:var(--mu)">Total: <strong id="total-desp" style="color:var(--red);font-family:&#39;Space Grotesk&#39;,sans-serif">R$ 0</strong></div>
+    <div style="font-size:13px;color:var(--mu)">Total: <strong id="total-desp" style="color:var(--red);font-family:&#39;Space Grotesk&#39;,sans-serif">R$ —</strong></div>
   </div>
   <div class="divider"></div>
   <div style="display:flex;justify-content:space-between">
@@ -997,17 +861,17 @@ body.dark .topbar{
     <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:0">
       <div class="stat-card" style="border-color:rgba(167,139,250,.3);background:rgba(167,139,250,.05)">
         <div class="stat-label">Meta do dízimo</div>
-        <div class="stat-value" id="diz-meta" style="color:var(--purple)">R$ 0</div>
+        <div class="stat-value" id="diz-meta" style="color:var(--purple)">R$ —</div>
         <div class="stat-sub" id="diz-pct-label">10% da renda</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Já doa</div>
-        <div class="stat-value" id="diz-dado" style="color:var(--tx)">R$ 0</div>
+        <div class="stat-value" id="diz-dado" style="color:var(--tx)">R$ —</div>
         <div class="stat-sub" id="diz-dado-pct">—</div>
       </div>
       <div class="stat-card" style="border-color:rgba(251,191,36,.3)">
         <div class="stat-label">Falta para 100%</div>
-        <div class="stat-value" id="diz-falta" style="color:var(--amber)">R$ 0</div>
+        <div class="stat-value" id="diz-falta" style="color:var(--amber)">R$ —</div>
         <div class="stat-sub">a acrescentar</div>
       </div>
     </div>
@@ -1023,15 +887,8 @@ body.dark .topbar{
       </div>
     </div>
     <div class="form-grid" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr));margin-bottom:12px" id="missionarios-grid">
-    <div style="display:flex;align-items:center;gap:7px;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:7px 11px">
-      <span style="font-size:14px">✉️</span>
-      <input type="text" value="Murilo e Brenda" placeholder="Nome" style="background:transparent;border:none;outline:none;color:var(--tx);font-size:13px;flex:1;font-family:&#39;Inter&#39;,sans-serif" onchange="updateMiss(&#39;m1&#39;,&#39;nome&#39;,this.value)">
-      <div style="display:flex;align-items:center;background:var(--s3);border:1px solid var(--bd);border-radius:7px;overflow:hidden;flex-shrink:0">
-        <span style="padding:0 7px;font-size:11px;color:var(--di)">R$</span>
-        <input type="number" value="150" placeholder="0" style="background:transparent;border:none;outline:none;color:var(--blue);font-family:&#39;Space Grotesk&#39;,sans-serif;font-weight:600;font-size:13px;width:80px;padding:5px 7px 5px 0;text-align:right;-moz-appearance:textfield" oninput="updateMiss(&#39;m1&#39;,&#39;val&#39;,this.value)">
-      </div>
-      <button onclick="delMiss(&#39;m1&#39;)" style="background:none;border:none;cursor:pointer;color:var(--di);font-size:16px;padding:2px 4px;border-radius:5px;transition:color .15s" onmouseover="this.style.color=&#39;var(--red)&#39;" onmouseout="this.style.color=&#39;var(--di)&#39;">×</button>
-    </div></div>
+      <!-- Renderizado pelo JS -->
+    </div>
     <button class="add-expense-btn" onclick="addMissionario()" style="max-width:220px">
       <span style="font-size:16px">+</span> Adicionar missionário
     </button>
@@ -1066,7 +923,7 @@ body.dark .topbar{
 
   <!-- RESUMO TOTAL DOAÇÕES -->
   <div id="resumo-doacoes"></div>
-  <div id="alert-dizimo"><div class="alert alert-amber"><span class="alert-icon">🙏</span><div>Informe quanto já entrega de dízimo à igreja mensalmente.</div></div></div>
+  <div id="alert-dizimo"></div>
 
   <div class="divider"></div>
   <div style="display:flex;justify-content:space-between">
@@ -1150,6 +1007,141 @@ body.dark .topbar{
   <div class="divider"></div>
   <div id="dicas-list"></div>
 </div>
+
+
+<!-- ══════════════════════════════════════
+     MÓDULO MENSAL
+═══════════════════════════════════════ -->
+
+<!-- ── LANÇAMENTOS DO MÊS ── -->
+<div class="page-section" id="sec-mes-lancamentos" style="display:none">
+  <div class="section-header">
+    <div class="section-eyebrow">controle mensal</div>
+    <div class="section-title" id="mes-lancamentos-title">Lançamentos</div>
+    <div class="section-desc">Edite os valores reais de cada despesa. Tudo pré-preenchido do seu planejamento.</div>
+  </div>
+
+  <!-- NAVEGADOR DE MÊS -->
+  <div class="mes-selector">
+    <button class="mes-nav" onclick="navMes(-1)">‹</button>
+    <div class="mes-label" id="mes-atual-label">Janeiro 2026</div>
+    <div class="mes-status" id="mes-saldo-badge">—</div>
+    <button class="mes-nav" onclick="navMes(+1)">›</button>
+  </div>
+
+  <!-- RESUMO RÁPIDO DO MÊS -->
+  <div class="stats-grid" id="mes-stats-rapido" style="margin-bottom:14px"></div>
+
+  <!-- BLOCO: RECEITAS DO MÊS -->
+  <div class="mes-block" id="bloco-receitas">
+    <div class="mes-block-header" onclick="toggleBloco(&#39;receitas&#39;)">
+      <div class="mes-block-title"><span>💰</span> Receitas do mês</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="mes-block-total" id="total-receitas-mes" style="color:var(--green)">R$ —</div>
+        <span id="chevron-receitas" style="color:var(--mu);font-size:12px">▾</span>
+      </div>
+    </div>
+    <div class="mes-block-body" id="body-receitas">
+      <div id="mes-receitas-list"></div>
+      <button class="add-mes-item" onclick="addMesItem(&#39;receita&#39;)"><span>+</span> Adicionar receita extra</button>
+    </div>
+  </div>
+
+  <!-- BLOCO: DESPESAS FIXAS -->
+  <div class="mes-block" id="bloco-fixas">
+    <div class="mes-block-header" onclick="toggleBloco(&#39;fixas&#39;)">
+      <div class="mes-block-title"><span>📌</span> Despesas fixas</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="mes-block-total" id="total-fixas-mes" style="color:var(--red)">R$ —</div>
+        <span id="chevron-fixas" style="color:var(--mu);font-size:12px">▾</span>
+      </div>
+    </div>
+    <div class="mes-block-body" id="body-fixas">
+      <div id="mes-fixas-list"></div>
+    </div>
+  </div>
+
+  <!-- BLOCO: DESPESAS VARIÁVEIS -->
+  <div class="mes-block" id="bloco-variaveis">
+    <div class="mes-block-header" onclick="toggleBloco(&#39;variaveis&#39;)">
+      <div class="mes-block-title"><span>🔄</span> Despesas variáveis</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="mes-block-total" id="total-variaveis-mes" style="color:var(--amber)">R$ —</div>
+        <span id="chevron-variaveis" style="color:var(--mu);font-size:12px">▾</span>
+      </div>
+    </div>
+    <div class="mes-block-body" id="body-variaveis">
+      <div id="mes-variaveis-list"></div>
+    </div>
+  </div>
+
+  <!-- BLOCO: DOAÇÕES DO MÊS -->
+  <div class="mes-block" id="bloco-doacoes-mes">
+    <div class="mes-block-header" onclick="toggleBloco(&#39;doacoes-mes&#39;)">
+      <div class="mes-block-title"><span>🙏</span> Doações</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="mes-block-total" id="total-doacoes-mes" style="color:var(--purple)">R$ —</div>
+        <span id="chevron-doacoes-mes" style="color:var(--mu);font-size:12px">▾</span>
+      </div>
+    </div>
+    <div class="mes-block-body" id="body-doacoes-mes">
+      <div id="mes-doacoes-list"></div>
+    </div>
+  </div>
+
+  <!-- BLOCO: DESPESAS INESPERADAS -->
+  <div class="mes-block" id="bloco-inesperadas">
+    <div class="mes-block-header" onclick="toggleBloco(&#39;inesperadas&#39;)">
+      <div class="mes-block-title"><span>⚡</span> Inesperadas / extras</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="mes-block-total" id="total-inesperadas-mes" style="color:var(--coral)">R$ —</div>
+        <span id="chevron-inesperadas" style="color:var(--mu);font-size:12px">▾</span>
+      </div>
+    </div>
+    <div class="mes-block-body" id="body-inesperadas">
+      <div id="mes-inesperadas-list"></div>
+      <button class="add-mes-item" onclick="addMesItem(&#39;inesperada&#39;)"><span>+</span> Adicionar gasto inesperado</button>
+    </div>
+  </div>
+
+  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
+    <button class="btn btn-save" onclick="salvarMes()">☁️ Salvar mês</button>
+    <button class="btn btn-primary" onclick="goToMensal(&#39;mes-resumo&#39;)">Ver resumo →</button>
+  </div>
+</div>
+
+<!-- ── RESUMO DO MÊS ── -->
+<div class="page-section" id="sec-mes-resumo" style="display:none">
+  <div class="section-header">
+    <div class="section-eyebrow">resumo do mês</div>
+    <div class="section-title" id="mes-resumo-title">Resumo</div>
+  </div>
+  <div class="mes-selector">
+    <button class="mes-nav" onclick="navMes(-1)">‹</button>
+    <div class="mes-label" id="mes-resumo-label">Janeiro 2026</div>
+    <div class="mes-status" id="mes-resumo-badge">—</div>
+    <button class="mes-nav" onclick="navMes(+1)">›</button>
+  </div>
+  <div id="mes-resumo-content"></div>
+</div>
+
+<!-- ── VISÃO ANUAL ── -->
+<div class="page-section" id="sec-mes-anual" style="display:none">
+  <div class="section-header">
+    <div class="section-eyebrow">visão anual</div>
+    <div class="section-title" id="ano-title">2026</div>
+    <div class="section-desc">Todos os meses do ano lado a lado. Clique num mês para editar.</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+    <button class="mes-nav" onclick="navAno(-1)">‹</button>
+    <div style="font-family:&#39;Space Grotesk&#39;,sans-serif;font-size:16px;font-weight:700;color:var(--tx)" id="ano-label">2026</div>
+    <button class="mes-nav" onclick="navAno(+1)">›</button>
+  </div>
+  <div class="ano-grid" id="ano-grid"></div>
+  <div class="resumo-ano-grid" id="resumo-ano-stats"></div>
+  <div id="grafico-anual"></div>
+</div>
+
 
 </div><!-- /content -->
 </div><!-- /main -->
@@ -1749,7 +1741,276 @@ function setCloudStatus(status){
 }
 
 // Verifica se firebase foi configurado
+
+/* ══════════════════════════════════════════════════
+   MÓDULO MENSAL
+══════════════════════════════════════════════════ */
+const MESES_NOMES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const CATS_FIXAS=['moradia','obrigacoes','dividas','saude'];
+const CATS_VARIAVEIS=['alimentacao','transporte','lazer','outros'];
+
+let mesAtual=new Date().getMonth();
+let anoAtual=new Date().getFullYear();
+let anoVisual=anoAtual;
+let appMode='geral';
+let mesesData={};
+
+function mesKey(ano,mes){return `${ano}-${String(mes+1).padStart(2,'0')}`;}
+
+window.setMode=(mode)=>{
+  appMode=mode;
+  document.getElementById('nav-geral').style.display  = mode==='geral'?'flex':'none';
+  document.getElementById('nav-mensal').style.display = mode==='mensal'?'flex':'none';
+  document.getElementById('mode-geral-btn').classList.toggle('active', mode==='geral');
+  document.getElementById('mode-mensal-btn').classList.toggle('active',mode==='mensal');
+  if(mode==='geral'){goTo('plano');}
+  else{document.querySelectorAll('.page-section').forEach(s=>s.style.display='none');goToMensal('mes-lancamentos');}
+};
+
+const titlesMensal={'mes-lancamentos':'Lançamentos','mes-resumo':'Resumo do mês','mes-anual':'Visão anual'};
+
+window.goToMensal=(id)=>{
+  document.querySelectorAll('.page-section').forEach(s=>s.style.display='none');
+  const sec=document.getElementById('sec-'+id);
+  if(sec) sec.style.display='block';
+  document.querySelectorAll('#nav-mensal .nav-item').forEach(n=>n.classList.remove('active'));
+  const nb=document.getElementById('nav-'+id.replace('mes-',''));
+  if(nb) nb.classList.add('active');
+  document.getElementById('topbar-title').textContent=titlesMensal[id]||id;
+  if(id==='mes-lancamentos') renderLancamentos();
+  if(id==='mes-resumo')      renderResumoMes();
+  if(id==='mes-anual')       renderAnual();
+  window.scrollTo(0,0);
+};
+
+window.navMes=(dir)=>{
+  mesAtual+=dir;
+  if(mesAtual<0){mesAtual=11;anoAtual--;}
+  if(mesAtual>11){mesAtual=0;anoAtual++;}
+  const sa=document.querySelector('[id^="sec-mes-"][style*="block"]');
+  if(sa){const id=sa.id.replace('sec-','');if(id==='mes-lancamentos')renderLancamentos();if(id==='mes-resumo')renderResumoMes();}
+};
+
+window.navAno=(dir)=>{
+  anoVisual+=dir;
+  document.getElementById('ano-label').textContent=anoVisual;
+  document.getElementById('ano-title').textContent=anoVisual;
+  renderAnual();
+};
+
+function getMes(ano,mes){
+  const k=mesKey(ano,mes);
+  if(!mesesData[k]){
+    const rendas=state.rendas.map(r=>({id:r.id,nome:r.nome,val:r.val,icon:'💰'}));
+    const ticket=+document.getElementById('ticket').value||0;
+    if(ticket>0) rendas.push({id:'ticket',nome:'Ticket alimentação',val:ticket,icon:'🎫'});
+    const fixas=[],variaveis=[],doacoes=[];
+    state.expenses.forEach(e=>{
+      const item={id:'e'+e.id,nome:e.name,planejado:e.val,val:e.val,cat:e.cat,icon:e.icon};
+      if(CATS_FIXAS.includes(e.cat)) fixas.push(item); else variaveis.push(item);
+    });
+    const dizAtual=+document.getElementById('dizimo-atual').value||0;
+    if(dizAtual>0) doacoes.push({id:'diz',nome:'Dízimo',planejado:dizAtual,val:dizAtual,icon:'🙏'});
+    state.missionarios.forEach(m=>{if(m.val>0)doacoes.push({id:m.id,nome:m.nome,planejado:m.val,val:m.val,icon:'✉️'});});
+    const outrasDoa=+document.getElementById('outras-doacoes').value||0;
+    if(outrasDoa>0) doacoes.push({id:'outDoa',nome:document.getElementById('outras-doacoes-desc').value||'Outras doações',planejado:outrasDoa,val:outrasDoa,icon:'💚'});
+    mesesData[k]={receitas:rendas,fixas,variaveis,doacoes,inesperadas:[],nextId:1};
+  }
+  return mesesData[k];
+}
+
+function renderLancamentos(){
+  const mes=getMes(anoAtual,mesAtual);
+  const nome=`${MESES_NOMES[mesAtual]} ${anoAtual}`;
+  document.getElementById('mes-atual-label').textContent=nome;
+  document.getElementById('mes-lancamentos-title').textContent=`Lançamentos — ${nome}`;
+  const totRec=mes.receitas.reduce((s,r)=>s+r.val,0);
+  const totFix=mes.fixas.reduce((s,r)=>s+r.val,0);
+  const totVar=mes.variaveis.reduce((s,r)=>s+r.val,0);
+  const totDoa=mes.doacoes.reduce((s,r)=>s+r.val,0);
+  const totIne=mes.inesperadas.reduce((s,r)=>s+r.val,0);
+  const totDesp=totFix+totVar+totDoa+totIne;
+  const saldo=totRec-totDesp;
+  const badge=document.getElementById('mes-saldo-badge');
+  badge.textContent=(saldo>=0?'+':'')+fmt(saldo);
+  badge.className='mes-status '+(saldo>0?'ok':saldo===0?'warn':'bad');
+  document.getElementById('mes-stats-rapido').innerHTML=`
+    <div class="stat-card"><div class="stat-label">Receitas</div><div class="stat-value" style="color:var(--green)">${fmt(totRec)}</div></div>
+    <div class="stat-card"><div class="stat-label">Despesas</div><div class="stat-value" style="color:var(--red)">${fmt(totDesp)}</div></div>
+    <div class="stat-card"><div class="stat-label">Doações</div><div class="stat-value" style="color:var(--purple)">${fmt(totDoa)}</div></div>
+    <div class="stat-card"><div class="stat-label">Saldo</div><div class="stat-value" style="color:${saldo>=0?'var(--green)':'var(--red)'}">${fmt(saldo)}</div></div>`;
+  document.getElementById('total-receitas-mes').textContent=fmt(totRec);
+  document.getElementById('total-fixas-mes').textContent=fmt(totFix);
+  document.getElementById('total-variaveis-mes').textContent=fmt(totVar);
+  document.getElementById('total-doacoes-mes').textContent=fmt(totDoa);
+  document.getElementById('total-inesperadas-mes').textContent=fmt(totIne);
+  renderMesList('mes-receitas-list',mes.receitas,'receita','var(--green)');
+  renderMesList('mes-fixas-list',mes.fixas,'fixa','var(--red)');
+  renderMesList('mes-variaveis-list',mes.variaveis,'variavel','var(--amber)');
+  renderMesList('mes-doacoes-list',mes.doacoes,'doacao','var(--purple)');
+  renderMesList('mes-inesperadas-list',mes.inesperadas,'inesperada','var(--coral)');
+}
+
+function renderMesList(elId,items,tipo,cor){
+  const el=document.getElementById(elId);
+  if(!el) return;
+  const key=mesKey(anoAtual,mesAtual);
+  const canDelTypes=['receita','inesperada'];
+  el.innerHTML=items.map((item,idx)=>{
+    const diff=item.planejado!=null?item.val-item.planejado:null;
+    const diffHTML=diff!=null?`<span class="mes-diff ${diff>0&&tipo!=='receita'?'neg':diff<0&&tipo!=='receita'?'pos':'zero'}">${diff>0?'+':''} ${fmt(Math.abs(diff))}</span>`:'';
+    const planHTML=item.planejado!=null?`<span class="mes-item-plan">prev: ${fmt(item.planejado)}</span>`:'';
+    const canDel=canDelTypes.includes(tipo);
+    return `<div class="mes-item">
+      <div class="mes-item-icon" style="background:rgba(127,127,127,.1)">${item.icon||'📦'}</div>
+      <div class="mes-item-name" style="flex:1;font-size:13px;color:var(--tx)">${item.nome}${planHTML}</div>
+      ${diffHTML}
+      <div class="mes-item-val-wrap">
+        <span class="mes-item-prefix">R$</span>
+        <input class="mes-item-input" type="number" value="${item.val||''}" placeholder="0" style="color:${cor}"
+          oninput="updateMesItem('${key}','${tipo}',${idx},this.value)">
+      </div>
+      ${canDel?`<button onclick="delMesItem('${key}','${tipo}',${idx})" style="background:none;border:none;cursor:pointer;color:var(--di);font-size:18px;padding:2px 5px;border-radius:5px" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--di)'">×</button>`:'<div style="width:26px"></div>'}
+    </div>`;
+  }).join('');
+}
+
+function updateMesItem(key,tipo,idx,val){
+  const m={receita:'receitas',fixa:'fixas',variavel:'variaveis',doacao:'doacoes',inesperada:'inesperadas'};
+  const lista=mesesData[key]?.[m[tipo]];
+  if(lista&&lista[idx]!==undefined){
+    lista[idx].val=parseFloat(val)||0;
+    const mes=mesesData[key];
+    const tR=mes.receitas.reduce((s,r)=>s+r.val,0);
+    const tD=mes.fixas.reduce((s,r)=>s+r.val,0)+mes.variaveis.reduce((s,r)=>s+r.val,0)+mes.doacoes.reduce((s,r)=>s+r.val,0)+mes.inesperadas.reduce((s,r)=>s+r.val,0);
+    const sl=tR-tD;
+    const b=document.getElementById('mes-saldo-badge');
+    if(b){b.textContent=(sl>=0?'+':'')+fmt(sl);b.className='mes-status '+(sl>0?'ok':sl===0?'warn':'bad');}
+    document.getElementById('total-receitas-mes').textContent=fmt(tR);
+    document.getElementById('total-fixas-mes').textContent=fmt(mes.fixas.reduce((s,r)=>s+r.val,0));
+    document.getElementById('total-variaveis-mes').textContent=fmt(mes.variaveis.reduce((s,r)=>s+r.val,0));
+    document.getElementById('total-doacoes-mes').textContent=fmt(mes.doacoes.reduce((s,r)=>s+r.val,0));
+    document.getElementById('total-inesperadas-mes').textContent=fmt(mes.inesperadas.reduce((s,r)=>s+r.val,0));
+  }
+}
+
+function delMesItem(key,tipo,idx){
+  const m={receita:'receitas',inesperada:'inesperadas'};
+  const lista=mesesData[key]?.[m[tipo]];
+  if(lista){lista.splice(idx,1);renderLancamentos();}
+}
+
+window.addMesItem=(tipo)=>{
+  const key=mesKey(anoAtual,mesAtual);
+  const mes=getMes(anoAtual,mesAtual);
+  if(tipo==='receita') mes.receitas.push({id:'rx'+(mes.nextId||1),nome:'Nova receita',val:0,icon:'💰'});
+  else mes.inesperadas.push({id:'ix'+(mes.nextId||1),nome:'Gasto inesperado',val:0,icon:'⚡'});
+  mes.nextId=(mes.nextId||1)+1;
+  renderLancamentos();
+};
+
+window.toggleBloco=(id)=>{
+  const body=document.getElementById('body-'+id);
+  const ch=document.getElementById('chevron-'+id);
+  if(!body) return;
+  const isOpen=!body.classList.contains('collapsed');
+  body.classList.toggle('collapsed',isOpen);
+  if(ch) ch.textContent=isOpen?'›':'▾';
+};
+
+function renderResumoMes(){
+  const mes=getMes(anoAtual,mesAtual);
+  const nome=`${MESES_NOMES[mesAtual]} ${anoAtual}`;
+  document.getElementById('mes-resumo-title').textContent=`Resumo — ${nome}`;
+  document.getElementById('mes-resumo-label').textContent=nome;
+  const tR=mes.receitas.reduce((s,r)=>s+r.val,0);
+  const tFix=mes.fixas.reduce((s,r)=>s+r.val,0);
+  const tVar=mes.variaveis.reduce((s,r)=>s+r.val,0);
+  const tDoa=mes.doacoes.reduce((s,r)=>s+r.val,0);
+  const tIne=mes.inesperadas.reduce((s,r)=>s+r.val,0);
+  const tD=tFix+tVar+tDoa+tIne;
+  const sl=tR-tD;
+  const b=document.getElementById('mes-resumo-badge');
+  b.textContent=(sl>=0?'+':'')+fmt(sl);
+  b.className='mes-status '+(sl>0?'ok':sl===0?'warn':'bad');
+  const tRPlan=state.rendas.reduce((s,r)=>s+r.val,0);
+  const tDPlan=state.expenses.reduce((s,e)=>s+e.val,0);
+  const tDoaPlan=(+document.getElementById('dizimo-atual').value||0)+state.missionarios.reduce((s,m)=>s+m.val,0)+(+document.getElementById('outras-doacoes').value||0);
+  const diff=(real,plan)=>{const d=real-plan;if(Math.abs(d)<1)return'<span style="font-size:11px;color:var(--di)">= planejado</span>';const c=d>0?'var(--red)':'var(--green)';return`<span style="font-size:11px;color:${c};font-weight:600">${d>0?'▲':'▼'} ${fmt(Math.abs(d))}</span>`;};
+  document.getElementById('mes-resumo-content').innerHTML=`
+    <div class="stats-grid" style="margin-bottom:16px">
+      <div class="stat-card" style="border-color:rgba(74,222,128,.3)"><div class="stat-label">Receitas</div><div class="stat-value" style="color:var(--green)">${fmt(tR)}</div><div style="margin-top:4px">${diff(tR,tRPlan)}</div></div>
+      <div class="stat-card" style="border-color:rgba(248,113,113,.3)"><div class="stat-label">Despesas</div><div class="stat-value" style="color:var(--red)">${fmt(tD)}</div><div style="margin-top:4px">${diff(tD,tDPlan)}</div></div>
+      <div class="stat-card" style="border-color:rgba(167,139,250,.3)"><div class="stat-label">Doações</div><div class="stat-value" style="color:var(--purple)">${fmt(tDoa)}</div><div style="margin-top:4px">${diff(tDoa,tDoaPlan)}</div></div>
+      <div class="stat-card" style="border-color:${sl>=0?'rgba(74,222,128,.3)':'rgba(248,113,113,.3)'}"><div class="stat-label">Saldo final</div><div class="stat-value" style="color:${sl>=0?'var(--green)':'var(--red)'}">${fmt(sl)}</div><div class="stat-sub">${sl>=0?'No azul 🎉':'No vermelho ⚠️'}</div></div>
+      ${tIne>0?`<div class="stat-card" style="border-color:rgba(251,146,60,.3)"><div class="stat-label">Inesperados</div><div class="stat-value" style="color:var(--coral)">${fmt(tIne)}</div><div class="stat-sub">${mes.inesperadas.length} item(s)</div></div>`:''}
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-header"><span class="card-title">📊 Distribuição do mês</span></div>
+      <div class="card-body">
+        ${[{label:'Fixas',val:tFix,cor:'var(--red)'},{label:'Variáveis',val:tVar,cor:'var(--amber)'},{label:'Doações',val:tDoa,cor:'var(--purple)'},{label:'Inesperados',val:tIne,cor:'var(--coral)'}].filter(c=>c.val>0).map(c=>{const p=tD>0?(c.val/tD*100).toFixed(0):0;return`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="color:var(--mu)">${c.label}</span><span style="font-family:'Space Grotesk',sans-serif;font-weight:700;color:${c.cor}">${fmt(c.val)} <span style="color:var(--di);font-weight:400">${p}%</span></span></div><div style="height:5px;background:var(--bd);border-radius:3px"><div style="height:5px;border-radius:3px;background:${c.cor};width:${p}%;transition:width .5s"></div></div></div>`;}).join('')}
+      </div>
+    </div>
+    ${mes.inesperadas.length>0?`<div class="card" style="margin-bottom:12px"><div class="card-header"><span class="card-title">⚡ Gastos inesperados</span></div><div class="card-body">${mes.inesperadas.map(i=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--bd)"><span style="font-size:13px">${i.nome}</span><span style="font-family:'Space Grotesk',sans-serif;font-weight:700;color:var(--coral)">${fmt(i.val)}</span></div>`).join('')}<div style="display:flex;justify-content:space-between;padding-top:8px;font-weight:700"><span style="color:var(--mu)">Total</span><span style="font-family:'Space Grotesk',sans-serif;color:var(--coral)">${fmt(tIne)}</span></div></div></div>`:''}
+    <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" onclick="goToMensal('mes-lancamentos')">← Editar</button><button class="btn btn-primary" onclick="goToMensal('mes-anual')">Ver ano →</button></div>`;
+}
+
+function renderAnual(){
+  document.getElementById('ano-label').textContent=anoVisual;
+  document.getElementById('ano-title').textContent=anoVisual;
+  const hoje=new Date();
+  const mH=hoje.getMonth(),aH=hoje.getFullYear();
+  let tRA=0,tDA=0,tSA=0,mAz=0,mVm=0,maxD=0;
+  const dm=MESES_NOMES.map((nome,idx)=>{
+    const k=mesKey(anoVisual,idx);
+    const mes=mesesData[k];
+    const futuro=anoVisual>aH||(anoVisual===aH&&idx>mH);
+    if(!mes) return{nome:nome.slice(0,3),idx,saldo:null,rec:0,desp:0,futuro};
+    const rec=mes.receitas.reduce((s,r)=>s+r.val,0);
+    const desp=mes.fixas.reduce((s,r)=>s+r.val,0)+mes.variaveis.reduce((s,r)=>s+r.val,0)+mes.doacoes.reduce((s,r)=>s+r.val,0)+mes.inesperadas.reduce((s,r)=>s+r.val,0);
+    const saldo=rec-desp;
+    tRA+=rec;tDA+=desp;tSA+=saldo;
+    if(saldo>=0)mAz++;else mVm++;
+    if(desp>maxD)maxD=desp;
+    return{nome:nome.slice(0,3),idx,saldo,rec,desp,futuro};
+  });
+  document.getElementById('ano-grid').innerHTML=dm.map(d=>{
+    const iC=d.idx===mesAtual&&anoVisual===anoAtual;
+    const bp=maxD>0&&d.desp>0?Math.min(100,d.desp/maxD*100):0;
+    const cor=d.saldo===null?'var(--di)':d.saldo>=0?'var(--green)':'var(--red)';
+    return`<div class="ano-card ${iC?'active':''} ${d.futuro&&d.saldo===null?'futuro':''}" onclick="mesAtual=${d.idx};anoAtual=${anoVisual};goToMensal('mes-lancamentos')">
+      <div class="ano-card-mes">${d.nome}</div>
+      <div class="ano-card-saldo" style="color:${cor}">${d.saldo===null?(d.futuro?'—':'vazio'):fmt(d.saldo)}</div>
+      ${d.desp>0?`<div class="ano-card-bar"><div class="ano-card-bar-fill" style="width:${bp}%;background:${cor}"></div></div>`:''}
+    </div>`;
+  }).join('');
+  document.getElementById('resumo-ano-stats').innerHTML=`
+    <div class="stat-card"><div class="stat-label">Receitas ${anoVisual}</div><div class="stat-value" style="color:var(--green)">${fmt(tRA)}</div></div>
+    <div class="stat-card"><div class="stat-label">Despesas ${anoVisual}</div><div class="stat-value" style="color:var(--red)">${fmt(tDA)}</div></div>
+    <div class="stat-card"><div class="stat-label">Saldo acumulado</div><div class="stat-value" style="color:${tSA>=0?'var(--green)':'var(--red)'}">${fmt(tSA)}</div></div>
+    <div class="stat-card"><div class="stat-label">Meses no azul</div><div class="stat-value" style="color:var(--green)">${mAz}</div></div>
+    ${mVm>0?`<div class="stat-card" style="border-color:rgba(248,113,113,.3)"><div class="stat-label">No vermelho</div><div class="stat-value" style="color:var(--red)">${mVm}</div></div>`:''}`;
+  const gEl=document.getElementById('grafico-anual');
+  if(dm.some(d=>d.saldo!==null)){
+    const W=840,H=140,PL=40,PR=20,PT=10,PB=28,maxV=Math.max(...dm.filter(d=>d.saldo!==null).flatMap(d=>[d.rec,d.desp]),1);
+    const bW=(W-PL-PR)/12-4;
+    const bars=dm.map((d,i)=>{if(d.saldo===null)return'';const x=PL+i*(W-PL-PR)/12;const hR=(d.rec/maxV)*(H-PT-PB);const hD=(d.desp/maxV)*(H-PT-PB);return`<rect x="${x+1}" y="${H-PB-hR}" width="${bW/2-1}" height="${hR}" fill="var(--green)" opacity=".7" rx="2"/><rect x="${x+bW/2+1}" y="${H-PB-hD}" width="${bW/2-1}" height="${hD}" fill="var(--red)" opacity=".7" rx="2"/><text x="${x+bW/2}" y="${H-PB+12}" text-anchor="middle" font-size="8" fill="var(--di)">${d.nome}</text>`;}).join('');
+    gEl.innerHTML=`<div class="card"><div class="card-header"><span class="card-title">📈 Receitas vs Despesas ${anoVisual}</span><div style="display:flex;gap:12px;font-size:11px"><span><span style="display:inline-block;width:8px;height:8px;background:var(--green);border-radius:2px;margin-right:4px"></span>Receitas</span><span><span style="display:inline-block;width:8px;height:8px;background:var(--red);border-radius:2px;margin-right:4px"></span>Despesas</span></div></div><div class="card-body" style="padding:8px 0 0"><svg width="100%" viewBox="0 0 ${W} ${H}">${bars}<line x1="${PL}" y1="${H-PB}" x2="${W-PR}" y2="${H-PB}" stroke="var(--bd)" stroke-width="1"/></svg></div></div>`;
+  } else {
+    gEl.innerHTML=`<div style="text-align:center;color:var(--di);font-size:13px;padding:20px">Lance pelo menos um mês para ver o gráfico.</div>`;
+  }
+}
+
+window.salvarMes=async()=>{if(typeof salvarFirestore==='function')await salvarFirestore();};
+
+// Integrar mesesData no Firestore
+const _coletarOrig=window.coletarDados;
+window.coletarDados=()=>({..._coletarOrig(),mesesData});
+const _applyOrig=window.applyData;
+window.applyData=(d)=>{_applyOrig(d);if(d.mesesData)mesesData=d.mesesData;};
+
 /* ── TEMA ── */
+function toggleTheme()
 function setToggleUI(isDark) {
   [['toggle-track','theme-label'],['toggle-track-login','theme-label-login']].forEach(([tid,lid]) => {
     const track = document.getElementById(tid);
