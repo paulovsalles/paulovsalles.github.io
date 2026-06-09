@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- saved from url=(0045)file:///C:/Users/lais_/Downloads/index_1.html -->
+<!-- saved from url=(0045)file:///C:/Users/lais_/Downloads/index_2.html -->
 <html lang="pt-BR"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PainelFin — Planejamento Financeiro</title>
-<link href="./35_files/css2" rel="stylesheet">
+<link href="./lko_files/css2" rel="stylesheet">
 
 <!-- ══════════ FIREBASE SDK ══════════ -->
 <script type="module">
@@ -583,7 +583,7 @@ body{background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;font-si
     abra o arquivo HTML, localize o bloco <code>firebaseConfig</code> e cole as credenciais do seu projeto.
     <a href="https://console.firebase.google.com/" target="_blank" style="color:var(--teal);text-decoration:none;font-weight:600">→ Abrir console Firebase</a>
     &nbsp;·&nbsp;
-    <a href="file:///C:/Users/lais_/Downloads/index_1.html#" onclick="document.getElementById(&#39;setup-banner&#39;).classList.remove(&#39;show&#39;)" style="color:var(--di)">fechar</a>
+    <a href="file:///C:/Users/lais_/Downloads/index_2.html#" onclick="document.getElementById(&#39;setup-banner&#39;).classList.remove(&#39;show&#39;)" style="color:var(--di)">fechar</a>
   </div>
 </div>
 
@@ -644,16 +644,56 @@ body{background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;font-si
   <div class="section-header">
     <div class="section-eyebrow">passo 1</div>
     <div class="section-title">Qual é a sua renda?</div>
-    <div class="section-desc">Valores líquidos (já descontado impostos).</div>
+    <div class="section-desc">Valores líquidos (já descontado impostos). Renomeie cada fonte e adicione quantas quiser.</div>
   </div>
-  <div class="form-grid">
-    <div class="form-group"><label class="form-label">Salário 1</label><div class="input-wrap"><div class="input-prefix">R$</div><input type="number" class="form-input" id="sal1" placeholder="0" oninput="calcular()"></div></div>
-    <div class="form-group"><label class="form-label">Salário 2</label><div class="input-wrap"><div class="input-prefix">R$</div><input type="number" class="form-input" id="sal2" placeholder="0" oninput="calcular()"></div></div>
-    <div class="form-group"><label class="form-label">Salário 3</label><div class="input-wrap"><div class="input-prefix">R$</div><input type="number" class="form-input" id="sal3" placeholder="0" oninput="calcular()"></div></div>
-    <div class="form-group"><label class="form-label">Renda extra / aulas</label><div class="input-wrap"><div class="input-prefix">R$</div><input type="number" class="form-input" id="extra" placeholder="0" oninput="calcular()"></div></div>
-    <div class="form-group"><label class="form-label">Ticket alimentação</label><div class="input-wrap"><div class="input-prefix">R$</div><input type="number" class="form-input" id="ticket" placeholder="0" oninput="calcular()"></div><span class="form-sublabel">bônus, separado do fluxo</span></div>
-    <div class="form-group"><label class="form-label">Outras rendas</label><div class="input-wrap"><div class="input-prefix">R$</div><input type="number" class="form-input" id="outras" placeholder="0" oninput="calcular()"></div></div>
+
+  <!-- FONTES DE RENDA DINÂMICAS -->
+  <div style="margin-bottom:14px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--di)">💰 Fontes de renda</div>
+      <div style="font-family:&#39;Space Grotesk&#39;,sans-serif;font-size:13px;font-weight:700;color:var(--teal)" id="total-rendas-label">R$ 0</div>
+    </div>
+    <div id="rendas-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px">
+    <div style="display:flex;align-items:center;gap:7px;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:7px 11px">
+      <span style="font-size:14px">💰</span>
+      <input type="text" value="CLT / Salário" placeholder="Nome (ex: CLT, Freelance...)" style="background:transparent;border:none;outline:none;color:var(--tx);font-size:13px;flex:1;font-family:&#39;Inter&#39;,sans-serif;font-weight:500" onchange="updateRenda(&#39;r1&#39;,&#39;nome&#39;,this.value)">
+      <div style="display:flex;align-items:center;background:var(--s3);border:1px solid var(--bd);border-radius:7px;overflow:hidden;flex-shrink:0">
+        <span style="padding:0 8px;font-size:11px;color:var(--di)">R$</span>
+        <input type="number" value="" placeholder="0" style="background:transparent;border:none;outline:none;color:var(--teal);font-family:&#39;Space Grotesk&#39;,sans-serif;font-weight:700;font-size:14px;width:100px;padding:6px 8px 6px 0;text-align:right;-moz-appearance:textfield" oninput="updateRenda(&#39;r1&#39;,&#39;val&#39;,this.value)">
+      </div>
+      <button onclick="delRenda(&#39;r1&#39;)" style="background:none;border:none;cursor:pointer;color:var(--di);font-size:18px;padding:2px 5px;border-radius:5px;transition:color .15s;flex-shrink:0" onmouseover="this.style.color=&#39;var(--red)&#39;" onmouseout="this.style.color=&#39;var(--di)&#39;" title="Remover">×</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:7px;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:7px 11px">
+      <span style="font-size:14px">💰</span>
+      <input type="text" value="Salário 2" placeholder="Nome (ex: CLT, Freelance...)" style="background:transparent;border:none;outline:none;color:var(--tx);font-size:13px;flex:1;font-family:&#39;Inter&#39;,sans-serif;font-weight:500" onchange="updateRenda(&#39;r2&#39;,&#39;nome&#39;,this.value)">
+      <div style="display:flex;align-items:center;background:var(--s3);border:1px solid var(--bd);border-radius:7px;overflow:hidden;flex-shrink:0">
+        <span style="padding:0 8px;font-size:11px;color:var(--di)">R$</span>
+        <input type="number" value="" placeholder="0" style="background:transparent;border:none;outline:none;color:var(--teal);font-family:&#39;Space Grotesk&#39;,sans-serif;font-weight:700;font-size:14px;width:100px;padding:6px 8px 6px 0;text-align:right;-moz-appearance:textfield" oninput="updateRenda(&#39;r2&#39;,&#39;val&#39;,this.value)">
+      </div>
+      <button onclick="delRenda(&#39;r2&#39;)" style="background:none;border:none;cursor:pointer;color:var(--di);font-size:18px;padding:2px 5px;border-radius:5px;transition:color .15s;flex-shrink:0" onmouseover="this.style.color=&#39;var(--red)&#39;" onmouseout="this.style.color=&#39;var(--di)&#39;" title="Remover">×</button>
+    </div></div>
+    <button class="add-expense-btn" onclick="addRenda()" style="max-width:220px">
+      <span style="font-size:18px">+</span> Adicionar fonte de renda
+    </button>
   </div>
+
+  <!-- TICKET + OUTRAS (fixos) -->
+  <div style="background:var(--s2);border:1px solid var(--bd);border-radius:12px;padding:13px 16px;margin-bottom:16px">
+    <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--di);margin-bottom:10px">🎫 Benefícios / bônus</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Ticket alimentação</label>
+        <div class="input-wrap"><div class="input-prefix">R$</div><input type="number" class="form-input" id="ticket" placeholder="0" oninput="calcular()"></div>
+        <span class="form-sublabel">bônus, separado do fluxo</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Outros benefícios</label>
+        <div class="input-wrap"><div class="input-prefix">R$</div><input type="number" class="form-input" id="outras" placeholder="0" oninput="calcular()"></div>
+        <span class="form-sublabel">vale refeição, outros</span>
+      </div>
+    </div>
+  </div>
+
   <div class="stats-grid">
     <div class="stat-card"><div class="stat-label">Renda total</div><div class="stat-value" id="st-total" style="color:var(--teal)">R$ 0</div><div class="stat-sub">todos os ingressos</div></div>
     <div class="stat-card"><div class="stat-label">Ticket bônus</div><div class="stat-value" id="st-ticket" style="color:var(--blue)">R$ 0</div><div class="stat-sub">exclusivo alimentação</div></div>
@@ -1108,7 +1148,13 @@ const DICAS = [
 ];
 
 let state = {
-  sal1:0,sal2:0,sal3:0,extra:0,ticket:0,outras:0,
+  // Fontes de renda dinâmicas
+  rendas: [
+    {id:'r1', nome:'CLT / Salário', val:0},
+    {id:'r2', nome:'Salário 2',     val:0},
+  ],
+  nextRendaId: 3,
+  ticket:0, outras:0,
   dizimoPct:10, dizimoAtual:0,
   // Missionários: lista de {id, nome, val}
   missionarios:[
@@ -1180,14 +1226,62 @@ window.addMissionario = () => {
   if(last){last.focus();last.select();}
 };
 
+/* ── RENDAS DINÂMICAS ── */
+function renderRendas() {
+  const list = document.getElementById('rendas-list');
+  if (!list) return;
+  list.innerHTML = state.rendas.map(r => `
+    <div style="display:flex;align-items:center;gap:7px;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:7px 11px">
+      <span style="font-size:14px">💰</span>
+      <input type="text" value="${r.nome}" placeholder="Nome (ex: CLT, Freelance...)"
+        style="background:transparent;border:none;outline:none;color:var(--tx);font-size:13px;flex:1;font-family:'Inter',sans-serif;font-weight:500"
+        onchange="updateRenda('${r.id}','nome',this.value)">
+      <div style="display:flex;align-items:center;background:var(--s3);border:1px solid var(--bd);border-radius:7px;overflow:hidden;flex-shrink:0">
+        <span style="padding:0 8px;font-size:11px;color:var(--di)">R$</span>
+        <input type="number" value="${r.val||''}" placeholder="0"
+          style="background:transparent;border:none;outline:none;color:var(--teal);font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:14px;width:100px;padding:6px 8px 6px 0;text-align:right;-moz-appearance:textfield"
+          oninput="updateRenda('${r.id}','val',this.value)">
+      </div>
+      <button onclick="delRenda('${r.id}')"
+        style="background:none;border:none;cursor:pointer;color:var(--di);font-size:18px;padding:2px 5px;border-radius:5px;transition:color .15s;flex-shrink:0"
+        onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--di)'" title="Remover">×</button>
+    </div>`).join('');
+  // Atualiza total
+  const total = state.rendas.reduce((s,r)=>s+r.val,0);
+  const lbl = document.getElementById('total-rendas-label');
+  if(lbl) lbl.textContent = fmt(total);
+}
+
+function updateRenda(id, field, val) {
+  const r = state.rendas.find(x=>x.id===id);
+  if(!r) return;
+  r[field] = field==='val' ? (parseFloat(val)||0) : val;
+  const total = state.rendas.reduce((s,r)=>s+r.val,0);
+  const lbl = document.getElementById('total-rendas-label');
+  if(lbl) lbl.textContent = fmt(total);
+  calcular();
+}
+
+function delRenda(id) {
+  if(state.rendas.length <= 1) { showToast('Mantenha ao menos uma fonte de renda.', true); return; }
+  state.rendas = state.rendas.filter(r=>r.id!==id);
+  renderRendas(); calcular();
+}
+
+window.addRenda = () => {
+  state.rendas.push({id:'r'+state.nextRendaId++, nome:'Nova fonte de renda', val:0});
+  renderRendas();
+  const inputs = document.querySelectorAll('#rendas-list input[type="text"]');
+  const last = inputs[inputs.length-1];
+  if(last){ last.focus(); last.select(); }
+};
+
 /* ── COLETAR/APLICAR dados ── */
 window.coletarDados = () => ({
-  sal1:   +document.getElementById('sal1').value||0,
-  sal2:   +document.getElementById('sal2').value||0,
-  sal3:   +document.getElementById('sal3').value||0,
-  extra:  +document.getElementById('extra').value||0,
-  ticket: +document.getElementById('ticket').value||0,
-  outras: +document.getElementById('outras').value||0,
+  rendas:        state.rendas,
+  nextRendaId:   state.nextRendaId,
+  ticket:        +document.getElementById('ticket').value||0,
+  outras:        +document.getElementById('outras').value||0,
   dizimoPct:        +document.getElementById('dizimo-pct').value||10,
   dizimoAtual:      +document.getElementById('dizimo-atual').value||0,
   outrasDoacoes:    +document.getElementById('outras-doacoes').value||0,
@@ -1199,8 +1293,16 @@ window.coletarDados = () => ({
 });
 
 window.applyData = (d) => {
-  const fields = ['sal1','sal2','sal3','extra','ticket','outras'];
-  fields.forEach(f => { if(d[f]!==undefined) document.getElementById(f).value = d[f]||''; });
+  if(d.rendas)     { state.rendas = d.rendas; state.nextRendaId = d.nextRendaId||state.nextRendaId; }
+  // compatibilidade com dados antigos (sal1/sal2/sal3)
+  if(!d.rendas && (d.sal1||d.sal2||d.sal3)) {
+    state.rendas = [];
+    if(d.sal1) state.rendas.push({id:'r1',nome:'CLT / Salário',val:d.sal1});
+    if(d.sal2) state.rendas.push({id:'r2',nome:'Salário 2',val:d.sal2});
+    if(d.sal3) state.rendas.push({id:'r3',nome:'Salário 3',val:d.sal3});
+    if(d.extra) state.rendas.push({id:'r4',nome:'Renda extra / aulas',val:d.extra});
+  }
+  ['ticket','outras'].forEach(f => { if(d[f]!==undefined) document.getElementById(f).value = d[f]||''; });
   if(d.dizimoPct)         document.getElementById('dizimo-pct').value        = d.dizimoPct;
   if(d.dizimoAtual)       document.getElementById('dizimo-atual').value      = d.dizimoAtual;
   if(d.outrasDoacoes)     document.getElementById('outras-doacoes').value    = d.outrasDoacoes;
@@ -1208,7 +1310,7 @@ window.applyData = (d) => {
   if(d.missionarios)  { state.missionarios = d.missionarios; state.nextMissId = d.nextMissId||state.nextMissId; }
   if(d.expenses)   state.expenses = d.expenses;
   if(d.nextId)     state.nextId   = d.nextId;
-  renderExpenses(); renderMissionarios(); calcular();
+  renderRendas(); renderExpenses(); renderMissionarios(); calcular();
 };
 
 /* ── NAVEGAÇÃO ── */
@@ -1228,10 +1330,7 @@ function goTo(id) {
 
 /* ── CÁLCULO ── */
 function getRenda() {
-  return (+document.getElementById('sal1').value||0)
-       + (+document.getElementById('sal2').value||0)
-       + (+document.getElementById('sal3').value||0)
-       + (+document.getElementById('extra').value||0)
+  return state.rendas.reduce((s,r) => s + r.val, 0)
        + (+document.getElementById('outras').value||0);
 }
 
@@ -1572,14 +1671,16 @@ window.showToast = (msg, isError=false) => {
 
 window.resetAll = () => {
   if(!confirm('Limpar todos os dados?'))return;
-  ['sal1','sal2','sal3','extra','ticket','outras'].forEach(id=>document.getElementById(id).value='');
+  state.rendas = [{id:'r1',nome:'CLT / Salário',val:0},{id:'r2',nome:'Salário 2',val:0}];
+  state.nextRendaId = 3;
+  ['ticket','outras'].forEach(id=>document.getElementById(id).value='');
   state.expenses.forEach(e=>e.val=0);
   state.missionarios = [{id:'m1',nome:'Murilo e Brenda',val:0}];
   document.getElementById('dizimo-pct').value='10';
   document.getElementById('dizimo-atual').value='0';
   document.getElementById('outras-doacoes').value='0';
   document.getElementById('outras-doacoes-desc').value='';
-  renderExpenses(); renderMissionarios(); calcular(); showToast('Dados limpos!');
+  renderRendas(); renderExpenses(); renderMissionarios(); calcular(); showToast('Dados limpos!');
 };
 
 /* ── CLOUD STATUS ── */
@@ -1593,6 +1694,7 @@ function setCloudStatus(status){
 
 // Verifica se firebase foi configurado
 window.addEventListener('DOMContentLoaded',()=>{
+  renderRendas();
   renderExpenses();
   renderMissionarios();
   calcular();
