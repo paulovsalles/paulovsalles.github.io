@@ -786,6 +786,7 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
   <div class="nav" id="nav-geral">
     <button class="nav-item active" onclick="goTo(&#39;renda&#39;)" id="nav-renda">     <span class="nav-icon">💰</span><span>Renda</span>     <span class="nav-status active-dot" id="dot-renda"></span></button>
     <button class="nav-item" onclick="goTo(&#39;despesas&#39;)" id="nav-despesas">  <span class="nav-icon">📋</span><span>Despesas</span>  <span class="nav-status" id="dot-despesas"></span></button>
+    <button class="nav-item" onclick="goTo(&#39;dividas&#39;)" id="nav-dividas">   <span class="nav-icon">💳</span><span>Dívidas</span>    <span class="nav-status" id="dot-dividas"></span></button>
     <button class="nav-item" onclick="goTo(&#39;dizimo&#39;)" id="nav-dizimo">    <span class="nav-icon">🙏</span><span>Dízimo</span>    <span class="nav-status done" id="dot-dizimo"></span></button>
     <button class="nav-item" onclick="goTo(&#39;plano&#39;)" id="nav-plano">     <span class="nav-icon">📊</span><span>Plano</span>     <span class="nav-status" id="dot-plano"></span></button>
     <button class="nav-item" onclick="goTo(&#39;metas&#39;)" id="nav-metas">     <span class="nav-icon">🎯</span><span>Metas</span>     <span class="nav-status" id="dot-metas"></span></button>
@@ -1731,7 +1732,7 @@ window.applyData = (d) => {
 */
 const SECS_G = ['sec-renda','sec-despesas','sec-dividas','sec-dizimo','sec-plano','sec-metas','sec-investir','sec-dashboard'];
 const SECS_M = ['sec-mes-lancamentos','sec-mes-resumo','sec-mes-anual','sec-dash-mensal'];
-const TITLES_G = {renda:'Renda mensal',despesas:'Despesas',dizimo:'Doações',plano:'Diagnóstico',metas:'Metas',investir:'Investimentos',dashboard:'Dashboard Geral'};
+const TITLES_G = {renda:'Renda mensal',despesas:'Despesas',dividas:'Acompanhamento de Dívidas',dizimo:'Doações',plano:'Diagnóstico',metas:'Metas',investir:'Investimentos',dashboard:'Dashboard Geral'};
 const TITLES_M = {'mes-lancamentos':'Lançamentos','mes-resumo':'Resumo do mês','mes-anual':'Visão anual','dash-mensal':'Dashboard do Mês'};
 
 function _hideAll(ids){ ids.forEach(id=>{ const el=document.getElementById(id); if(el){el.style.display='none'; el.classList.remove('active');} }); }
@@ -1747,6 +1748,7 @@ function goTo(id) {
   if(id==='metas')     renderMetas();
   if(id==='investir')  renderInvestir();
   if(id==='dizimo')    renderDizimo();
+  if(id==='dividas' && typeof renderDividas==='function') renderDividas();
   if(id==='dashboard' && typeof renderDashGeral==='function') renderDashGeral();
   window.scrollTo(0,0);
 }
