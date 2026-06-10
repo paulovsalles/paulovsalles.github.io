@@ -678,6 +678,17 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
 .login-sep{display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--di);font-size:11px}
 .login-sep::before,.login-sep::after{content:'';flex:1;height:1px;background:var(--bd)}
 
+
+/* Cartões de dívida aparecem antes da lista detalhada */
+.debt-list{margin:14px 0 14px;display:flex;flex-direction:column;gap:12px}
+.debt-card{scroll-margin-top:70px}
+.debt-components{margin-top:12px;background:var(--s2);border:1px solid var(--bd);border-radius:12px;padding:12px}
+.debt-components-title{font-size:12px;font-weight:800;color:var(--tx);margin-bottom:10px}
+.debt-add-component{display:grid;grid-template-columns:1.3fr 120px 110px 110px 140px auto;gap:8px;align-items:end;margin-bottom:10px}
+.debt-add-component label{display:block;font-size:10px;font-weight:800;text-transform:uppercase;color:var(--di);margin-bottom:4px}
+.debt-add-component input{height:36px;border:1px solid var(--bd);border-radius:9px;background:var(--s3);color:var(--tx);padding:0 10px;font-family:'Inter',sans-serif}
+@media(max-width:900px){.debt-add-component{grid-template-columns:1fr 1fr}.debt-add-component button{grid-column:1/-1}}
+
 /* RESPONSIVE */
 @media(max-width:768px){
   .sidebar{width:56px}
@@ -1276,6 +1287,8 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
     </div>
   </div>
 
+  <div id="dividas-list" class="debt-list"></div>
+
   <div class="debt-filter-card">
     <div class="debt-filter-title">🔎 Visão detalhada do que compõe as dívidas</div>
     <div class="debt-filter-grid">
@@ -1303,7 +1316,6 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
   </div>
 
   <div id="dividas-itens-list" class="debt-items-list"></div>
-  <div id="dividas-list" class="debt-list"></div>
   <div id="dividas-projecao"></div>
 
   <div class="divider"></div>
@@ -3818,7 +3830,12 @@ window.addDivida = function(){
   renderDividas();
   calcular();
   showToast(isCartao ? 'Cartão criado. Agora adicione os itens dentro dele.' : 'Dívida adicionada.');
-  setTimeout(()=>document.getElementById('comp-'+nova.id+'-nome')?.focus(),50);
+  setTimeout(()=>{
+    const card = document.getElementById('card-'+nova.id);
+    if(card) card.scrollIntoView({behavior:'smooth', block:'center'});
+    const input = document.getElementById('comp-'+nova.id+'-nome');
+    if(input){ input.focus(); input.select?.(); }
+  },80);
   if(typeof window.salvarFirestore==='function') window.salvarFirestore(true);
 };
 
@@ -3941,8 +3958,8 @@ function renderDividas(){
   const totalFalta=infos.reduce((s,x)=>s+x.info.falta,0); const compromisso=infos.reduce((s,x)=>s+x.info.valorParcela,0); const pago=infos.reduce((s,x)=>s+x.info.pago,0); const fim=infos.map(x=>x.info.fimMes).filter(Boolean).sort().pop()||'';
   summary.innerHTML=`<div class="stat-card"><div class="stat-label">Dívidas abertas</div><div class="stat-value" style="color:var(--red)">${abertas.length}</div><div class="stat-sub">cartões e parcelamentos</div></div><div class="stat-card"><div class="stat-label">Compromisso mensal</div><div class="stat-value" style="color:var(--amber)">${fmt(compromisso)}</div><div class="stat-sub">parcelas ativas</div></div><div class="stat-card"><div class="stat-label">Falta pagar</div><div class="stat-value" style="color:var(--red)">${fmt(totalFalta)}</div><div class="stat-sub">saldo restante</div></div><div class="stat-card"><div class="stat-label">Já pago</div><div class="stat-value" style="color:var(--green)">${fmt(pago)}</div><div class="stat-sub">estimado</div></div><div class="stat-card"><div class="stat-label">Último vencimento</div><div class="stat-value" style="color:var(--tx);font-size:16px">${fim?nomeMesLongo(fim):'—'}</div><div class="stat-sub">pelas parcelas</div></div>`;
   renderItensDetalhadosDividas(dividas);
-  if(!dividas.length){ list.innerHTML='<div class="debt-empty">💳 Nenhuma dívida cadastrada ainda. Crie um cartão ou cadastre um parcelamento para começar.</div>'; proj.innerHTML=''; return; }
-  list.innerHTML=infos.map(({d,info})=>{ const isCartao=(d.tipo||'')==='Cartão'; const status=info.parcelasRestantes===0 && info.total>0?'Quitada':isCartao&&!(d.componentes||[]).length?'adicione itens':`${info.parcelasRestantes} parcela(s) restantes`; const cor=info.parcelasRestantes===0&&info.total>0?'var(--green)':'var(--red)'; return `<div class="debt-card"><div class="debt-card-top"><div class="debt-title"><strong>${isCartao?'💳 ':''}${escapeHTML(d.nome||'Dívida')}</strong><span>${escapeHTML(d.tipo||'Dívida')}${d.credor?' · '+escapeHTML(d.credor):''}</span></div><div><div class="debt-metric-label">Parcela mensal</div><div class="debt-metric-value" style="color:var(--amber)">${fmt(info.valorParcela)}</div></div><div><div class="debt-metric-label">Progresso</div><div class="debt-metric-value">${info.parcelasPagas}/${info.totalParcelas}</div></div><div><div class="debt-metric-label">Falta</div><div class="debt-metric-value" style="color:${cor}">${fmt(info.falta)}</div></div><div class="debt-card-actions">${!isCartao?`<button class="debt-mini-btn" onclick="voltarParcelaDivida('${d.id}')">↩ Voltar</button><button class="debt-mini-btn" onclick="pagarParcelaDivida('${d.id}')">✅ Pagar</button>`:''}<button class="debt-mini-btn danger" onclick="delDivida('${d.id}')">×</button></div></div><div class="debt-progress-bg"><div class="debt-progress-fg" style="width:${info.progresso.toFixed(1)}%;background:${info.parcelasRestantes===0&&info.total>0?'var(--green)':'var(--teal)'}"></div></div><div style="display:flex;justify-content:space-between;gap:10px;font-size:11px;color:var(--mu);flex-wrap:wrap"><span>Status: <strong style="color:${cor}">${status}</strong></span><span>Próxima: <strong>${info.proximoMes?nomeMesLongo(info.proximoMes):'—'}</strong></span><span>Termina em: <strong>${info.fimMes?nomeMesLongo(info.fimMes):'—'}</strong></span><span>Total: <strong>${fmt(info.total)}</strong></span></div><div class="debt-edit-grid"><input value="${escapeAttr(d.nome||'')}" placeholder="Nome" onchange="updateDivida('${d.id}','nome',this.value)"><select onchange="updateDivida('${d.id}','tipo',this.value)">${['Cartão','Financiamento','Empréstimo','Loja','Outros'].map(t=>`<option value="${t}" ${d.tipo===t?'selected':''}>${t}</option>`).join('')}</select><input value="${escapeAttr(d.credor||'')}" placeholder="Credor" onchange="updateDivida('${d.id}','credor',this.value)"><input type="number" min="0" step="0.01" value="${!isCartao?(d.valorParcela||''):''}" placeholder="Parcela" ${isCartao?'disabled title="No cartão, some pelos itens abaixo"':''} onchange="updateDivida('${d.id}','valorParcela',this.value)"><input type="number" min="1" step="1" value="${!isCartao?(d.totalParcelas||1):''}" placeholder="Total" ${isCartao?'disabled title="No cartão, some pelos itens abaixo"':''} onchange="updateDivida('${d.id}','totalParcelas',this.value)"><input type="month" value="${d.inicio||mesInicioPadrao()}" onchange="updateDivida('${d.id}','inicio',this.value)"></div>${isCartao?renderComponentesDivida(d):''}</div>`; }).join('');
+  if(!dividas.length){ list.innerHTML='<div class="debt-empty">💳 Nenhuma dívida cadastrada ainda. Crie um cartão acima. O card aparecerá aqui para você detalhar os itens.</div>'; proj.innerHTML=''; return; }
+  list.innerHTML=infos.map(({d,info})=>{ const isCartao=(d.tipo||'')==='Cartão'; const status=info.parcelasRestantes===0 && info.total>0?'Quitada':isCartao&&!(d.componentes||[]).length?'adicione itens':`${info.parcelasRestantes} parcela(s) restantes`; const cor=info.parcelasRestantes===0&&info.total>0?'var(--green)':'var(--red)'; return `<div class="debt-card" id="card-${d.id}"><div class="debt-card-top"><div class="debt-title"><strong>${isCartao?'💳 ':''}${escapeHTML(d.nome||'Dívida')}</strong><span>${escapeHTML(d.tipo||'Dívida')}${d.credor?' · '+escapeHTML(d.credor):''}</span></div><div><div class="debt-metric-label">Parcela mensal</div><div class="debt-metric-value" style="color:var(--amber)">${fmt(info.valorParcela)}</div></div><div><div class="debt-metric-label">Progresso</div><div class="debt-metric-value">${info.parcelasPagas}/${info.totalParcelas}</div></div><div><div class="debt-metric-label">Falta</div><div class="debt-metric-value" style="color:${cor}">${fmt(info.falta)}</div></div><div class="debt-card-actions">${!isCartao?`<button class="debt-mini-btn" onclick="voltarParcelaDivida('${d.id}')">↩ Voltar</button><button class="debt-mini-btn" onclick="pagarParcelaDivida('${d.id}')">✅ Pagar</button>`:''}<button class="debt-mini-btn danger" onclick="delDivida('${d.id}')">×</button></div></div><div class="debt-progress-bg"><div class="debt-progress-fg" style="width:${info.progresso.toFixed(1)}%;background:${info.parcelasRestantes===0&&info.total>0?'var(--green)':'var(--teal)'}"></div></div><div style="display:flex;justify-content:space-between;gap:10px;font-size:11px;color:var(--mu);flex-wrap:wrap"><span>Status: <strong style="color:${cor}">${status}</strong></span><span>Próxima: <strong>${info.proximoMes?nomeMesLongo(info.proximoMes):'—'}</strong></span><span>Termina em: <strong>${info.fimMes?nomeMesLongo(info.fimMes):'—'}</strong></span><span>Total: <strong>${fmt(info.total)}</strong></span></div><div class="debt-edit-grid"><input value="${escapeAttr(d.nome||'')}" placeholder="Nome" onchange="updateDivida('${d.id}','nome',this.value)"><select onchange="updateDivida('${d.id}','tipo',this.value)">${['Cartão','Financiamento','Empréstimo','Loja','Outros'].map(t=>`<option value="${t}" ${d.tipo===t?'selected':''}>${t}</option>`).join('')}</select><input value="${escapeAttr(d.credor||'')}" placeholder="Credor" onchange="updateDivida('${d.id}','credor',this.value)"><input type="number" min="0" step="0.01" value="${!isCartao?(d.valorParcela||''):''}" placeholder="Parcela" ${isCartao?'disabled title="No cartão, some pelos itens abaixo"':''} onchange="updateDivida('${d.id}','valorParcela',this.value)"><input type="number" min="1" step="1" value="${!isCartao?(d.totalParcelas||1):''}" placeholder="Total" ${isCartao?'disabled title="No cartão, some pelos itens abaixo"':''} onchange="updateDivida('${d.id}','totalParcelas',this.value)"><input type="month" value="${d.inicio||mesInicioPadrao()}" onchange="updateDivida('${d.id}','inicio',this.value)"></div>${isCartao?renderComponentesDivida(d):''}</div>`; }).join('');
   renderProjecaoDividas();
 }
 
