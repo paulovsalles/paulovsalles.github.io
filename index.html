@@ -524,6 +524,16 @@ body.dark .topbar{
 .debt-mini-btn.danger:hover{border-color:rgba(248,113,113,.35);color:var(--red)}
 .debt-edit-grid{display:grid;grid-template-columns:1.2fr .9fr .9fr .7fr .7fr .8fr;gap:8px;margin-top:10px}
 .debt-edit-grid input,.debt-edit-grid select{height:34px;border:1px solid var(--bd);background:var(--s2);color:var(--tx);border-radius:8px;padding:0 9px;font-size:12px;outline:none;min-width:0}
+.debt-components{margin-top:12px;background:var(--s2);border:1px solid var(--bd);border-radius:12px;padding:10px 12px}
+.debt-components-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+.debt-components-title{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--mu)}
+.debt-component-row{display:grid;grid-template-columns:1.2fr .7fr .6fr .6fr .75fr 30px;gap:7px;align-items:center;padding:6px 0;border-bottom:1px solid var(--bd)}
+.debt-component-row:last-child{border-bottom:none}
+.debt-component-row input{height:32px;border:1px solid var(--bd);background:var(--s1);color:var(--tx);border-radius:8px;padding:0 8px;font-size:12px;outline:none;min-width:0}
+.debt-component-summary{font-size:11px;color:var(--mu);margin-top:7px}
+.debt-add-component{display:grid;grid-template-columns:1.2fr .7fr .6fr .6fr .75fr auto;gap:7px;align-items:end;margin-top:8px;padding-top:8px;border-top:1px dashed var(--bd)}
+.debt-add-component input{height:32px;border:1px solid var(--bd);background:var(--s1);color:var(--tx);border-radius:8px;padding:0 8px;font-size:12px;outline:none;min-width:0}
+.debt-add-component label{display:block;font-size:9px;font-weight:800;color:var(--di);text-transform:uppercase;margin-bottom:3px}
 .debt-projection{background:var(--s1);border:1px solid var(--bd);border-radius:14px;overflow:hidden}
 .debt-projection-header{padding:12px 16px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center}
 .debt-projection-title{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700}
@@ -535,7 +545,7 @@ body.dark .topbar{
 .debt-month-fill{height:7px;background:var(--red);border-radius:4px}
 .debt-month-value{font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;text-align:right;color:var(--red)}
 .debt-empty{background:var(--s1);border:1px dashed var(--bd2);border-radius:14px;padding:24px;text-align:center;color:var(--mu);font-size:13px;margin-bottom:16px}
-@media(max-width:980px){.debt-form-grid{grid-template-columns:1fr 1fr}.debt-card-top{grid-template-columns:1fr}.debt-card-actions{justify-content:flex-start}.debt-edit-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:980px){.debt-form-grid{grid-template-columns:1fr 1fr}.debt-card-top{grid-template-columns:1fr}.debt-card-actions{justify-content:flex-start}.debt-edit-grid{grid-template-columns:1fr 1fr}.debt-component-row,.debt-add-component{grid-template-columns:1fr 1fr}}
 @media(max-width:640px){.debt-form-grid,.debt-edit-grid{grid-template-columns:1fr}.debt-month-row{grid-template-columns:80px 1fr}.debt-month-value{grid-column:2;text-align:left}}
 
 
@@ -2048,20 +2058,40 @@ function escapeHTML(v){
     .replaceAll("'",'&#039;');
 }
 
-function infoDivida(d){
-  const totalParcelas = Math.max(1, parseInt(d.totalParcelas || 1, 10));
-  const parcelaAtual = Math.min(Math.max(1, parseInt(d.parcelaAtual || 1, 10)), totalParcelas + 1);
-  const valorParcela = valorNumero(d.valorParcela);
+function infoParcelamento(base){
+  const totalParcelas = Math.max(1, parseInt(base.totalParcelas || 1, 10));
+  const parcelaAtual = Math.min(Math.max(1, parseInt(base.parcelaAtual || 1, 10)), totalParcelas + 1);
+  const valorParcela = valorNumero(base.valorParcela);
   const parcelasPagas = Math.min(totalParcelas, Math.max(0, parcelaAtual - 1));
   const parcelasRestantes = Math.max(0, totalParcelas - parcelasPagas);
   const total = totalParcelas * valorParcela;
   const pago = parcelasPagas * valorParcela;
   const falta = parcelasRestantes * valorParcela;
-  const inicio = d.inicio || mesInicioPadrao();
+  const inicio = base.inicio || mesInicioPadrao();
   const proximoMes = parcelasRestantes > 0 ? addMeses(inicio, parcelaAtual - 1) : '';
   const fimMes = totalParcelas > 0 ? addMeses(inicio, totalParcelas - 1) : inicio;
-  const progresso = totalParcelas > 0 ? Math.min(100, parcelasPagas / totalParcelas * 100) : 0;
+  const progresso = total > 0 ? Math.min(100, pago / total * 100) : 0;
   return { totalParcelas, parcelaAtual, valorParcela, parcelasPagas, parcelasRestantes, total, pago, falta, inicio, proximoMes, fimMes, progresso };
+}
+
+function infoDivida(d){
+  const componentes = Array.isArray(d.componentes) ? d.componentes : [];
+  if(!componentes.length) return infoParcelamento(d);
+
+  const infos = componentes.map(c => infoParcelamento({ ...c, inicio: c.inicio || d.inicio || mesInicioPadrao() }));
+  const abertas = infos.filter(i => i.parcelasRestantes > 0);
+  const total = infos.reduce((s,i)=>s+i.total,0);
+  const pago = infos.reduce((s,i)=>s+i.pago,0);
+  const falta = infos.reduce((s,i)=>s+i.falta,0);
+  const valorParcela = abertas.reduce((s,i)=>s+i.valorParcela,0);
+  const parcelasPagas = infos.reduce((s,i)=>s+i.parcelasPagas,0);
+  const totalParcelas = infos.reduce((s,i)=>s+i.totalParcelas,0);
+  const parcelasRestantes = abertas.reduce((s,i)=>s+i.parcelasRestantes,0);
+  const inicio = (infos.map(i=>i.inicio).sort()[0]) || d.inicio || mesInicioPadrao();
+  const proximoMes = (abertas.map(i=>i.proximoMes).filter(Boolean).sort()[0]) || '';
+  const fimMes = (infos.map(i=>i.fimMes).filter(Boolean).sort().pop()) || inicio;
+  const progresso = total > 0 ? Math.min(100, pago / total * 100) : 0;
+  return { totalParcelas, parcelaAtual: 1, valorParcela, parcelasPagas, parcelasRestantes, total, pago, falta, inicio, proximoMes, fimMes, progresso, componentes: infos };
 }
 
 window.addDivida = () => {
@@ -2084,6 +2114,8 @@ window.addDivida = () => {
     totalParcelas,
     parcelaAtual,
     inicio,
+    componentes: [],
+    nextComponenteId: 1,
     criadoEm: new Date().toISOString()
   });
 
@@ -2108,8 +2140,15 @@ function updateDivida(id, campo, valor){
 function pagarParcelaDivida(id){
   const d = state.dividasParceladas.find(x => x.id === id);
   if(!d) return;
-  const info = infoDivida(d);
-  d.parcelaAtual = Math.min(info.totalParcelas + 1, info.parcelaAtual + 1);
+  if(Array.isArray(d.componentes) && d.componentes.length){
+    d.componentes.forEach(c => {
+      const infoC = infoParcelamento({ ...c, inicio: c.inicio || d.inicio || mesInicioPadrao() });
+      if(infoC.parcelasRestantes > 0) c.parcelaAtual = Math.min(infoC.totalParcelas + 1, infoC.parcelaAtual + 1);
+    });
+  } else {
+    const info = infoDivida(d);
+    d.parcelaAtual = Math.min(info.totalParcelas + 1, info.parcelaAtual + 1);
+  }
   renderDividas();
   if(window.agendarAutoSave) window.agendarAutoSave(500);
 }
@@ -2117,7 +2156,11 @@ function pagarParcelaDivida(id){
 function voltarParcelaDivida(id){
   const d = state.dividasParceladas.find(x => x.id === id);
   if(!d) return;
-  d.parcelaAtual = Math.max(1, (parseInt(d.parcelaAtual || 1, 10) - 1));
+  if(Array.isArray(d.componentes) && d.componentes.length){
+    d.componentes.forEach(c => c.parcelaAtual = Math.max(1, (parseInt(c.parcelaAtual || 1, 10) - 1)));
+  } else {
+    d.parcelaAtual = Math.max(1, (parseInt(d.parcelaAtual || 1, 10) - 1));
+  }
   renderDividas();
   if(window.agendarAutoSave) window.agendarAutoSave(500);
 }
@@ -2129,6 +2172,113 @@ function delDivida(id){
   state.dividasParceladas = state.dividasParceladas.filter(x => x.id !== id);
   renderDividas();
   if(window.agendarAutoSave) window.agendarAutoSave(500);
+}
+
+function somaComponentesAtivos(d){
+  const comps = Array.isArray(d.componentes) ? d.componentes : [];
+  return comps.map(c => infoParcelamento({ ...c, inicio: c.inicio || d.inicio || mesInicioPadrao() }))
+    .filter(i => i.parcelasRestantes > 0)
+    .reduce((s,i)=>s+i.valorParcela,0);
+}
+
+function addComponenteDivida(id){
+  const d = state.dividasParceladas.find(x => x.id === id);
+  if(!d) return;
+  if(!Array.isArray(d.componentes)) d.componentes = [];
+  if(!d.nextComponenteId) d.nextComponenteId = d.componentes.length + 1;
+
+  const prefix = `comp-${id}`;
+  const nome = document.getElementById(prefix+'-nome')?.value.trim() || 'Novo item';
+  const valorParcela = valorNumero(document.getElementById(prefix+'-valor')?.value);
+  const totalParcelas = Math.max(1, parseInt(document.getElementById(prefix+'-total')?.value || d.totalParcelas || '1', 10));
+  const parcelaAtual = Math.min(Math.max(1, parseInt(document.getElementById(prefix+'-atual')?.value || '1', 10)), totalParcelas + 1);
+  const inicio = document.getElementById(prefix+'-inicio')?.value || d.inicio || mesInicioPadrao();
+
+  if(valorParcela <= 0){ showToast('Informe o valor da parcela do item.', true); return; }
+
+  d.componentes.push({
+    id: 'c' + d.nextComponenteId++,
+    nome,
+    valorParcela,
+    totalParcelas,
+    parcelaAtual,
+    inicio
+  });
+
+  renderDividas();
+  if(window.agendarAutoSave) window.agendarAutoSave(500);
+}
+
+function updateComponenteDivida(dividaId, compId, campo, valor){
+  const d = state.dividasParceladas.find(x => x.id === dividaId);
+  const c = d?.componentes?.find(x => x.id === compId);
+  if(!c) return;
+
+  if(campo === 'valorParcela') c[campo] = valorNumero(valor);
+  else if(['totalParcelas','parcelaAtual'].includes(campo)) c[campo] = Math.max(1, parseInt(valor || '1', 10));
+  else c[campo] = valor;
+
+  if(c.parcelaAtual > (Number(c.totalParcelas)||1) + 1) c.parcelaAtual = (Number(c.totalParcelas)||1) + 1;
+  renderDividas();
+  if(window.agendarAutoSave) window.agendarAutoSave(700);
+}
+
+function pagarParcelaComponente(dividaId, compId){
+  const d = state.dividasParceladas.find(x => x.id === dividaId);
+  const c = d?.componentes?.find(x => x.id === compId);
+  if(!c) return;
+  const info = infoParcelamento({ ...c, inicio: c.inicio || d.inicio || mesInicioPadrao() });
+  c.parcelaAtual = Math.min(info.totalParcelas + 1, info.parcelaAtual + 1);
+  renderDividas();
+  if(window.agendarAutoSave) window.agendarAutoSave(500);
+}
+
+function delComponenteDivida(dividaId, compId){
+  const d = state.dividasParceladas.find(x => x.id === dividaId);
+  if(!d || !Array.isArray(d.componentes)) return;
+  d.componentes = d.componentes.filter(x => x.id !== compId);
+  renderDividas();
+  if(window.agendarAutoSave) window.agendarAutoSave(500);
+}
+
+function renderComponentesDivida(d){
+  const comps = Array.isArray(d.componentes) ? d.componentes : [];
+  const totalAtivo = somaComponentesAtivos(d);
+  const linhas = comps.map(c => {
+    const info = infoParcelamento({ ...c, inicio: c.inicio || d.inicio || mesInicioPadrao() });
+    const status = info.parcelasRestantes === 0 ? 'quitado' : `${info.parcelaAtual}/${info.totalParcelas}`;
+    return `
+      <div class="debt-component-row">
+        <input value="${escapeAttr(c.nome || '')}" placeholder="ex: Geladeira" onchange="updateComponenteDivida('${d.id}','${c.id}','nome',this.value)">
+        <input type="number" min="0" step="0.01" value="${info.valorParcela || ''}" placeholder="Parcela" onchange="updateComponenteDivida('${d.id}','${c.id}','valorParcela',this.value)">
+        <input type="number" min="1" step="1" value="${info.totalParcelas}" placeholder="Total" onchange="updateComponenteDivida('${d.id}','${c.id}','totalParcelas',this.value)">
+        <input type="number" min="1" step="1" value="${info.parcelaAtual}" placeholder="Atual" onchange="updateComponenteDivida('${d.id}','${c.id}','parcelaAtual',this.value)">
+        <input type="month" value="${info.inicio}" onchange="updateComponenteDivida('${d.id}','${c.id}','inicio',this.value)">
+        <button class="debt-mini-btn danger" title="Apagar item" onclick="delComponenteDivida('${d.id}','${c.id}')">×</button>
+        <div style="grid-column:1 / -1;font-size:10px;color:var(--mu)">
+          ${escapeHTML(status)} · falta ${fmt(info.falta)} · termina em ${nomeMesLongo(info.fimMes)}
+          ${info.parcelasRestantes>0 ? `<button class="debt-mini-btn" style="margin-left:8px;padding:3px 8px" onclick="pagarParcelaComponente('${d.id}','${c.id}')">pagar este item</button>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="debt-components">
+      <div class="debt-components-head">
+        <div class="debt-components-title">🧾 Composição da dívida</div>
+        <div style="font-size:11px;color:var(--mu)">Total ativo dos itens: <strong style="color:var(--red)">${fmt(totalAtivo)}</strong>/mês</div>
+      </div>
+      ${comps.length ? linhas : `<div style="font-size:12px;color:var(--mu);padding:4px 0">Nenhum item detalhado. Ex.: celular, geladeira, notebook...</div>`}
+      <div class="debt-add-component">
+        <div><label>Item</label><input id="comp-${d.id}-nome" placeholder="ex: Celular"></div>
+        <div><label>Parcela R$</label><input id="comp-${d.id}-valor" type="number" min="0" step="0.01" placeholder="200"></div>
+        <div><label>Total</label><input id="comp-${d.id}-total" type="number" min="1" step="1" placeholder="10"></div>
+        <div><label>Atual</label><input id="comp-${d.id}-atual" type="number" min="1" step="1" placeholder="1"></div>
+        <div><label>Início</label><input id="comp-${d.id}-inicio" type="month" value="${d.inicio || mesInicioPadrao()}"></div>
+        <button class="btn btn-sm btn-primary" onclick="addComponenteDivida('${d.id}')">+ Item</button>
+      </div>
+      <div class="debt-component-summary">Use isso para detalhar um cartão: por exemplo, Nubank = celular + geladeira + compras parceladas. O valor mensal da dívida passa a ser a soma dos itens ativos.</div>
+    </div>`;
 }
 
 function renderDividas(){
@@ -2193,10 +2343,11 @@ function renderDividas(){
             ${['Cartão','Financiamento','Empréstimo','Loja','Outros'].map(t=>`<option value="${t}" ${d.tipo===t?'selected':''}>${t}</option>`).join('')}
           </select>
           <input value="${escapeAttr(d.credor || '')}" placeholder="Credor" onchange="updateDivida('${d.id}','credor',this.value)">
-          <input type="number" min="0" step="0.01" value="${info.valorParcela || ''}" placeholder="Parcela" onchange="updateDivida('${d.id}','valorParcela',this.value)">
-          <input type="number" min="1" step="1" value="${info.totalParcelas}" placeholder="Total" onchange="updateDivida('${d.id}','totalParcelas',this.value)">
+          <input type="number" min="0" step="0.01" value="${Array.isArray(d.componentes)&&d.componentes.length ? '' : (info.valorParcela || '')}" placeholder="Parcela" ${Array.isArray(d.componentes)&&d.componentes.length ? 'disabled title="Quando há composição, a parcela vem da soma dos itens"' : ''} onchange="updateDivida('${d.id}','valorParcela',this.value)">
+          <input type="number" min="1" step="1" value="${Array.isArray(d.componentes)&&d.componentes.length ? '' : info.totalParcelas}" placeholder="Total" ${Array.isArray(d.componentes)&&d.componentes.length ? 'disabled title="Quando há composição, o total vem dos itens"' : ''} onchange="updateDivida('${d.id}','totalParcelas',this.value)">
           <input type="month" value="${info.inicio}" onchange="updateDivida('${d.id}','inicio',this.value)">
         </div>
+        ${renderComponentesDivida(d)}
       </div>
     `;
   }).join('');
@@ -2217,10 +2368,18 @@ function renderProjecaoDividas(){
     let total = 0;
     const itens = [];
     abertas.forEach(({d,info})=>{
-      for(let p=info.parcelaAtual; p<=info.totalParcelas; p++){
-        const mesParcela = addMeses(info.inicio, p-1);
-        if(mesParcela === chave){ total += info.valorParcela; itens.push(d.nome); }
-      }
+      const componentes = Array.isArray(d.componentes) && d.componentes.length ? d.componentes : [d];
+      componentes.forEach(comp => {
+        const ci = infoParcelamento({ ...comp, inicio: comp.inicio || d.inicio || mesInicioPadrao() });
+        if(ci.parcelasRestantes <= 0) return;
+        for(let p=ci.parcelaAtual; p<=ci.totalParcelas; p++){
+          const mesParcela = addMeses(ci.inicio, p-1);
+          if(mesParcela === chave){
+            total += ci.valorParcela;
+            itens.push(`${d.nome}${comp.nome && comp.nome !== d.nome ? ' - ' + comp.nome : ''}`);
+          }
+        }
+      });
     });
     meses.push({chave,total,itens});
   }
