@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- saved from url=(0045)file:///C:/Users/lais_/Downloads/index_5.html -->
+<!-- saved from url=(0077)file:///C:/Users/lais_/Downloads/painelfin-auto-save-navegacao-corrigida.html -->
 <html lang="pt-BR"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PainelFin — Planejamento Financeiro</title>
-<link href="./okei_files/css2" rel="stylesheet">
+<link href="./olocomeu_files/css2" rel="stylesheet">
 
 <!-- ══════════ FIREBASE SDK ══════════ -->
 <script type="module">
@@ -160,17 +160,28 @@ function listenData(uid) {
 }
 
 /* ── SALVAR NO FIRESTORE ── */
-window.salvarFirestore = async () => {
-  if (!currentUser) { showToast("Faça login primeiro", true); return; }
+window.salvarFirestore = async (silencioso = false) => {
+  if (!currentUser) {
+    if (!silencioso) showToast("Faça login primeiro", true);
+    return;
+  }
+
   const data = coletarDados();
+
   try {
+    if (typeof setCloudStatus === 'function') setCloudStatus('saving');
+
     await setDoc(doc(db, "usuarios", currentUser.uid), {
       ...data,
       updatedAt: new Date().toISOString()
     });
-    showToast("✅ Salvo na nuvem!");
+
+    if (typeof setCloudStatus === 'function') setCloudStatus('saved');
+    if (!silencioso) showToast("✅ Salvo na nuvem!");
   } catch(e) {
-    showToast("❌ Erro ao salvar: " + e.message, true);
+    if (typeof setCloudStatus === 'function') setCloudStatus('offline');
+    if (!silencioso) showToast("❌ Erro ao salvar: " + e.message, true);
+    else console.warn("Auto-save falhou:", e);
   }
 };
 </script>
@@ -707,7 +718,7 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
   <div class="nav" id="nav-geral">
     <button class="nav-item active" onclick="goTo(&#39;renda&#39;)" id="nav-renda">    <span class="nav-icon">💰</span><span>Renda</span>    <span class="nav-status active-dot" id="dot-renda"></span></button>
     <button class="nav-item" onclick="goTo(&#39;despesas&#39;)" id="nav-despesas"> <span class="nav-icon">📋</span><span>Despesas</span> <span class="nav-status" id="dot-despesas"></span></button>
-    <button class="nav-item" onclick="goTo(&#39;dizimo&#39;)" id="nav-dizimo">   <span class="nav-icon">🙏</span><span>Dízimo</span>   <span class="nav-status" id="dot-dizimo"></span></button>
+    <button class="nav-item" onclick="goTo(&#39;dizimo&#39;)" id="nav-dizimo">   <span class="nav-icon">🙏</span><span>Dízimo</span>   <span class="nav-status done" id="dot-dizimo"></span></button>
     <button class="nav-item" onclick="goTo(&#39;plano&#39;)" id="nav-plano">    <span class="nav-icon">📊</span><span>Plano</span>    <span class="nav-status" id="dot-plano"></span></button>
     <button class="nav-item" onclick="goTo(&#39;metas&#39;)" id="nav-metas">    <span class="nav-icon">🎯</span><span>Metas</span>    <span class="nav-status" id="dot-metas"></span></button>
     <button class="nav-item" onclick="goTo(&#39;investir&#39;)" id="nav-investir"> <span class="nav-icon">📈</span><span>Investir</span> <span class="nav-status" id="dot-investir"></span></button>
@@ -771,9 +782,27 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
   <div style="margin-bottom:14px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
       <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--di)">💰 Fontes de renda</div>
-      <div style="font-family:&#39;Space Grotesk&#39;,sans-serif;font-size:13px;font-weight:700;color:var(--teal)" id="total-rendas-label">R$ —</div>
+      <div style="font-family:&#39;Space Grotesk&#39;,sans-serif;font-size:13px;font-weight:700;color:var(--teal)" id="total-rendas-label">R$ 0</div>
     </div>
-    <div id="rendas-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px"></div>
+    <div id="rendas-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px">
+    <div style="display:flex;align-items:center;gap:7px;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:7px 11px">
+      <span style="font-size:14px">💰</span>
+      <input type="text" value="CLT / Salário" placeholder="Nome (ex: CLT, Freelance...)" style="background:transparent;border:none;outline:none;color:var(--tx);font-size:13px;flex:1;font-family:&#39;Inter&#39;,sans-serif;font-weight:500" onchange="updateRenda(&#39;r1&#39;,&#39;nome&#39;,this.value)">
+      <div style="display:flex;align-items:center;background:var(--s3);border:1px solid var(--bd);border-radius:7px;overflow:hidden;flex-shrink:0">
+        <span style="padding:0 8px;font-size:11px;color:var(--di)">R$</span>
+        <input type="number" value="" placeholder="0" style="background:transparent;border:none;outline:none;color:var(--teal);font-family:&#39;Space Grotesk&#39;,sans-serif;font-weight:700;font-size:14px;width:100px;padding:6px 8px 6px 0;text-align:right;-moz-appearance:textfield" oninput="updateRenda(&#39;r1&#39;,&#39;val&#39;,this.value)">
+      </div>
+      <button onclick="delRenda(&#39;r1&#39;)" style="background:none;border:none;cursor:pointer;color:var(--di);font-size:18px;padding:2px 5px;border-radius:5px;transition:color .15s;flex-shrink:0" onmouseover="this.style.color=&#39;var(--red)&#39;" onmouseout="this.style.color=&#39;var(--di)&#39;" title="Remover">×</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:7px;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:7px 11px">
+      <span style="font-size:14px">💰</span>
+      <input type="text" value="Salário 2" placeholder="Nome (ex: CLT, Freelance...)" style="background:transparent;border:none;outline:none;color:var(--tx);font-size:13px;flex:1;font-family:&#39;Inter&#39;,sans-serif;font-weight:500" onchange="updateRenda(&#39;r2&#39;,&#39;nome&#39;,this.value)">
+      <div style="display:flex;align-items:center;background:var(--s3);border:1px solid var(--bd);border-radius:7px;overflow:hidden;flex-shrink:0">
+        <span style="padding:0 8px;font-size:11px;color:var(--di)">R$</span>
+        <input type="number" value="" placeholder="0" style="background:transparent;border:none;outline:none;color:var(--teal);font-family:&#39;Space Grotesk&#39;,sans-serif;font-weight:700;font-size:14px;width:100px;padding:6px 8px 6px 0;text-align:right;-moz-appearance:textfield" oninput="updateRenda(&#39;r2&#39;,&#39;val&#39;,this.value)">
+      </div>
+      <button onclick="delRenda(&#39;r2&#39;)" style="background:none;border:none;cursor:pointer;color:var(--di);font-size:18px;padding:2px 5px;border-radius:5px;transition:color .15s;flex-shrink:0" onmouseover="this.style.color=&#39;var(--red)&#39;" onmouseout="this.style.color=&#39;var(--di)&#39;" title="Remover">×</button>
+    </div></div>
     <button class="add-expense-btn" onclick="addRenda()" style="max-width:220px">
       <span style="font-size:18px">+</span> Adicionar fonte de renda
     </button>
@@ -797,9 +826,9 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
   </div>
 
   <div class="stats-grid">
-    <div class="stat-card"><div class="stat-label">Renda total</div><div class="stat-value" id="st-total" style="color:var(--teal)">R$ —</div><div class="stat-sub">todos os ingressos</div></div>
-    <div class="stat-card"><div class="stat-label">Ticket bônus</div><div class="stat-value" id="st-ticket" style="color:var(--blue)">R$ —</div><div class="stat-sub">exclusivo alimentação</div></div>
-    <div class="stat-card"><div class="stat-label">Base de distribuição</div><div class="stat-value" id="st-base" style="color:var(--tx)">R$ —</div><div class="stat-sub">sem ticket</div></div>
+    <div class="stat-card"><div class="stat-label">Renda total</div><div class="stat-value" id="st-total" style="color:var(--teal)">R$ 0</div><div class="stat-sub">todos os ingressos</div></div>
+    <div class="stat-card"><div class="stat-label">Ticket bônus</div><div class="stat-value" id="st-ticket" style="color:var(--blue)">R$ 0</div><div class="stat-sub">exclusivo alimentação</div></div>
+    <div class="stat-card"><div class="stat-label">Base de distribuição</div><div class="stat-value" id="st-base" style="color:var(--tx)">R$ 0</div><div class="stat-sub">sem ticket</div></div>
   </div>
   <div style="display:flex;justify-content:flex-end"><button class="btn btn-primary" onclick="goTo(&#39;despesas&#39;)">Próximo →</button></div>
 </div>
@@ -811,10 +840,192 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
     <div class="section-title">Quais são suas despesas?</div>
     <div class="section-desc">Edite nome, categoria e valor de cada gasto.</div>
   </div>
-  <div id="expense-categories"></div>
+  <div id="expense-categories"><div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--di)">Moradia</div>
+        <div style="font-family:&#39;Space Grotesk&#39;,sans-serif;font-size:12px;font-weight:700;color:var(--teal)">R$ 0</div>
+      </div><div class="expense-list"><div class="expense-item" id="exp-1">
+        <div class="expense-icon" style="background:rgba(45,212,191,.12)">🏠</div>
+        <input class="expense-name-input" type="text" value="Aluguel" placeholder="Nome" onchange="updateExpName(1,this.value)">
+        <select class="cat-select" onchange="updateExpCat(1,this.value)">
+          <option value="moradia" selected="">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte">Transporte</option><option value="saude">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
+        </select>
+        <div class="expense-val-wrap">
+          <span class="expense-prefix">R$</span>
+          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(1,this.value)">
+        </div>
+        <button class="del-btn" onclick="delExpense(1)">×</button>
+      </div><div class="expense-item" id="exp-2">
+        <div class="expense-icon" style="background:rgba(45,212,191,.12)">🏢</div>
+        <input class="expense-name-input" type="text" value="Condomínio" placeholder="Nome" onchange="updateExpName(2,this.value)">
+        <select class="cat-select" onchange="updateExpCat(2,this.value)">
+          <option value="moradia" selected="">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte">Transporte</option><option value="saude">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
+        </select>
+        <div class="expense-val-wrap">
+          <span class="expense-prefix">R$</span>
+          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(2,this.value)">
+        </div>
+        <button class="del-btn" onclick="delExpense(2)">×</button>
+      </div><div class="expense-item" id="exp-3">
+        <div class="expense-icon" style="background:rgba(45,212,191,.12)">💡</div>
+        <input class="expense-name-input" type="text" value="Luz" placeholder="Nome" onchange="updateExpName(3,this.value)">
+        <select class="cat-select" onchange="updateExpCat(3,this.value)">
+          <option value="moradia" selected="">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte">Transporte</option><option value="saude">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
+        </select>
+        <div class="expense-val-wrap">
+          <span class="expense-prefix">R$</span>
+          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(3,this.value)">
+        </div>
+        <button class="del-btn" onclick="delExpense(3)">×</button>
+      </div><div class="expense-item" id="exp-4">
+        <div class="expense-icon" style="background:rgba(45,212,191,.12)">📡</div>
+        <input class="expense-name-input" type="text" value="Internet" placeholder="Nome" onchange="updateExpName(4,this.value)">
+        <select class="cat-select" onchange="updateExpCat(4,this.value)">
+          <option value="moradia" selected="">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte">Transporte</option><option value="saude">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
+        </select>
+        <div class="expense-val-wrap">
+          <span class="expense-prefix">R$</span>
+          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(4,this.value)">
+        </div>
+        <button class="del-btn" onclick="delExpense(4)">×</button>
+      </div></div></div><div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--di)">Alimentação</div>
+        <div style="font-family:&#39;Space Grotesk&#39;,sans-serif;font-size:12px;font-weight:700;color:var(--blue)">R$ 0</div>
+      </div><div class="expense-list"><div class="expense-item" id="exp-5">
+        <div class="expense-icon" style="background:rgba(96,165,250,.12)">🛒</div>
+        <input class="expense-name-input" type="text" value="Mercado / Feira" placeholder="Nome" onchange="updateExpName(5,this.value)">
+        <select class="cat-select" onchange="updateExpCat(5,this.value)">
+          <option value="moradia">Moradia</option><option value="alimentacao" selected="">Alimentação</option><option value="transporte">Transporte</option><option value="saude">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
+        </select>
+        <div class="expense-val-wrap">
+          <span class="expense-prefix">R$</span>
+          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(5,this.value)">
+        </div>
+        <button class="del-btn" onclick="delExpense(5)">×</button>
+      </div></div></div><div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--di)">Transporte</div>
+        <div style="font-family:&#39;Space Grotesk&#39;,sans-serif;font-size:12px;font-weight:700;color:var(--amber)">R$ 0</div>
+      </div><div class="expense-list"><div class="expense-item" id="exp-6">
+        <div class="expense-icon" style="background:rgba(251,191,36,.12)">⛽</div>
+        <input class="expense-name-input" type="text" value="Gasolina" placeholder="Nome" onchange="updateExpName(6,this.value)">
+        <select class="cat-select" onchange="updateExpCat(6,this.value)">
+          <option value="moradia">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte" selected="">Transporte</option><option value="saude">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
+        </select>
+        <div class="expense-val-wrap">
+          <span class="expense-prefix">R$</span>
+          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(6,this.value)">
+        </div>
+        <button class="del-btn" onclick="delExpense(6)">×</button>
+      </div><div class="expense-item" id="exp-7">
+        <div class="expense-icon" style="background:rgba(251,191,36,.12)">🚗</div>
+        <input class="expense-name-input" type="text" value="IPVA" placeholder="Nome" onchange="updateExpName(7,this.value)">
+        <select class="cat-select" onchange="updateExpCat(7,this.value)">
+          <option value="moradia">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte" selected="">Transporte</option><option value="saude">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
+        </select>
+        <div class="expense-val-wrap">
+          <span class="expense-prefix">R$</span>
+          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(7,this.value)">
+        </div>
+        <button class="del-btn" onclick="delExpense(7)">×</button>
+      </div><div class="expense-item" id="exp-8">
+        <div class="expense-icon" style="background:rgba(251,191,36,.12)">🔧</div>
+        <input class="expense-name-input" type="text" value="Manutenção carro" placeholder="Nome" onchange="updateExpName(8,this.value)">
+        <select class="cat-select" onchange="updateExpCat(8,this.value)">
+          <option value="moradia">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte" selected="">Transporte</option><option value="saude">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
+        </select>
+        <div class="expense-val-wrap">
+          <span class="expense-prefix">R$</span>
+          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(8,this.value)">
+        </div>
+        <button class="del-btn" onclick="delExpense(8)">×</button>
+      </div></div></div><div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--di)">Saúde</div>
+        <div style="font-family:&#39;Space Grotesk&#39;,sans-serif;font-size:12px;font-weight:700;color:var(--indigo)">R$ 0</div>
+      </div><div class="expense-list"><div class="expense-item" id="exp-9">
+        <div class="expense-icon" style="background:rgba(129,140,248,.12)">💊</div>
+        <input class="expense-name-input" type="text" value="Plano de saúde" placeholder="Nome" onchange="updateExpName(9,this.value)">
+        <select class="cat-select" onchange="updateExpCat(9,this.value)">
+          <option value="moradia">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte">Transporte</option><option value="saude" selected="">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
+        </select>
+        <div class="expense-val-wrap">
+          <span class="expense-prefix">R$</span>
+          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(9,this.value)">
+        </div>
+        <button class="del-btn" onclick="delExpense(9)">×</button>
+      </div></div></div><div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--di)">Lazer / Pessoal</div>
+        <div style="font-family:&#39;Space Grotesk&#39;,sans-serif;font-size:12px;font-weight:700;color:var(--pink)">R$ 0</div>
+      </div><div class="expense-list"><div class="expense-item" id="exp-10">
+        <div class="expense-icon" style="background:rgba(244,114,182,.12)">📺</div>
+        <input class="expense-name-input" type="text" value="Assinaturas" placeholder="Nome" onchange="updateExpName(10,this.value)">
+        <select class="cat-select" onchange="updateExpCat(10,this.value)">
+          <option value="moradia">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte">Transporte</option><option value="saude">Saúde</option><option value="lazer" selected="">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
+        </select>
+        <div class="expense-val-wrap">
+          <span class="expense-prefix">R$</span>
+          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(10,this.value)">
+        </div>
+        <button class="del-btn" onclick="delExpense(10)">×</button>
+      </div><div class="expense-item" id="exp-11">
+        <div class="expense-icon" style="background:rgba(244,114,182,.12)">💸</div>
+        <input class="expense-name-input" type="text" value="Gastos semanais" placeholder="Nome" onchange="updateExpName(11,this.value)">
+        <select class="cat-select" onchange="updateExpCat(11,this.value)">
+          <option value="moradia">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte">Transporte</option><option value="saude">Saúde</option><option value="lazer" selected="">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
+        </select>
+        <div class="expense-val-wrap">
+          <span class="expense-prefix">R$</span>
+          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(11,this.value)">
+        </div>
+        <button class="del-btn" onclick="delExpense(11)">×</button>
+      </div></div></div><div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--di)">Dívidas</div>
+        <div style="font-family:&#39;Space Grotesk&#39;,sans-serif;font-size:12px;font-weight:700;color:var(--red)">R$ 0</div>
+      </div><div class="expense-list"><div class="expense-item" id="exp-12">
+        <div class="expense-icon" style="background:rgba(248,113,113,.12)">🏗️</div>
+        <input class="expense-name-input" type="text" value="Financiamento" placeholder="Nome" onchange="updateExpName(12,this.value)">
+        <select class="cat-select" onchange="updateExpCat(12,this.value)">
+          <option value="moradia">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte">Transporte</option><option value="saude">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas" selected="">Dívidas</option><option value="obrigacoes">Obrigações</option><option value="outros">Outros</option>
+        </select>
+        <div class="expense-val-wrap">
+          <span class="expense-prefix">R$</span>
+          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(12,this.value)">
+        </div>
+        <button class="del-btn" onclick="delExpense(12)">×</button>
+      </div></div></div><div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--di)">Obrigações</div>
+        <div style="font-family:&#39;Space Grotesk&#39;,sans-serif;font-size:12px;font-weight:700;color:var(--mu)">R$ 0</div>
+      </div><div class="expense-list"><div class="expense-item" id="exp-13">
+        <div class="expense-icon" style="background:rgba(127,142,164,.12)">📋</div>
+        <input class="expense-name-input" type="text" value="Imposto de Renda" placeholder="Nome" onchange="updateExpName(13,this.value)">
+        <select class="cat-select" onchange="updateExpCat(13,this.value)">
+          <option value="moradia">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte">Transporte</option><option value="saude">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes" selected="">Obrigações</option><option value="outros">Outros</option>
+        </select>
+        <div class="expense-val-wrap">
+          <span class="expense-prefix">R$</span>
+          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(13,this.value)">
+        </div>
+        <button class="del-btn" onclick="delExpense(13)">×</button>
+      </div><div class="expense-item" id="exp-14">
+        <div class="expense-icon" style="background:rgba(127,142,164,.12)">🏢</div>
+        <input class="expense-name-input" type="text" value="MEI" placeholder="Nome" onchange="updateExpName(14,this.value)">
+        <select class="cat-select" onchange="updateExpCat(14,this.value)">
+          <option value="moradia">Moradia</option><option value="alimentacao">Alimentação</option><option value="transporte">Transporte</option><option value="saude">Saúde</option><option value="lazer">Lazer / Pessoal</option><option value="dividas">Dívidas</option><option value="obrigacoes" selected="">Obrigações</option><option value="outros">Outros</option>
+        </select>
+        <div class="expense-val-wrap">
+          <span class="expense-prefix">R$</span>
+          <input class="expense-val-input" type="number" value="" placeholder="0" oninput="updateExpVal(14,this.value)">
+        </div>
+        <button class="del-btn" onclick="delExpense(14)">×</button>
+      </div></div></div></div>
   <div style="display:flex;gap:8px;margin-top:14px;justify-content:space-between;align-items:center">
     <button class="add-expense-btn" onclick="addExpense()" style="max-width:200px"><span style="font-size:18px">+</span> Adicionar</button>
-    <div style="font-size:13px;color:var(--mu)">Total: <strong id="total-desp" style="color:var(--red);font-family:&#39;Space Grotesk&#39;,sans-serif">R$ —</strong></div>
+    <div style="font-size:13px;color:var(--mu)">Total: <strong id="total-desp" style="color:var(--red);font-family:&#39;Space Grotesk&#39;,sans-serif">R$ 0</strong></div>
   </div>
   <div class="divider"></div>
   <div style="display:flex;justify-content:space-between">
@@ -861,17 +1072,17 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
     <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:0">
       <div class="stat-card" style="border-color:rgba(167,139,250,.3);background:rgba(167,139,250,.05)">
         <div class="stat-label">Meta do dízimo</div>
-        <div class="stat-value" id="diz-meta" style="color:var(--purple)">R$ —</div>
+        <div class="stat-value" id="diz-meta" style="color:var(--purple)">R$ 0</div>
         <div class="stat-sub" id="diz-pct-label">10% da renda</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Já doa</div>
-        <div class="stat-value" id="diz-dado" style="color:var(--tx)">R$ —</div>
+        <div class="stat-value" id="diz-dado" style="color:var(--tx)">R$ 0</div>
         <div class="stat-sub" id="diz-dado-pct">—</div>
       </div>
       <div class="stat-card" style="border-color:rgba(251,191,36,.3)">
         <div class="stat-label">Falta para 100%</div>
-        <div class="stat-value" id="diz-falta" style="color:var(--amber)">R$ —</div>
+        <div class="stat-value" id="diz-falta" style="color:var(--amber)">R$ 0</div>
         <div class="stat-sub">a acrescentar</div>
       </div>
     </div>
@@ -887,8 +1098,15 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
       </div>
     </div>
     <div class="form-grid" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr));margin-bottom:12px" id="missionarios-grid">
-      <!-- Renderizado pelo JS -->
-    </div>
+    <div style="display:flex;align-items:center;gap:7px;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:7px 11px">
+      <span style="font-size:14px">✉️</span>
+      <input type="text" value="Murilo e Brenda" placeholder="Nome" style="background:transparent;border:none;outline:none;color:var(--tx);font-size:13px;flex:1;font-family:&#39;Inter&#39;,sans-serif" onchange="updateMiss(&#39;m1&#39;,&#39;nome&#39;,this.value)">
+      <div style="display:flex;align-items:center;background:var(--s3);border:1px solid var(--bd);border-radius:7px;overflow:hidden;flex-shrink:0">
+        <span style="padding:0 7px;font-size:11px;color:var(--di)">R$</span>
+        <input type="number" value="150" placeholder="0" style="background:transparent;border:none;outline:none;color:var(--blue);font-family:&#39;Space Grotesk&#39;,sans-serif;font-weight:600;font-size:13px;width:80px;padding:5px 7px 5px 0;text-align:right;-moz-appearance:textfield" oninput="updateMiss(&#39;m1&#39;,&#39;val&#39;,this.value)">
+      </div>
+      <button onclick="delMiss(&#39;m1&#39;)" style="background:none;border:none;cursor:pointer;color:var(--di);font-size:16px;padding:2px 4px;border-radius:5px;transition:color .15s" onmouseover="this.style.color=&#39;var(--red)&#39;" onmouseout="this.style.color=&#39;var(--di)&#39;">×</button>
+    </div></div>
     <button class="add-expense-btn" onclick="addMissionario()" style="max-width:220px">
       <span style="font-size:16px">+</span> Adicionar missionário
     </button>
@@ -923,7 +1141,7 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
 
   <!-- RESUMO TOTAL DOAÇÕES -->
   <div id="resumo-doacoes"></div>
-  <div id="alert-dizimo"></div>
+  <div id="alert-dizimo"><div class="alert alert-amber"><span class="alert-icon">🙏</span><div>Informe quanto já entrega de dízimo à igreja mensalmente.</div></div></div>
 
   <div class="divider"></div>
   <div style="display:flex;justify-content:space-between">
@@ -1361,19 +1579,81 @@ window.applyData = (d) => {
   renderRendas(); renderExpenses(); renderMissionarios(); calcular();
 };
 
-/* ── NAVEGAÇÃO ── */
-const titles = {renda:'Renda mensal',despesas:'Despesas',dizimo:'Doações',plano:'Diagnóstico',metas:'Metas',investir:'Investimentos'};
+/* ══ NAVEGAÇÃO CENTRAL ══
+   Corrige o problema de ficar preso no Mensal.
+   Agora, toda navegação Geral esconde as telas mensais,
+   e toda navegação Mensal esconde as telas gerais.
+*/
+const SECS_G = ['sec-renda','sec-despesas','sec-dizimo','sec-plano','sec-metas','sec-investir','sec-dashboard'];
+const SECS_M = ['sec-mes-lancamentos','sec-mes-resumo','sec-mes-anual','sec-dash-mensal'];
+const TITLES_G = {
+  renda:'Renda mensal',
+  despesas:'Despesas',
+  dizimo:'Doações',
+  plano:'Diagnóstico',
+  metas:'Metas',
+  investir:'Investimentos',
+  dashboard:'Dashboard Geral'
+};
+const TITLES_M = {
+  'mes-lancamentos':'Lançamentos',
+  'mes-resumo':'Resumo do mês',
+  'mes-anual':'Visão anual',
+  'dash-mensal':'Dashboard do Mês'
+};
+
+function _hideAll(ids) {
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.style.display = 'none';
+      el.classList.remove('active');
+    }
+  });
+}
+
+function _show(id) {
+  const el = document.getElementById(id);
+  if (el) {
+    el.style.display = 'block';
+    el.classList.add('active');
+  }
+}
+
+function _syncModeUI(mode) {
+  appMode = mode;
+
+  const navGeral = document.getElementById('nav-geral');
+  const navMensal = document.getElementById('nav-mensal');
+  const btnGeral = document.getElementById('mode-geral-btn');
+  const btnMensal = document.getElementById('mode-mensal-btn');
+
+  if (navGeral) navGeral.style.display = mode === 'geral' ? 'flex' : 'none';
+  if (navMensal) navMensal.style.display = mode === 'mensal' ? 'flex' : 'none';
+  if (btnGeral) btnGeral.classList.toggle('active', mode === 'geral');
+  if (btnMensal) btnMensal.classList.toggle('active', mode === 'mensal');
+}
+
 function goTo(id) {
-  document.querySelectorAll('.page-section').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.getElementById('sec-'+id).classList.add('active');
-  document.getElementById('nav-'+id).classList.add('active');
-  document.getElementById('topbar-title').textContent = titles[id];
-  if(id==='plano')   calcular();
-  if(id==='metas')   renderMetas();
-  if(id==='investir')renderInvestir();
-  if(id==='dizimo')  renderDizimo();
-  window.scrollTo(0,0);
+  _syncModeUI('geral');
+  _hideAll(SECS_M);
+  _hideAll(SECS_G);
+  _show('sec-' + id);
+
+  document.querySelectorAll('#nav-geral .nav-item').forEach(n => n.classList.remove('active'));
+  const navBtn = document.getElementById('nav-' + id);
+  if (navBtn) navBtn.classList.add('active');
+
+  const title = document.getElementById('topbar-title');
+  if (title) title.textContent = TITLES_G[id] || id;
+
+  if (id === 'plano') calcular();
+  if (id === 'metas') renderMetas();
+  if (id === 'investir') renderInvestir();
+  if (id === 'dizimo') renderDizimo();
+  if (id === 'dashboard' && typeof renderDashGeral === 'function') renderDashGeral();
+
+  window.scrollTo(0, 0);
 }
 
 /* ── CÁLCULO ── */
@@ -1625,11 +1905,11 @@ function renderExpenses(){
   document.getElementById('total-desp').textContent=fmt(state.expenses.reduce((s,e)=>s+e.val,0));
 }
 
-function updateExpName(id,v){state.expenses.find(e=>e.id===id).name=v;}
-function updateExpCat(id,v){const e=state.expenses.find(e=>e.id===id);e.cat=v;e.icon=ICONS[v]||'📦';renderExpenses();calcular();}
-function updateExpVal(id,v){state.expenses.find(e=>e.id===id).val=parseFloat(v)||0;document.getElementById('total-desp').textContent=fmt(state.expenses.reduce((s,e)=>s+e.val,0));calcular();}
-function delExpense(id){state.expenses=state.expenses.filter(e=>e.id!==id);renderExpenses();calcular();}
-function addExpense(){state.expenses.push({id:state.nextId++,name:'Nova despesa',cat:'outros',val:0,icon:'📦'});renderExpenses();const l=document.querySelector('.expense-item:last-child .expense-name-input');if(l){l.focus();l.select();}}
+function updateExpName(id,v){state.expenses.find(e=>e.id===id).name=v; if(window.agendarAutoSave) window.agendarAutoSave();}
+function updateExpCat(id,v){const e=state.expenses.find(e=>e.id===id);e.cat=v;e.icon=ICONS[v]||'📦';renderExpenses();calcular(); if(window.agendarAutoSave) window.agendarAutoSave();}
+function updateExpVal(id,v){state.expenses.find(e=>e.id===id).val=parseFloat(v)||0;document.getElementById('total-desp').textContent=fmt(state.expenses.reduce((s,e)=>s+e.val,0));calcular(); if(window.agendarAutoSave) window.agendarAutoSave();}
+function delExpense(id){state.expenses=state.expenses.filter(e=>e.id!==id);renderExpenses();calcular(); if(window.agendarAutoSave) window.agendarAutoSave(500);}
+function addExpense(){state.expenses.push({id:state.nextId++,name:'Nova despesa',cat:'outros',val:0,icon:'📦'});renderExpenses();const l=document.querySelector('.expense-item:last-child .expense-name-input');if(l){l.focus();l.select();} if(window.agendarAutoSave) window.agendarAutoSave(500);}
 
 /* ── METAS ── */
 function renderMetas(){
@@ -1757,30 +2037,40 @@ let mesesData={};
 
 function mesKey(ano,mes){return `${ano}-${String(mes+1).padStart(2,'0')}`;}
 
-window.setMode=(mode)=>{
-  appMode=mode;
-  document.getElementById('nav-geral').style.display  = mode==='geral'?'flex':'none';
-  document.getElementById('nav-mensal').style.display = mode==='mensal'?'flex':'none';
-  document.getElementById('mode-geral-btn').classList.toggle('active', mode==='geral');
-  document.getElementById('mode-mensal-btn').classList.toggle('active',mode==='mensal');
-  if(mode==='geral'){goTo('plano');}
-  else{document.querySelectorAll('.page-section').forEach(s=>s.style.display='none');goToMensal('mes-lancamentos');}
+window.setMode = (mode) => {
+  if (mode === 'geral') {
+    goTo('plano');
+  } else {
+    goToMensal('mes-lancamentos');
+  }
 };
 
-const titlesMensal={'mes-lancamentos':'Lançamentos','mes-resumo':'Resumo do mês','mes-anual':'Visão anual'};
+window.goToMensal = (id) => {
+  _syncModeUI('mensal');
+  _hideAll(SECS_G);
+  _hideAll(SECS_M);
+  _show('sec-' + id);
 
-window.goToMensal=(id)=>{
-  document.querySelectorAll('.page-section').forEach(s=>s.style.display='none');
-  const sec=document.getElementById('sec-'+id);
-  if(sec) sec.style.display='block';
-  document.querySelectorAll('#nav-mensal .nav-item').forEach(n=>n.classList.remove('active'));
-  const nb=document.getElementById('nav-'+id.replace('mes-',''));
-  if(nb) nb.classList.add('active');
-  document.getElementById('topbar-title').textContent=titlesMensal[id]||id;
-  if(id==='mes-lancamentos') renderLancamentos();
-  if(id==='mes-resumo')      renderResumoMes();
-  if(id==='mes-anual')       renderAnual();
-  window.scrollTo(0,0);
+  document.querySelectorAll('#nav-mensal .nav-item').forEach(n => n.classList.remove('active'));
+
+  const navMap = {
+    'mes-lancamentos': 'nav-lancamentos',
+    'mes-resumo': 'nav-mes-resumo',
+    'mes-anual': 'nav-anual',
+    'dash-mensal': 'nav-dash-mensal'
+  };
+  const navBtn = document.getElementById(navMap[id]);
+  if (navBtn) navBtn.classList.add('active');
+
+  const title = document.getElementById('topbar-title');
+  if (title) title.textContent = TITLES_M[id] || id;
+
+  if (id === 'mes-lancamentos') renderLancamentos();
+  if (id === 'mes-resumo') renderResumoMes();
+  if (id === 'mes-anual') renderAnual();
+  if (id === 'dash-mensal' && typeof renderDashMensal === 'function') renderDashMensal();
+
+  window.scrollTo(0, 0);
 };
 
 window.navMes=(dir)=>{
@@ -1909,6 +2199,7 @@ function updateMesItem(key,tipo,idx,val){
     document.getElementById('total-variaveis-mes').textContent=fmt(mes.variaveis.reduce((s,r)=>s+r.val,0));
     document.getElementById('total-doacoes-mes').textContent=fmt(mes.doacoes.reduce((s,r)=>s+r.val,0));
     document.getElementById('total-inesperadas-mes').textContent=fmt(mes.inesperadas.reduce((s,r)=>s+r.val,0));
+    if(window.agendarAutoSave) window.agendarAutoSave();
   }
 }
 
@@ -2040,10 +2331,74 @@ function renderAnual(){
 window.salvarMes=async()=>{if(typeof salvarFirestore==='function')await salvarFirestore();};
 
 // Integrar mesesData no Firestore
-const _coletarOrig=window.coletarDados;
-window.coletarDados=()=>({..._coletarOrig(),mesesData});
-const _applyOrig=window.applyData;
-window.applyData=(d)=>{_applyOrig(d);if(d.mesesData)mesesData=d.mesesData;};
+const _coletarOrig = window.coletarDados;
+window.coletarDados = () => ({ ..._coletarOrig(), mesesData });
+
+const _applyOrig = window.applyData;
+window.applyData = (d) => {
+  carregandoDadosDaNuvem = true;
+  _applyOrig(d);
+  if (d.mesesData) mesesData = d.mesesData;
+  carregandoDadosDaNuvem = false;
+};
+
+/* ── AUTO-SALVAR ──
+   Qualquer alteração feita no Geral ou no Mensal é salva na nuvem
+   depois de alguns instantes. Assim, ao entrar de novo, fica salvo.
+*/
+let autoSaveTimer = null;
+let carregandoDadosDaNuvem = false;
+
+function appEstaAberto() {
+  const shell = document.getElementById('app-shell');
+  return shell && shell.style.display !== 'none';
+}
+
+window.agendarAutoSave = (delay = 900) => {
+  if (carregandoDadosDaNuvem) return;
+  if (!appEstaAberto()) return;
+  if (!currentUser) return;
+
+  clearTimeout(autoSaveTimer);
+  if (typeof setCloudStatus === 'function') setCloudStatus('saving');
+
+  autoSaveTimer = setTimeout(() => {
+    if (typeof window.salvarFirestore === 'function') {
+      window.salvarFirestore(true);
+    }
+  }, delay);
+};
+
+document.addEventListener('input', (ev) => {
+  const campo = ev.target;
+  if (!campo || !campo.matches('input, select, textarea')) return;
+  window.agendarAutoSave();
+});
+
+document.addEventListener('change', (ev) => {
+  const campo = ev.target;
+  if (!campo || !campo.matches('input, select, textarea')) return;
+  window.agendarAutoSave(500);
+});
+
+document.addEventListener('click', (ev) => {
+  const btn = ev.target.closest('button');
+  if (!btn) return;
+
+  const texto = (btn.textContent || '').toLowerCase();
+  const acao = btn.getAttribute('onclick') || '';
+
+  const mexeNosDados =
+    texto.includes('adicionar') ||
+    texto.includes('limpar') ||
+    texto.trim() === '×' ||
+    acao.includes('add') ||
+    acao.includes('del') ||
+    acao.includes('resetAll') ||
+    acao.includes('salvarMes');
+
+  if (mexeNosDados) window.agendarAutoSave(1200);
+});
 
 /* ── TEMA ── */
 function setToggleUI(isDark) {
