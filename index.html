@@ -545,6 +545,27 @@ body.dark .topbar{
 .debt-month-fill{height:7px;background:var(--red);border-radius:4px}
 .debt-month-value{font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;text-align:right;color:var(--red)}
 .debt-empty{background:var(--s1);border:1px dashed var(--bd2);border-radius:14px;padding:24px;text-align:center;color:var(--mu);font-size:13px;margin-bottom:16px}
+
+.debt-filter-card{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:13px 16px;margin-bottom:12px}
+.debt-filter-title{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--di);margin-bottom:9px}
+.debt-filter-grid{display:grid;grid-template-columns:1.2fr .9fr 1.2fr auto;gap:9px;align-items:end}
+.debt-filter-field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.debt-filter-field label{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--di)}
+.debt-filter-field input,.debt-filter-field select{height:36px;border:1px solid var(--bd);background:var(--s2);color:var(--tx);border-radius:9px;padding:0 10px;font-family:'Inter',sans-serif;font-size:12px;outline:none;min-width:0}
+.debt-items-list{background:var(--s1);border:1px solid var(--bd);border-radius:14px;overflow:hidden;margin-bottom:14px}
+.debt-items-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--bd)}
+.debt-items-title{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:800;color:var(--tx)}
+.debt-item-row{display:grid;grid-template-columns:1.1fr 1fr .75fr .75fr .85fr auto;gap:10px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--bd)}
+.debt-item-row:last-child{border-bottom:none}
+.debt-parent-badge{display:inline-flex;align-items:center;gap:5px;max-width:100%;border:1px solid var(--tbd);background:var(--tbg);color:var(--teal);border-radius:999px;padding:4px 9px;font-size:11px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.debt-item-name strong{display:block;font-size:13px;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.debt-item-name span{display:block;font-size:10px;color:var(--mu);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.debt-item-small{font-size:11px;color:var(--mu)}
+.debt-item-money{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:800;text-align:right}
+.debt-item-empty{padding:18px;text-align:center;color:var(--mu);font-size:13px;background:var(--s1)}
+@media(max-width:980px){.debt-filter-grid{grid-template-columns:1fr 1fr}.debt-item-row{grid-template-columns:1fr 1fr}.debt-item-money{text-align:left}}
+@media(max-width:640px){.debt-filter-grid{grid-template-columns:1fr}.debt-item-row{grid-template-columns:1fr}.debt-parent-badge{width:max-content}.debt-item-money{text-align:left}}
+
 @media(max-width:980px){.debt-form-grid{grid-template-columns:1fr 1fr}.debt-card-top{grid-template-columns:1fr}.debt-card-actions{justify-content:flex-start}.debt-edit-grid{grid-template-columns:1fr 1fr}.debt-component-row,.debt-add-component{grid-template-columns:1fr 1fr}}
 @media(max-width:640px){.debt-form-grid,.debt-edit-grid{grid-template-columns:1fr}.debt-month-row{grid-template-columns:80px 1fr}.debt-month-value{grid-column:2;text-align:left}}
 
@@ -1125,7 +1146,7 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
   <div class="section-header">
     <div class="section-eyebrow">controle de dívidas</div>
     <div class="section-title">Acompanhamento de dívidas parceladas</div>
-    <div class="section-desc">Cadastre financiamentos, cartão de crédito, empréstimos e compras parceladas. O painel calcula quanto falta pagar e até quando vai cada dívida.</div>
+    <div class="section-desc">Cadastre cartões, financiamentos, empréstimos e compras parceladas. Em cartões, você pode detalhar tudo que compõe a fatura, como celular, geladeira e outras parcelas.</div>
   </div>
 
   <div class="debt-summary-grid" id="dividas-summary"></div>
@@ -1143,6 +1164,35 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
       <button class="btn btn-primary" style="height:38px" onclick="addDivida()">Adicionar</button>
     </div>
   </div>
+
+  <div class="debt-filter-card">
+    <div class="debt-filter-title">🔎 Visão detalhada do que compõe as dívidas</div>
+    <div class="debt-filter-grid">
+      <div class="debt-filter-field">
+        <label>Filtrar por cartão/dívida</label>
+        <select id="debt-filter-parent" onchange="renderDividas()"><option value="">Todos</option></select>
+      </div>
+      <div class="debt-filter-field">
+        <label>Tipo</label>
+        <select id="debt-filter-tipo" onchange="renderDividas()">
+          <option value="">Todos</option>
+          <option value="Cartão">Cartão</option>
+          <option value="Financiamento">Financiamento</option>
+          <option value="Empréstimo">Empréstimo</option>
+          <option value="Loja">Loja</option>
+          <option value="Outros">Outros</option>
+        </select>
+      </div>
+      <div class="debt-filter-field">
+        <label>Buscar item</label>
+        <input id="debt-filter-busca" type="text" placeholder="ex: celular, geladeira, Nubank" oninput="renderDividas()">
+      </div>
+      <button class="btn" style="height:36px" onclick="limparFiltrosDividas()">Limpar filtros</button>
+    </div>
+  </div>
+
+  <div id="dividas-itens-list" class="debt-items-list"></div>
+
 
   <div id="dividas-list" class="debt-list"></div>
   <div id="dividas-projecao"></div>
@@ -2281,6 +2331,135 @@ function renderComponentesDivida(d){
     </div>`;
 }
 
+
+function itensDetalhadosDividas(dividas){
+  const itens = [];
+  (dividas || []).forEach(d => {
+    const comps = Array.isArray(d.componentes) ? d.componentes : [];
+
+    if(comps.length){
+      comps.forEach(c => {
+        const info = infoParcelamento({ ...c, inicio: c.inicio || d.inicio || mesInicioPadrao() });
+        itens.push({
+          parentId: d.id,
+          parentNome: d.nome || 'Dívida',
+          tipo: d.tipo || 'Outros',
+          credor: d.credor || '',
+          itemId: c.id,
+          nome: c.nome || 'Item da dívida',
+          info,
+          ehComponente: true
+        });
+      });
+    } else {
+      const info = infoParcelamento(d);
+      itens.push({
+        parentId: d.id,
+        parentNome: d.nome || 'Dívida',
+        tipo: d.tipo || 'Outros',
+        credor: d.credor || '',
+        itemId: d.id,
+        nome: d.nome || 'Dívida',
+        info,
+        ehComponente: false
+      });
+    }
+  });
+  return itens;
+}
+
+function atualizarSelectFiltroDividas(dividas){
+  const select = document.getElementById('debt-filter-parent');
+  if(!select) return;
+  const atual = select.value;
+  const opcoes = (dividas || []).map(d => ({ id:d.id, nome:d.nome || 'Dívida', tipo:d.tipo || 'Outros', credor:d.credor || '' }));
+  select.innerHTML = `<option value="">Todos</option>` + opcoes.map(o => {
+    const label = `${o.tipo === 'Cartão' ? '💳 ' : ''}${escapeHTML(o.nome)}${o.credor ? ' · ' + escapeHTML(o.credor) : ''}`;
+    return `<option value="${escapeAttr(o.id)}" ${o.id===atual?'selected':''}>${label}</option>`;
+  }).join('');
+  if(atual && !opcoes.some(o => o.id === atual)) select.value = '';
+}
+
+function limparFiltrosDividas(){
+  const parent = document.getElementById('debt-filter-parent');
+  const tipo = document.getElementById('debt-filter-tipo');
+  const busca = document.getElementById('debt-filter-busca');
+  if(parent) parent.value = '';
+  if(tipo) tipo.value = '';
+  if(busca) busca.value = '';
+  renderDividas();
+}
+
+function renderItensDetalhadosDividas(dividas){
+  const box = document.getElementById('dividas-itens-list');
+  if(!box) return;
+
+  atualizarSelectFiltroDividas(dividas);
+
+  const filtroParent = document.getElementById('debt-filter-parent')?.value || '';
+  const filtroTipo = document.getElementById('debt-filter-tipo')?.value || '';
+  const busca = (document.getElementById('debt-filter-busca')?.value || '').trim().toLowerCase();
+
+  let itens = itensDetalhadosDividas(dividas)
+    .filter(i => i.info.parcelasRestantes > 0)
+    .filter(i => !filtroParent || i.parentId === filtroParent)
+    .filter(i => !filtroTipo || i.tipo === filtroTipo)
+    .filter(i => {
+      if(!busca) return true;
+      const texto = `${i.nome} ${i.parentNome} ${i.tipo} ${i.credor}`.toLowerCase();
+      return texto.includes(busca);
+    })
+    .sort((a,b) => {
+      const card = String(a.parentNome).localeCompare(String(b.parentNome));
+      if(card !== 0) return card;
+      return String(a.nome).localeCompare(String(b.nome));
+    });
+
+  const totalMensal = itens.reduce((s,i)=>s+i.info.valorParcela,0);
+  const totalFalta = itens.reduce((s,i)=>s+i.info.falta,0);
+
+  if(!itens.length){
+    box.innerHTML = `
+      <div class="debt-items-head">
+        <div class="debt-items-title">📋 Lista detalhada das dívidas</div>
+        <div class="debt-item-small">Nenhum item ativo no filtro atual.</div>
+      </div>
+      <div class="debt-item-empty">Cadastre uma dívida ou adicione itens na composição do cartão para aparecerem aqui.</div>`;
+    return;
+  }
+
+  box.innerHTML = `
+    <div class="debt-items-head">
+      <div>
+        <div class="debt-items-title">📋 Lista detalhada das dívidas</div>
+        <div class="debt-item-small">Tudo que compõe os cartões, financiamentos e parcelamentos aparece separado aqui.</div>
+      </div>
+      <div style="text-align:right">
+        <div class="debt-item-small">Mensal no filtro</div>
+        <div class="debt-item-money" style="color:var(--red)">${fmt(totalMensal)}</div>
+        <div class="debt-item-small">Falta: <strong>${fmt(totalFalta)}</strong></div>
+      </div>
+    </div>
+    ${itens.map(i => {
+      const marcador = i.tipo === 'Cartão' ? '💳' : i.tipo === 'Financiamento' ? '🏗️' : i.tipo === 'Empréstimo' ? '🏦' : i.tipo === 'Loja' ? '🛍️' : '📌';
+      const status = `${i.info.parcelaAtual}/${i.info.totalParcelas}`;
+      return `
+        <div class="debt-item-row">
+          <div><span class="debt-parent-badge">${marcador} ${escapeHTML(i.parentNome)}</span></div>
+          <div class="debt-item-name">
+            <strong>${escapeHTML(i.nome)}</strong>
+            <span>${escapeHTML(i.tipo)}${i.credor ? ' · ' + escapeHTML(i.credor) : ''}${i.ehComponente ? '' : ' · lançamento principal'}</span>
+          </div>
+          <div class="debt-item-small">Parcela <strong style="color:var(--tx)">${escapeHTML(status)}</strong></div>
+          <div class="debt-item-money" style="color:var(--amber)">${fmt(i.info.valorParcela)}/mês</div>
+          <div class="debt-item-small">Falta <strong style="color:var(--red)">${fmt(i.info.falta)}</strong><br>até ${nomeMesLongo(i.info.fimMes)}</div>
+          <div style="text-align:right">
+            ${i.ehComponente && i.info.parcelasRestantes>0 ? `<button class="debt-mini-btn" onclick="pagarParcelaComponente('${i.parentId}','${i.itemId}')">pagar</button>` : `<button class="debt-mini-btn" onclick="pagarParcelaDivida('${i.parentId}')">pagar</button>`}
+          </div>
+        </div>`;
+    }).join('')}`;
+}
+
 function renderDividas(){
   const summary = document.getElementById('dividas-summary');
   const list = document.getElementById('dividas-list');
@@ -2291,6 +2470,7 @@ function renderDividas(){
 
   const dividas = state.dividasParceladas || [];
   const infos = dividas.map(d => ({ d, info: infoDivida(d) }));
+  renderItensDetalhadosDividas(dividas);
   const abertas = infos.filter(x => x.info.parcelasRestantes > 0);
   const totalFalta = abertas.reduce((s,x)=>s+x.info.falta,0);
   const compromissoMensal = abertas.reduce((s,x)=>s+x.info.valorParcela,0);
