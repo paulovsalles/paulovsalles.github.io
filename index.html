@@ -723,6 +723,41 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
 @media(max-width:1100px){.debt-form-grid-clean{grid-template-columns:1fr 1fr !important}.debt-add-main-btn{grid-column:1 / -1}.debt-card-top,.debt-edit-grid,.debt-component-row,.debt-add-component{grid-template-columns:1fr 1fr}.debt-card-actions{justify-content:flex-start}}
 @media(max-width:640px){.debt-form-grid-clean,.debt-card-top,.debt-edit-grid,.debt-component-row,.debt-add-component{grid-template-columns:1fr !important}}
 
+
+
+/* ─── DÍVIDAS V2 — fluxo simples e robusto ─── */
+.debt-step-box{display:grid;grid-template-columns:1.1fr 1.3fr 1fr 1fr 1fr 1fr 1fr auto;gap:10px;align-items:end}
+.debt-field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.debt-field label,.debt-filter-field label,.debt-add-component label{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--di)}
+.debt-field input,.debt-field select,.debt-filter-field input,.debt-filter-field select,.debt-add-component input,.debt-component-row input,.debt-edit-grid input,.debt-edit-grid select{height:38px;border:1px solid var(--bd);background:var(--s2);color:var(--tx);border-radius:9px;padding:0 11px;font-family:'Inter',sans-serif;font-size:13px;outline:none;min-width:0}
+.debt-field input:focus,.debt-field select:focus,.debt-filter-field input:focus,.debt-filter-field select:focus,.debt-add-component input:focus,.debt-component-row input:focus{border-color:var(--tbd)}
+.debt-add-main-btn{height:38px;align-self:end}
+.debt-form-help{margin-top:14px;padding:10px 13px;border:1px solid var(--tbd);background:var(--tbg);border-radius:10px;color:var(--mu);font-size:12px;line-height:1.5}
+.debt-summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.debt-form-card,.debt-filter-card,.debt-items-list{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:15px 16px;margin-bottom:14px}
+.debt-filter-title{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--di);margin-bottom:10px}
+.debt-filter-grid{display:grid;grid-template-columns:1fr 220px 1fr auto;gap:10px;align-items:end}
+.debt-list{display:flex;flex-direction:column;gap:12px;margin-top:10px}
+.debt-card{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:15px 16px}
+.debt-card-top{display:grid;grid-template-columns:minmax(170px,1fr) 110px 110px 110px auto;gap:12px;align-items:center}
+.debt-title strong{display:block;font-size:15px;color:var(--tx)}
+.debt-title span{font-size:11px;color:var(--mu)}
+.debt-metric-label{font-size:10px;color:var(--di);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+.debt-metric-value{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:800;color:var(--tx)}
+.debt-card-actions{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+.debt-mini-btn{border:1px solid var(--bd);background:var(--s2);color:var(--mu);border-radius:7px;padding:5px 8px;font-size:11px;cursor:pointer;white-space:nowrap}
+.debt-mini-btn:hover{border-color:var(--tbd);color:var(--teal)}
+.debt-mini-btn.danger:hover{color:var(--red);border-color:rgba(248,113,113,.35);background:rgba(248,113,113,.08)}
+.debt-progress-bg{height:6px;background:var(--bd);border-radius:5px;margin:12px 0;overflow:hidden}.debt-progress-fg{height:6px;border-radius:5px;transition:width .3s}
+.debt-edit-grid{display:grid;grid-template-columns:1.3fr 130px 1fr 110px 110px 130px;gap:8px;margin-top:12px}
+.debt-components{border-top:1px solid var(--bd);margin-top:14px;padding-top:12px}.debt-components-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:9px}.debt-components-title{font-size:12px;font-weight:800;color:var(--tx)}
+.debt-add-component{display:grid;grid-template-columns:1.4fr 110px 100px 100px 130px auto;gap:8px;align-items:end;background:var(--s2);border:1px dashed var(--bd);border-radius:12px;padding:10px;margin-top:9px}
+.debt-component-row{display:grid;grid-template-columns:1.4fr 110px 80px 80px 120px 32px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--bd)}
+.debt-component-summary{font-size:11px;color:var(--mu);margin-top:8px}.debt-empty{background:var(--s1);border:1px dashed var(--bd);border-radius:14px;padding:26px;text-align:center;color:var(--mu);font-size:13px}
+.debt-items-head{display:flex;justify-content:space-between;gap:10px;align-items:center;border-bottom:1px solid var(--bd);margin:-15px -16px 0;padding:13px 16px}.debt-items-title{font-size:13px;font-weight:800;color:var(--tx)}.debt-item-small{font-size:11px;color:var(--mu)}.debt-item-money{font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:13px}.debt-item-empty{text-align:center;color:var(--mu);padding:22px;font-size:13px}.debt-item-row{display:grid;grid-template-columns:140px minmax(160px,1fr) 92px 115px 135px auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--bd)}.debt-item-row:last-child{border-bottom:0}.debt-parent-badge{display:inline-flex;background:var(--tbg);color:var(--teal);border:1px solid var(--tbd);border-radius:999px;padding:4px 8px;font-size:11px;font-weight:800}.debt-item-name strong{display:block;font-size:13px;color:var(--tx)}.debt-item-name span{display:block;font-size:11px;color:var(--mu)}
+.debt-projection{background:var(--s1);border:1px solid var(--bd);border-radius:14px;margin-top:14px;overflow:hidden}.debt-projection-header{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--bd)}.debt-projection-title{font-size:13px;font-weight:800}.debt-projection-body{padding:12px 16px}.debt-month-row{display:grid;grid-template-columns:70px 1fr 80px;gap:8px;align-items:center;margin-bottom:7px}.debt-month-track{height:8px;background:var(--bd);border-radius:8px;overflow:hidden}.debt-month-fill{height:8px;border-radius:8px;background:var(--red)}.debt-month-name,.debt-month-value{font-size:11px;color:var(--mu)}.debt-month-value{text-align:right;font-family:'Space Grotesk',sans-serif;font-weight:800;color:var(--red)}
+@media(max-width:900px){.debt-step-box,.debt-filter-grid,.debt-card-top,.debt-edit-grid,.debt-add-component,.debt-component-row,.debt-item-row{grid-template-columns:1fr}.debt-card-actions{justify-content:flex-start}.debt-field input,.debt-field select{width:100%}}
+
 </style>
 </head>
 <body>
@@ -1183,27 +1218,27 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
   <div class="section-header">
     <div class="section-eyebrow">controle de dívidas</div>
     <div class="section-title">Acompanhamento de dívidas parceladas</div>
-    <div class="section-desc">Cadastre cartões, financiamentos, empréstimos e compras parceladas. Em cartões, você pode detalhar tudo que compõe a fatura, como celular, geladeira e outras parcelas.</div>
+    <div class="section-desc">Cadastre cartões, financiamentos, empréstimos e compras parceladas. No cartão, primeiro crie o cartão e depois adicione tudo que compõe a fatura.</div>
   </div>
 
   <div class="debt-summary-grid" id="dividas-summary"></div>
 
-  <div class="debt-form-card">
+  <div class="debt-form-card debt-wizard-card">
     <div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--di);margin-bottom:12px">➕ Nova dívida / parcelamento</div>
 
-    <div class="debt-form-grid debt-form-grid-clean">
+    <div class="debt-step-box">
       <div class="debt-field">
-        <label>1. Tipo da dívida</label>
+        <label>1. O que você quer cadastrar?</label>
         <select id="debt-tipo" onchange="onDebtTipoChange()">
           <option value="Cartão">Cartão de crédito</option>
           <option value="Financiamento">Financiamento</option>
           <option value="Empréstimo">Empréstimo</option>
-          <option value="Loja">Compra em loja</option>
+          <option value="Loja">Compra parcelada / loja</option>
           <option value="Outros">Outros</option>
         </select>
       </div>
 
-      <div class="debt-field debt-main-name">
+      <div class="debt-field">
         <label id="debt-nome-label">2. Qual cartão?</label>
         <input id="debt-nome" type="text" placeholder="ex: Nubank, Inter, PicPay">
       </div>
@@ -1215,17 +1250,17 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
 
       <div class="debt-field debt-parcel-only">
         <label>Valor da parcela</label>
-        <input id="debt-valor" type="number" min="0" step="0.01" placeholder="0">
+        <input id="debt-valor" type="number" min="0" step="0.01" placeholder="ex: 450">
       </div>
 
       <div class="debt-field debt-parcel-only">
         <label>Total de parcelas</label>
-        <input id="debt-total" type="number" min="1" step="1" placeholder="12">
+        <input id="debt-total" type="number" min="1" step="1" placeholder="ex: 24">
       </div>
 
       <div class="debt-field debt-parcel-only">
         <label>Próxima parcela</label>
-        <input id="debt-atual" type="number" min="1" step="1" placeholder="1">
+        <input id="debt-atual" type="number" min="1" step="1" placeholder="ex: 1">
       </div>
 
       <div class="debt-field">
@@ -1237,7 +1272,7 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
     </div>
 
     <div id="debt-form-help" class="debt-form-help">
-      Primeiro crie o cartão, por exemplo <strong>Nubank</strong>. Depois, no card que aparecer abaixo, adicione os itens que compõem a fatura: celular, geladeira, notebook etc.
+      Primeiro crie o cartão, por exemplo <strong>Nubank</strong>. Depois, no card que aparecer abaixo, adicione os itens da fatura: celular, geladeira, notebook etc.
     </div>
   </div>
 
@@ -1268,15 +1303,13 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
   </div>
 
   <div id="dividas-itens-list" class="debt-items-list"></div>
-
-
   <div id="dividas-list" class="debt-list"></div>
   <div id="dividas-projecao"></div>
 
   <div class="divider"></div>
   <div style="display:flex;justify-content:space-between">
-    <button class="btn" onclick="goTo(&#39;despesas&#39;)">← Despesas</button>
-    <button class="btn btn-primary" onclick="goTo(&#39;dizimo&#39;)">Próximo →</button>
+    <button class="btn" onclick="goTo('despesas')">← Despesas</button>
+    <button class="btn btn-primary" onclick="goTo('dizimo')">Próximo →</button>
   </div>
 </div>
 
@@ -3695,6 +3728,222 @@ function aplicarTema() {
   const isDark = saved === 'dark';
   if(isDark) document.body.classList.add('dark');
   setToggleUI(isDark);
+}
+
+
+
+/* ══════════════════════════════════════════
+   DÍVIDAS V3 — fluxo refeito e robusto
+══════════════════════════════════════════ */
+function garantirDividasState(){
+  if(!Array.isArray(state.dividasParceladas)) state.dividasParceladas=[];
+  if(!state.nextDividaId) state.nextDividaId = state.dividasParceladas.length + 1;
+}
+
+function onDebtTipoChange(){
+  const tipo = document.getElementById('debt-tipo')?.value || 'Cartão';
+  const isCartao = tipo === 'Cartão';
+  document.querySelectorAll('.debt-parcel-only').forEach(el => el.style.display = isCartao ? 'none' : 'flex');
+  const nomeLabel = document.getElementById('debt-nome-label');
+  const credorLabel = document.getElementById('debt-credor-label');
+  const nomeInput = document.getElementById('debt-nome');
+  const credorInput = document.getElementById('debt-credor');
+  const btn = document.getElementById('debt-add-btn');
+  const help = document.getElementById('debt-form-help');
+  if(isCartao){
+    if(nomeLabel) nomeLabel.textContent='2. Qual cartão?';
+    if(credorLabel) credorLabel.textContent='Banco/cartão';
+    if(nomeInput) nomeInput.placeholder='ex: Nubank, Inter, PicPay';
+    if(credorInput) credorInput.placeholder='ex: Nubank';
+    if(btn) btn.textContent='Criar cartão';
+    if(help) help.innerHTML='Primeiro crie o cartão, por exemplo <strong>Nubank</strong>. Depois, no card que aparecer abaixo, adicione os itens da fatura: celular, geladeira, notebook etc.';
+  }else{
+    if(nomeLabel) nomeLabel.textContent='2. Nome da dívida';
+    if(credorLabel) credorLabel.textContent='Credor';
+    if(nomeInput) nomeInput.placeholder='ex: Financiamento carro';
+    if(credorInput) credorInput.placeholder='ex: Banco/loja';
+    if(btn) btn.textContent='Adicionar dívida';
+    if(help) help.innerHTML='Para financiamento, empréstimo ou loja, preencha valor da parcela, total de parcelas e próxima parcela. O painel calcula o saldo e o mês de término.';
+  }
+}
+
+window.addDivida = function(){
+  garantirDividasState();
+  const tipo = document.getElementById('debt-tipo')?.value || 'Cartão';
+  const isCartao = tipo === 'Cartão';
+  const nomeEl = document.getElementById('debt-nome');
+  const credorEl = document.getElementById('debt-credor');
+  const valorEl = document.getElementById('debt-valor');
+  const totalEl = document.getElementById('debt-total');
+  const atualEl = document.getElementById('debt-atual');
+  const inicioEl = document.getElementById('debt-inicio');
+
+  const nome = (nomeEl?.value || '').trim();
+  const credor = (credorEl?.value || '').trim();
+  const inicio = inicioEl?.value || mesInicioPadrao();
+
+  if(!nome){ showToast(isCartao ? 'Digite o nome do cartão. Ex.: Nubank.' : 'Digite o nome da dívida.', true); nomeEl?.focus(); return; }
+
+  let valorParcela = 0, totalParcelas = 1, parcelaAtual = 1;
+  if(!isCartao){
+    valorParcela = valorNumero(valorEl?.value);
+    totalParcelas = Math.max(1, parseInt(totalEl?.value || '1',10));
+    parcelaAtual = Math.min(Math.max(1, parseInt(atualEl?.value || '1',10)), totalParcelas + 1);
+    if(valorParcela <= 0){ showToast('Informe o valor da parcela.', true); valorEl?.focus(); return; }
+  }
+
+  const nova = {
+    id:'d'+Date.now()+Math.floor(Math.random()*999),
+    nome,
+    tipo,
+    credor: credor || (isCartao ? nome : ''),
+    valorParcela,
+    totalParcelas,
+    parcelaAtual,
+    inicio,
+    componentes:[],
+    nextComponenteId:1,
+    criadoEm:new Date().toISOString()
+  };
+  state.dividasParceladas.push(nova);
+  state.nextDividaId++;
+
+  if(nomeEl) nomeEl.value='';
+  if(credorEl) credorEl.value='';
+  if(valorEl) valorEl.value='';
+  if(totalEl) totalEl.value='';
+  if(atualEl) atualEl.value='';
+  if(inicioEl) inicioEl.value=mesInicioPadrao();
+
+  renderDividas();
+  calcular();
+  showToast(isCartao ? 'Cartão criado. Agora adicione os itens dentro dele.' : 'Dívida adicionada.');
+  setTimeout(()=>document.getElementById('comp-'+nova.id+'-nome')?.focus(),50);
+  if(typeof window.salvarFirestore==='function') window.salvarFirestore(true);
+};
+
+function infoDivida(d){
+  const comps = Array.isArray(d.componentes) ? d.componentes : [];
+  if(comps.length){
+    const infos = comps.map(c=>infoParcelamento({...c,inicio:c.inicio||d.inicio||mesInicioPadrao()}));
+    const abertas = infos.filter(i=>i.parcelasRestantes>0);
+    const total = infos.reduce((s,i)=>s+i.total,0);
+    const pago = infos.reduce((s,i)=>s+i.pago,0);
+    const falta = infos.reduce((s,i)=>s+i.falta,0);
+    const valorParcela = abertas.reduce((s,i)=>s+i.valorParcela,0);
+    const parcelasPagas = infos.reduce((s,i)=>s+i.parcelasPagas,0);
+    const totalParcelas = infos.reduce((s,i)=>s+i.totalParcelas,0);
+    const parcelasRestantes = abertas.reduce((s,i)=>s+i.parcelasRestantes,0);
+    const inicio = infos.map(i=>i.inicio).sort()[0] || d.inicio || mesInicioPadrao();
+    const proximoMes = abertas.map(i=>i.proximoMes).filter(Boolean).sort()[0] || '';
+    const fimMes = infos.map(i=>i.fimMes).filter(Boolean).sort().pop() || inicio;
+    const progresso = total>0 ? Math.min(100,pago/total*100) : 0;
+    return {totalParcelas,parcelaAtual:1,valorParcela,parcelasPagas,parcelasRestantes,total,pago,falta,inicio,proximoMes,fimMes,progresso,componentes:infos};
+  }
+  if((d.tipo||'')==='Cartão') return {totalParcelas:0,parcelaAtual:1,valorParcela:0,parcelasPagas:0,parcelasRestantes:0,total:0,pago:0,falta:0,inicio:d.inicio||mesInicioPadrao(),proximoMes:'',fimMes:d.inicio||mesInicioPadrao(),progresso:0};
+  return infoParcelamento(d);
+}
+
+function addComponenteDivida(id){
+  garantirDividasState();
+  const d=state.dividasParceladas.find(x=>x.id===id);
+  if(!d) return;
+  if(!Array.isArray(d.componentes)) d.componentes=[];
+  if(!d.nextComponenteId) d.nextComponenteId=d.componentes.length+1;
+  const p='comp-'+id;
+  const nome=(document.getElementById(p+'-nome')?.value || '').trim();
+  const valorParcela=valorNumero(document.getElementById(p+'-valor')?.value);
+  const totalParcelas=Math.max(1,parseInt(document.getElementById(p+'-total')?.value || '1',10));
+  const parcelaAtual=Math.min(Math.max(1,parseInt(document.getElementById(p+'-atual')?.value || '1',10)), totalParcelas+1);
+  const inicio=document.getElementById(p+'-inicio')?.value || d.inicio || mesInicioPadrao();
+  if(!nome){ showToast('Digite o nome da compra. Ex.: Celular.', true); document.getElementById(p+'-nome')?.focus(); return; }
+  if(valorParcela<=0){ showToast('Informe o valor da parcela do item.', true); document.getElementById(p+'-valor')?.focus(); return; }
+  d.componentes.push({id:'c'+Date.now()+Math.floor(Math.random()*999),nome,valorParcela,totalParcelas,parcelaAtual,inicio});
+  renderDividas(); calcular(); showToast('Item adicionado à dívida.');
+  if(typeof window.salvarFirestore==='function') window.salvarFirestore(true);
+}
+
+function updateDivida(id,campo,valor){
+  garantirDividasState();
+  const d=state.dividasParceladas.find(x=>x.id===id); if(!d) return;
+  if(campo==='valorParcela') d[campo]=valorNumero(valor);
+  else if(['totalParcelas','parcelaAtual'].includes(campo)) d[campo]=Math.max(1,parseInt(valor||'1',10));
+  else d[campo]=valor;
+  if(d.parcelaAtual>(Number(d.totalParcelas)||1)+1) d.parcelaAtual=(Number(d.totalParcelas)||1)+1;
+  renderDividas(); calcular(); if(window.agendarAutoSave) window.agendarAutoSave(500);
+}
+function updateComponenteDivida(dividaId,compId,campo,valor){
+  const d=state.dividasParceladas?.find(x=>x.id===dividaId); const c=d?.componentes?.find(x=>x.id===compId); if(!c) return;
+  if(campo==='valorParcela') c[campo]=valorNumero(valor);
+  else if(['totalParcelas','parcelaAtual'].includes(campo)) c[campo]=Math.max(1,parseInt(valor||'1',10));
+  else c[campo]=valor;
+  if(c.parcelaAtual>(Number(c.totalParcelas)||1)+1) c.parcelaAtual=(Number(c.totalParcelas)||1)+1;
+  renderDividas(); calcular(); if(window.agendarAutoSave) window.agendarAutoSave(500);
+}
+function delDivida(id){ if(!confirm('Apagar esta dívida/cartão?')) return; state.dividasParceladas=(state.dividasParceladas||[]).filter(x=>x.id!==id); renderDividas(); calcular(); if(window.agendarAutoSave) window.agendarAutoSave(300); }
+function delComponenteDivida(dividaId,compId){ const d=state.dividasParceladas?.find(x=>x.id===dividaId); if(!d) return; d.componentes=(d.componentes||[]).filter(x=>x.id!==compId); renderDividas(); calcular(); if(window.agendarAutoSave) window.agendarAutoSave(300); }
+function pagarParcelaDivida(id){ const d=state.dividasParceladas?.find(x=>x.id===id); if(!d) return; const i=infoParcelamento(d); d.parcelaAtual=Math.min(i.totalParcelas+1,i.parcelaAtual+1); renderDividas(); calcular(); if(window.agendarAutoSave) window.agendarAutoSave(300); }
+function voltarParcelaDivida(id){ const d=state.dividasParceladas?.find(x=>x.id===id); if(!d) return; d.parcelaAtual=Math.max(1,(parseInt(d.parcelaAtual||1,10)-1)); renderDividas(); calcular(); if(window.agendarAutoSave) window.agendarAutoSave(300); }
+function pagarParcelaComponente(dividaId,compId){ const d=state.dividasParceladas?.find(x=>x.id===dividaId); const c=d?.componentes?.find(x=>x.id===compId); if(!c) return; const i=infoParcelamento({...c,inicio:c.inicio||d.inicio||mesInicioPadrao()}); c.parcelaAtual=Math.min(i.totalParcelas+1,i.parcelaAtual+1); renderDividas(); calcular(); if(window.agendarAutoSave) window.agendarAutoSave(300); }
+function voltarParcelaComponente(dividaId,compId){ const d=state.dividasParceladas?.find(x=>x.id===dividaId); const c=d?.componentes?.find(x=>x.id===compId); if(!c) return; c.parcelaAtual=Math.max(1,(parseInt(c.parcelaAtual||1,10)-1)); renderDividas(); calcular(); if(window.agendarAutoSave) window.agendarAutoSave(300); }
+
+function renderComponentesDivida(d){
+  const comps=Array.isArray(d.componentes)?d.componentes:[];
+  const linhas=comps.map(c=>{ const i=infoParcelamento({...c,inicio:c.inicio||d.inicio||mesInicioPadrao()}); return `
+    <div class="debt-component-row">
+      <input value="${escapeAttr(c.nome||'')}" placeholder="ex: Geladeira" onchange="updateComponenteDivida('${d.id}','${c.id}','nome',this.value)">
+      <input type="number" min="0" step="0.01" value="${i.valorParcela||''}" placeholder="Parcela" onchange="updateComponenteDivida('${d.id}','${c.id}','valorParcela',this.value)">
+      <input type="number" min="1" step="1" value="${i.totalParcelas}" placeholder="Total" onchange="updateComponenteDivida('${d.id}','${c.id}','totalParcelas',this.value)">
+      <input type="number" min="1" step="1" value="${i.parcelaAtual}" placeholder="Atual" onchange="updateComponenteDivida('${d.id}','${c.id}','parcelaAtual',this.value)">
+      <input type="month" value="${i.inicio}" onchange="updateComponenteDivida('${d.id}','${c.id}','inicio',this.value)">
+      <button class="debt-mini-btn danger" onclick="delComponenteDivida('${d.id}','${c.id}')">×</button>
+      <div style="grid-column:1/-1;font-size:10px;color:var(--mu)">Parcela ${i.parcelaAtual}/${i.totalParcelas} · falta <strong style="color:var(--red)">${fmt(i.falta)}</strong> · termina em ${nomeMesLongo(i.fimMes)} ${i.parcelasRestantes>0?`<button class="debt-mini-btn" style="margin-left:8px;padding:3px 8px" onclick="pagarParcelaComponente('${d.id}','${c.id}')">pagar este item</button><button class="debt-mini-btn" style="margin-left:4px;padding:3px 8px" onclick="voltarParcelaComponente('${d.id}','${c.id}')">voltar</button>`:''}</div>
+    </div>`; }).join('');
+  const info=infoDivida(d);
+  return `<div class="debt-components">
+    <div class="debt-components-head"><div class="debt-components-title">🧾 Itens que compõem ${escapeHTML(d.nome)}</div><div style="font-size:11px;color:var(--mu)">Total ativo: <strong style="color:var(--red)">${fmt(info.valorParcela)}</strong>/mês</div></div>
+    ${comps.length?linhas:`<div style="font-size:12px;color:var(--mu);padding:4px 0">Nenhum item ainda. Ex.: Celular, geladeira, notebook...</div>`}
+    <div class="debt-add-component">
+      <div><label>Compra/item</label><input id="comp-${d.id}-nome" placeholder="ex: Celular"></div>
+      <div><label>Valor parcela</label><input id="comp-${d.id}-valor" type="number" min="0" step="0.01" placeholder="200"></div>
+      <div><label>Qtd parcelas</label><input id="comp-${d.id}-total" type="number" min="1" step="1" placeholder="10"></div>
+      <div><label>Próx parcela</label><input id="comp-${d.id}-atual" type="number" min="1" step="1" placeholder="1"></div>
+      <div><label>Início</label><input id="comp-${d.id}-inicio" type="month" value="${d.inicio||mesInicioPadrao()}"></div>
+      <button class="btn btn-sm btn-primary" onclick="addComponenteDivida('${d.id}')">+ Item</button>
+    </div>
+  </div>`;
+}
+
+function itensDetalhadosDividas(dividas){
+  const itens=[];
+  (dividas||[]).forEach(d=>{
+    const comps=Array.isArray(d.componentes)?d.componentes:[];
+    if(comps.length){ comps.forEach(c=>{ const info=infoParcelamento({...c,inicio:c.inicio||d.inicio||mesInicioPadrao()}); itens.push({parentId:d.id,parentNome:d.nome,tipo:d.tipo||'Outros',credor:d.credor||'',itemId:c.id,nome:c.nome,info,ehComponente:true}); }); }
+    else if((d.tipo||'')!=='Cartão'){ const info=infoParcelamento(d); itens.push({parentId:d.id,parentNome:d.nome,tipo:d.tipo||'Outros',credor:d.credor||'',itemId:d.id,nome:d.nome,info,ehComponente:false}); }
+  });
+  return itens;
+}
+function atualizarSelectFiltroDividas(dividas){ const sel=document.getElementById('debt-filter-parent'); if(!sel) return; const atual=sel.value; const ops=(dividas||[]); sel.innerHTML='<option value="">Todos</option>'+ops.map(d=>`<option value="${escapeAttr(d.id)}" ${d.id===atual?'selected':''}>${d.tipo==='Cartão'?'💳 ':''}${escapeHTML(d.nome||'Dívida')}</option>`).join(''); if(atual&&!ops.some(d=>d.id===atual)) sel.value=''; }
+function limparFiltrosDividas(){ ['debt-filter-parent','debt-filter-tipo','debt-filter-busca'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';}); renderDividas(); }
+function renderItensDetalhadosDividas(dividas){
+  const box=document.getElementById('dividas-itens-list'); if(!box) return; atualizarSelectFiltroDividas(dividas);
+  const fp=document.getElementById('debt-filter-parent')?.value||''; const ft=document.getElementById('debt-filter-tipo')?.value||''; const busca=(document.getElementById('debt-filter-busca')?.value||'').toLowerCase().trim();
+  let itens=itensDetalhadosDividas(dividas).filter(i=>i.info.parcelasRestantes>0).filter(i=>!fp||i.parentId===fp).filter(i=>!ft||i.tipo===ft).filter(i=>!busca||`${i.nome} ${i.parentNome} ${i.tipo} ${i.credor}`.toLowerCase().includes(busca)).sort((a,b)=>String(a.parentNome).localeCompare(String(b.parentNome))||String(a.nome).localeCompare(String(b.nome)));
+  const mensal=itens.reduce((s,i)=>s+i.info.valorParcela,0); const falta=itens.reduce((s,i)=>s+i.info.falta,0);
+  if(!itens.length){ box.innerHTML=`<div class="debt-items-head"><div class="debt-items-title">📋 Lista detalhada das dívidas</div><div class="debt-item-small">Nenhum item ativo no filtro atual.</div></div><div class="debt-item-empty">Crie um cartão e adicione itens dentro dele, ou cadastre um financiamento/parcelamento direto.</div>`; return; }
+  box.innerHTML=`<div class="debt-items-head"><div><div class="debt-items-title">📋 Lista detalhada das dívidas</div><div class="debt-item-small">Tudo aparece separado por cartão/dívida.</div></div><div style="text-align:right"><div class="debt-item-small">Mensal no filtro</div><div class="debt-item-money" style="color:var(--red)">${fmt(mensal)}</div><div class="debt-item-small">Falta: <strong>${fmt(falta)}</strong></div></div></div>${itens.map(i=>{ const marca=i.tipo==='Cartão'?'💳':i.tipo==='Financiamento'?'🏗️':i.tipo==='Empréstimo'?'🏦':i.tipo==='Loja'?'🛍️':'📌'; return `<div class="debt-item-row"><div><span class="debt-parent-badge">${marca} ${escapeHTML(i.parentNome||'Dívida')}</span></div><div class="debt-item-name"><strong>${escapeHTML(i.nome||'Item')}</strong><span>${escapeHTML(i.tipo||'Dívida')}${i.credor?' · '+escapeHTML(i.credor):''}</span></div><div class="debt-item-small">Parcela <strong style="color:var(--tx)">${i.info.parcelaAtual}/${i.info.totalParcelas}</strong></div><div class="debt-item-money" style="color:var(--amber)">${fmt(i.info.valorParcela)}/mês</div><div class="debt-item-small">Falta <strong style="color:var(--red)">${fmt(i.info.falta)}</strong><br>até ${nomeMesLongo(i.info.fimMes)}</div><div style="text-align:right"><button class="debt-mini-btn" onclick="${i.ehComponente?`pagarParcelaComponente('${i.parentId}','${i.itemId}')`:`pagarParcelaDivida('${i.parentId}')`}">pagar</button></div></div>`;}).join('')}`;
+}
+
+function renderDividas(){
+  garantirDividasState(); onDebtTipoChange();
+  const summary=document.getElementById('dividas-summary'); const list=document.getElementById('dividas-list'); const proj=document.getElementById('dividas-projecao'); const inicio=document.getElementById('debt-inicio'); if(inicio&&!inicio.value) inicio.value=mesInicioPadrao(); if(!summary||!list||!proj) return;
+  const dividas=state.dividasParceladas; const infos=dividas.map(d=>({d,info:infoDivida(d)})); const abertas=infos.filter(x=>x.info.parcelasRestantes>0||((x.d.tipo||'')==='Cartão' && !(x.d.componentes||[]).length));
+  const totalFalta=infos.reduce((s,x)=>s+x.info.falta,0); const compromisso=infos.reduce((s,x)=>s+x.info.valorParcela,0); const pago=infos.reduce((s,x)=>s+x.info.pago,0); const fim=infos.map(x=>x.info.fimMes).filter(Boolean).sort().pop()||'';
+  summary.innerHTML=`<div class="stat-card"><div class="stat-label">Dívidas abertas</div><div class="stat-value" style="color:var(--red)">${abertas.length}</div><div class="stat-sub">cartões e parcelamentos</div></div><div class="stat-card"><div class="stat-label">Compromisso mensal</div><div class="stat-value" style="color:var(--amber)">${fmt(compromisso)}</div><div class="stat-sub">parcelas ativas</div></div><div class="stat-card"><div class="stat-label">Falta pagar</div><div class="stat-value" style="color:var(--red)">${fmt(totalFalta)}</div><div class="stat-sub">saldo restante</div></div><div class="stat-card"><div class="stat-label">Já pago</div><div class="stat-value" style="color:var(--green)">${fmt(pago)}</div><div class="stat-sub">estimado</div></div><div class="stat-card"><div class="stat-label">Último vencimento</div><div class="stat-value" style="color:var(--tx);font-size:16px">${fim?nomeMesLongo(fim):'—'}</div><div class="stat-sub">pelas parcelas</div></div>`;
+  renderItensDetalhadosDividas(dividas);
+  if(!dividas.length){ list.innerHTML='<div class="debt-empty">💳 Nenhuma dívida cadastrada ainda. Crie um cartão ou cadastre um parcelamento para começar.</div>'; proj.innerHTML=''; return; }
+  list.innerHTML=infos.map(({d,info})=>{ const isCartao=(d.tipo||'')==='Cartão'; const status=info.parcelasRestantes===0 && info.total>0?'Quitada':isCartao&&!(d.componentes||[]).length?'adicione itens':`${info.parcelasRestantes} parcela(s) restantes`; const cor=info.parcelasRestantes===0&&info.total>0?'var(--green)':'var(--red)'; return `<div class="debt-card"><div class="debt-card-top"><div class="debt-title"><strong>${isCartao?'💳 ':''}${escapeHTML(d.nome||'Dívida')}</strong><span>${escapeHTML(d.tipo||'Dívida')}${d.credor?' · '+escapeHTML(d.credor):''}</span></div><div><div class="debt-metric-label">Parcela mensal</div><div class="debt-metric-value" style="color:var(--amber)">${fmt(info.valorParcela)}</div></div><div><div class="debt-metric-label">Progresso</div><div class="debt-metric-value">${info.parcelasPagas}/${info.totalParcelas}</div></div><div><div class="debt-metric-label">Falta</div><div class="debt-metric-value" style="color:${cor}">${fmt(info.falta)}</div></div><div class="debt-card-actions">${!isCartao?`<button class="debt-mini-btn" onclick="voltarParcelaDivida('${d.id}')">↩ Voltar</button><button class="debt-mini-btn" onclick="pagarParcelaDivida('${d.id}')">✅ Pagar</button>`:''}<button class="debt-mini-btn danger" onclick="delDivida('${d.id}')">×</button></div></div><div class="debt-progress-bg"><div class="debt-progress-fg" style="width:${info.progresso.toFixed(1)}%;background:${info.parcelasRestantes===0&&info.total>0?'var(--green)':'var(--teal)'}"></div></div><div style="display:flex;justify-content:space-between;gap:10px;font-size:11px;color:var(--mu);flex-wrap:wrap"><span>Status: <strong style="color:${cor}">${status}</strong></span><span>Próxima: <strong>${info.proximoMes?nomeMesLongo(info.proximoMes):'—'}</strong></span><span>Termina em: <strong>${info.fimMes?nomeMesLongo(info.fimMes):'—'}</strong></span><span>Total: <strong>${fmt(info.total)}</strong></span></div><div class="debt-edit-grid"><input value="${escapeAttr(d.nome||'')}" placeholder="Nome" onchange="updateDivida('${d.id}','nome',this.value)"><select onchange="updateDivida('${d.id}','tipo',this.value)">${['Cartão','Financiamento','Empréstimo','Loja','Outros'].map(t=>`<option value="${t}" ${d.tipo===t?'selected':''}>${t}</option>`).join('')}</select><input value="${escapeAttr(d.credor||'')}" placeholder="Credor" onchange="updateDivida('${d.id}','credor',this.value)"><input type="number" min="0" step="0.01" value="${!isCartao?(d.valorParcela||''):''}" placeholder="Parcela" ${isCartao?'disabled title="No cartão, some pelos itens abaixo"':''} onchange="updateDivida('${d.id}','valorParcela',this.value)"><input type="number" min="1" step="1" value="${!isCartao?(d.totalParcelas||1):''}" placeholder="Total" ${isCartao?'disabled title="No cartão, some pelos itens abaixo"':''} onchange="updateDivida('${d.id}','totalParcelas',this.value)"><input type="month" value="${d.inicio||mesInicioPadrao()}" onchange="updateDivida('${d.id}','inicio',this.value)"></div>${isCartao?renderComponentesDivida(d):''}</div>`; }).join('');
+  renderProjecaoDividas();
 }
 
 window.addEventListener('DOMContentLoaded',()=>{
