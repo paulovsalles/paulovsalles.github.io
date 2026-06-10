@@ -686,6 +686,43 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
   .form-grid,.form-grid-2{grid-template-columns:1fr}
   .goal-grid{grid-template-columns:1fr}
 }
+
+
+/* ─── DÍVIDAS: FORMULÁRIO EM FLUXO LIMPO ─── */
+.debt-form-grid-clean{
+  display:grid !important;
+  grid-template-columns: 1fr 1.35fr 1fr 1fr 1fr 1fr .95fr auto !important;
+  gap:10px !important;
+  align-items:end !important;
+}
+.debt-main-name{grid-column:auto;}
+.debt-field{min-width:0;}
+.debt-field label{display:block;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--di);margin-bottom:6px;}
+.debt-field input,.debt-field select{
+  width:100%;height:40px;border:1px solid var(--bd);border-radius:9px;background:var(--s2);color:var(--tx);padding:0 12px;font-family:'Inter',sans-serif;font-size:13px;outline:none;
+}
+.debt-field input:focus,.debt-field select:focus{border-color:var(--tbd);}
+.debt-add-main-btn{height:40px !important;align-self:end;white-space:nowrap;}
+.debt-form-help{margin-top:12px;background:var(--tbg);border:1px solid var(--tbd);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--mu);line-height:1.45;}
+.debt-components{margin-top:14px;background:var(--s2);border:1px solid var(--bd);border-radius:12px;padding:12px;}
+.debt-component-row,.debt-add-component{display:grid;grid-template-columns:1.4fr .8fr .7fr .7fr .9fr auto;gap:8px;align-items:end;}
+.debt-component-row{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:8px;margin-bottom:8px;}
+.debt-add-component{border-top:1px dashed var(--bd);padding-top:10px;margin-top:8px;}
+.debt-add-component label{display:block;font-size:9px;font-weight:800;text-transform:uppercase;color:var(--di);margin-bottom:4px;}
+.debt-add-component input,.debt-component-row input{width:100%;height:34px;border:1px solid var(--bd);border-radius:8px;background:var(--s3);color:var(--tx);padding:0 9px;outline:none;}
+.debt-card{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:12px;}
+.debt-card-top{display:grid;grid-template-columns:minmax(180px,1fr) 120px 100px 120px auto;gap:10px;align-items:center;}
+.debt-card-actions{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;}
+.debt-mini-btn{border:1px solid var(--bd);background:var(--s2);color:var(--tx);border-radius:7px;padding:5px 9px;font-size:11px;cursor:pointer;}
+.debt-mini-btn:hover{border-color:var(--tbd);color:var(--teal);}
+.debt-mini-btn.danger{color:var(--red);}
+.debt-progress-bg{height:5px;background:var(--bd);border-radius:4px;overflow:hidden;margin:10px 0;}
+.debt-progress-fg{height:5px;border-radius:4px;}
+.debt-edit-grid{display:grid;grid-template-columns:1.2fr 1fr 1fr .8fr .8fr .9fr;gap:8px;margin-top:12px;}
+.debt-edit-grid input,.debt-edit-grid select{height:34px;border:1px solid var(--bd);border-radius:8px;background:var(--s2);color:var(--tx);padding:0 9px;outline:none;}
+@media(max-width:1100px){.debt-form-grid-clean{grid-template-columns:1fr 1fr !important}.debt-add-main-btn{grid-column:1 / -1}.debt-card-top,.debt-edit-grid,.debt-component-row,.debt-add-component{grid-template-columns:1fr 1fr}.debt-card-actions{justify-content:flex-start}}
+@media(max-width:640px){.debt-form-grid-clean,.debt-card-top,.debt-edit-grid,.debt-component-row,.debt-add-component{grid-template-columns:1fr !important}}
+
 </style>
 </head>
 <body>
@@ -1152,16 +1189,55 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
   <div class="debt-summary-grid" id="dividas-summary"></div>
 
   <div class="debt-form-card">
-    <div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--di);margin-bottom:10px">➕ Nova dívida / parcelamento</div>
-    <div class="debt-form-grid">
-      <div class="debt-field"><label>Nome</label><input id="debt-nome" type="text" placeholder="ex: Cartão Nubank, Financiamento"></div>
-      <div class="debt-field"><label>Tipo</label><select id="debt-tipo"><option value="Cartão">Cartão</option><option value="Financiamento">Financiamento</option><option value="Empréstimo">Empréstimo</option><option value="Loja">Loja</option><option value="Outros">Outros</option></select></div>
-      <div class="debt-field"><label>Credor</label><input id="debt-credor" type="text" placeholder="Banco/loja"></div>
-      <div class="debt-field"><label>Valor parcela</label><input id="debt-valor" type="number" min="0" step="0.01" placeholder="0"><small style="display:block;margin-top:4px;color:var(--di);font-size:10px">No cartão, pode deixar 0 e detalhar nos itens.</small></div>
-      <div class="debt-field"><label>Total parc.</label><input id="debt-total" type="number" min="1" step="1" placeholder="12"></div>
-      <div class="debt-field"><label>Próx. parc.</label><input id="debt-atual" type="number" min="1" step="1" placeholder="1"></div>
-      <div class="debt-field"><label>Início</label><input id="debt-inicio" type="month"></div>
-      <button class="btn btn-primary" style="height:38px" onclick="addDivida()">Adicionar</button>
+    <div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--di);margin-bottom:12px">➕ Nova dívida / parcelamento</div>
+
+    <div class="debt-form-grid debt-form-grid-clean">
+      <div class="debt-field">
+        <label>1. Tipo da dívida</label>
+        <select id="debt-tipo" onchange="onDebtTipoChange()">
+          <option value="Cartão">Cartão de crédito</option>
+          <option value="Financiamento">Financiamento</option>
+          <option value="Empréstimo">Empréstimo</option>
+          <option value="Loja">Compra em loja</option>
+          <option value="Outros">Outros</option>
+        </select>
+      </div>
+
+      <div class="debt-field debt-main-name">
+        <label id="debt-nome-label">2. Qual cartão?</label>
+        <input id="debt-nome" type="text" placeholder="ex: Nubank, Inter, PicPay">
+      </div>
+
+      <div class="debt-field">
+        <label id="debt-credor-label">Banco/cartão</label>
+        <input id="debt-credor" type="text" placeholder="ex: Nubank">
+      </div>
+
+      <div class="debt-field debt-parcel-only">
+        <label>Valor da parcela</label>
+        <input id="debt-valor" type="number" min="0" step="0.01" placeholder="0">
+      </div>
+
+      <div class="debt-field debt-parcel-only">
+        <label>Total de parcelas</label>
+        <input id="debt-total" type="number" min="1" step="1" placeholder="12">
+      </div>
+
+      <div class="debt-field debt-parcel-only">
+        <label>Próxima parcela</label>
+        <input id="debt-atual" type="number" min="1" step="1" placeholder="1">
+      </div>
+
+      <div class="debt-field">
+        <label>Início</label>
+        <input id="debt-inicio" type="month">
+      </div>
+
+      <button id="debt-add-btn" class="btn btn-primary debt-add-main-btn" onclick="addDivida()">Criar cartão</button>
+    </div>
+
+    <div id="debt-form-help" class="debt-form-help">
+      Primeiro crie o cartão, por exemplo <strong>Nubank</strong>. Depois, no card que aparecer abaixo, adicione os itens que compõem a fatura: celular, geladeira, notebook etc.
     </div>
   </div>
 
@@ -2144,23 +2220,70 @@ function infoDivida(d){
   return { totalParcelas, parcelaAtual: 1, valorParcela, parcelasPagas, parcelasRestantes, total, pago, falta, inicio, proximoMes, fimMes, progresso, componentes: infos };
 }
 
-window.addDivida = () => {
-  const nome = document.getElementById('debt-nome').value.trim() || 'Nova dívida';
-  const tipo = document.getElementById('debt-tipo').value || 'Outros';
-  const credor = document.getElementById('debt-credor').value.trim();
-  const valorParcela = valorNumero(document.getElementById('debt-valor').value);
-  const totalParcelas = Math.max(1, parseInt(document.getElementById('debt-total').value || '1', 10));
-  const parcelaAtual = Math.min(Math.max(1, parseInt(document.getElementById('debt-atual').value || '1', 10)), totalParcelas + 1);
-  const inicio = document.getElementById('debt-inicio').value || mesInicioPadrao();
 
-  // Para cartão de crédito, pode cadastrar o cartão principal com parcela 0
-  // e depois detalhar a composição: celular, geladeira, compras parceladas etc.
-  if(valorParcela <= 0 && tipo !== 'Cartão'){
-    showToast('Informe o valor da parcela ou escolha o tipo Cartão para detalhar por itens.', true);
+function onDebtTipoChange(){
+  const tipo = document.getElementById('debt-tipo')?.value || 'Cartão';
+  const isCartao = tipo === 'Cartão';
+  document.querySelectorAll('.debt-parcel-only').forEach(el => {
+    el.style.display = isCartao ? 'none' : 'flex';
+  });
+  const nomeLabel = document.getElementById('debt-nome-label');
+  const credorLabel = document.getElementById('debt-credor-label');
+  const nomeInput = document.getElementById('debt-nome');
+  const credorInput = document.getElementById('debt-credor');
+  const btn = document.getElementById('debt-add-btn');
+  const help = document.getElementById('debt-form-help');
+
+  if(isCartao){
+    if(nomeLabel) nomeLabel.textContent = '2. Qual cartão?';
+    if(credorLabel) credorLabel.textContent = 'Banco/cartão';
+    if(nomeInput) nomeInput.placeholder = 'ex: Nubank, Inter, PicPay';
+    if(credorInput) credorInput.placeholder = 'ex: Nubank';
+    if(btn) btn.textContent = 'Criar cartão';
+    if(help) help.innerHTML = 'Primeiro crie o cartão, por exemplo <strong>Nubank</strong>. Depois, no card que aparecer abaixo, adicione os itens que compõem a fatura: celular, geladeira, notebook etc.';
+  } else {
+    if(nomeLabel) nomeLabel.textContent = '2. Nome da dívida';
+    if(credorLabel) credorLabel.textContent = 'Credor';
+    if(nomeInput) nomeInput.placeholder = 'ex: Financiamento carro';
+    if(credorInput) credorInput.placeholder = 'ex: Banco/loja';
+    if(btn) btn.textContent = 'Adicionar dívida';
+    if(help) help.innerHTML = 'Para financiamento, empréstimo ou loja, informe o valor da parcela, total de parcelas e a próxima parcela. O painel calcula o que falta pagar e quando termina.';
+  }
+}
+
+window.addDivida = () => {
+  const nomeEl = document.getElementById('debt-nome');
+  const tipoEl = document.getElementById('debt-tipo');
+  const credorEl = document.getElementById('debt-credor');
+  const valorEl = document.getElementById('debt-valor');
+  const totalEl = document.getElementById('debt-total');
+  const atualEl = document.getElementById('debt-atual');
+  const inicioEl = document.getElementById('debt-inicio');
+
+  const tipo = tipoEl?.value || 'Outros';
+  const isCartao = tipo === 'Cartão';
+  const nome = (nomeEl?.value || '').trim() || (isCartao ? 'Novo cartão' : 'Nova dívida');
+  const credor = (credorEl?.value || '').trim();
+  const inicio = inicioEl?.value || mesInicioPadrao();
+
+  let valorParcela = isCartao ? 0 : valorNumero(valorEl?.value);
+  let totalParcelas = isCartao ? 1 : Math.max(1, parseInt(totalEl?.value || '1', 10));
+  let parcelaAtual = isCartao ? 1 : Math.min(Math.max(1, parseInt(atualEl?.value || '1', 10)), totalParcelas + 1);
+
+  if(!nome.trim()){
+    showToast('Informe o nome da dívida/cartão.', true);
     return;
   }
 
-  state.dividasParceladas.push({
+  if(!isCartao && valorParcela <= 0){
+    showToast('Informe o valor da parcela.', true);
+    return;
+  }
+
+  if(!state.dividasParceladas) state.dividasParceladas = [];
+  if(!state.nextDividaId) state.nextDividaId = state.dividasParceladas.length + 1;
+
+  const nova = {
     id: 'd' + state.nextDividaId++,
     nome,
     tipo,
@@ -2172,11 +2295,30 @@ window.addDivida = () => {
     componentes: [],
     nextComponenteId: 1,
     criadoEm: new Date().toISOString()
-  });
+  };
 
-  ['debt-nome','debt-credor','debt-valor','debt-total','debt-atual'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('debt-inicio').value = mesInicioPadrao();
+  state.dividasParceladas.push(nova);
+
+  if(nomeEl) nomeEl.value = '';
+  if(credorEl) credorEl.value = '';
+  if(valorEl) valorEl.value = '';
+  if(totalEl) totalEl.value = '';
+  if(atualEl) atualEl.value = '';
+  if(inicioEl) inicioEl.value = mesInicioPadrao();
+
   renderDividas();
+  onDebtTipoChange();
+
+  if(isCartao){
+    setTimeout(() => {
+      const compNome = document.getElementById(`comp-${nova.id}-nome`);
+      if(compNome){ compNome.focus(); compNome.select(); }
+    }, 80);
+    showToast('Cartão criado. Agora adicione os itens que compõem a fatura.');
+  } else {
+    showToast('Dívida adicionada.');
+  }
+
   if(window.agendarAutoSave) window.agendarAutoSave(500);
 };
 
@@ -2325,10 +2467,10 @@ function renderComponentesDivida(d){
       </div>
       ${comps.length ? linhas : `<div style="font-size:12px;color:var(--mu);padding:4px 0">Nenhum item detalhado. Ex.: celular, geladeira, notebook...</div>`}
       <div class="debt-add-component">
-        <div><label>Item</label><input id="comp-${d.id}-nome" placeholder="ex: Celular"></div>
-        <div><label>Parcela R$</label><input id="comp-${d.id}-valor" type="number" min="0" step="0.01" placeholder="200"></div>
-        <div><label>Total</label><input id="comp-${d.id}-total" type="number" min="1" step="1" placeholder="10"></div>
-        <div><label>Atual</label><input id="comp-${d.id}-atual" type="number" min="1" step="1" placeholder="1"></div>
+        <div><label>Compra/item</label><input id="comp-${d.id}-nome" placeholder="ex: Celular"></div>
+        <div><label>Valor parcela</label><input id="comp-${d.id}-valor" type="number" min="0" step="0.01" placeholder="200"></div>
+        <div><label>Qtd parcelas</label><input id="comp-${d.id}-total" type="number" min="1" step="1" placeholder="10"></div>
+        <div><label>Próx parcela</label><input id="comp-${d.id}-atual" type="number" min="1" step="1" placeholder="1"></div>
         <div><label>Início</label><input id="comp-${d.id}-inicio" type="month" value="${d.inicio || mesInicioPadrao()}"></div>
         <button class="btn btn-sm btn-primary" onclick="addComponenteDivida('${d.id}')">+ Item</button>
       </div>
@@ -2357,6 +2499,7 @@ function itensDetalhadosDividas(dividas){
         });
       });
     } else {
+      if((d.tipo || '') === 'Cartão' && valorNumero(d.valorParcela) <= 0) return;
       const info = infoParcelamento(d);
       itens.push({
         parentId: d.id,
