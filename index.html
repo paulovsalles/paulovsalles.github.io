@@ -747,7 +747,7 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
 .debt-summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
 .debt-form-card,.debt-filter-card,.debt-items-list{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:15px 16px;margin-bottom:14px}
 .debt-filter-title{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--di);margin-bottom:10px}
-.debt-filter-grid{display:grid;grid-template-columns:1fr 220px 1fr auto;gap:10px;align-items:end}
+.debt-filter-grid{display:grid;grid-template-columns:1fr 180px 1fr 160px 220px auto;gap:10px;align-items:end}
 .debt-list{display:flex;flex-direction:column;gap:12px;margin-top:10px}
 .debt-card{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:15px 16px}
 .debt-card-top{display:grid;grid-template-columns:minmax(170px,1fr) 110px 110px 110px auto;gap:12px;align-items:center}
@@ -769,6 +769,11 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
 .debt-projection{background:var(--s1);border:1px solid var(--bd);border-radius:14px;margin-top:14px;overflow:hidden}.debt-projection-header{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--bd)}.debt-projection-title{font-size:13px;font-weight:800}.debt-projection-body{padding:12px 16px}.debt-month-row{display:grid;grid-template-columns:70px 1fr 80px;gap:8px;align-items:center;margin-bottom:7px}.debt-month-track{height:8px;background:var(--bd);border-radius:8px;overflow:hidden}.debt-month-fill{height:8px;border-radius:8px;background:var(--red)}.debt-month-name,.debt-month-value{font-size:11px;color:var(--mu)}.debt-month-value{text-align:right;font-family:'Space Grotesk',sans-serif;font-weight:800;color:var(--red)}
 @media(max-width:900px){.debt-step-box,.debt-filter-grid,.debt-card-top,.debt-edit-grid,.debt-add-component,.debt-component-row,.debt-item-row{grid-template-columns:1fr}.debt-card-actions{justify-content:flex-start}.debt-field input,.debt-field select{width:100%}}
 
+</style>
+<style>
+.debt-item-quitado{opacity:.65;background:rgba(74,222,128,.04)}
+@media(max-width:1100px){.debt-filter-grid{grid-template-columns:1fr 1fr 1fr}}
+@media(max-width:720px){.debt-filter-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -1310,6 +1315,29 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
       <div class="debt-filter-field">
         <label>Buscar item</label>
         <input id="debt-filter-busca" type="text" placeholder="ex: celular, geladeira, Nubank" oninput="renderDividas()">
+      </div>
+      <div class="debt-filter-field">
+        <label>Status</label>
+        <select id="debt-filter-status" onchange="renderDividas()">
+          <option value="ativos">Somente ativos</option>
+          <option value="todos">Todos</option>
+          <option value="quitados">Quitados</option>
+        </select>
+      </div>
+      <div class="debt-filter-field">
+        <label>Ordenar</label>
+        <select id="debt-filter-ordem" onchange="renderDividas()">
+          <option value="maior-parcela">Maior parcela</option>
+          <option value="menor-parcela">Menor parcela</option>
+          <option value="maior-falta">Maior valor restante</option>
+          <option value="menor-falta">Menor valor restante</option>
+          <option value="az">Ordem alfabética A-Z</option>
+          <option value="za">Ordem alfabética Z-A</option>
+          <option value="cartao-az">Cartão/dívida A-Z</option>
+          <option value="vencimento-proximo">Vencimento mais próximo</option>
+          <option value="vencimento-distante">Vencimento mais distante</option>
+          <option value="mais-parcelas">Mais parcelas restantes</option>
+        </select>
       </div>
       <button class="btn" style="height:36px" onclick="limparFiltrosDividas()">Limpar filtros</button>
     </div>
@@ -4279,7 +4307,13 @@ window.addEventListener('DOMContentLoaded',()=>{
     if (current && dividas.some(d => d.id === current)) sel.value = current;
   }
   window.limparFiltrosDividas = function(){
-    ['debt-filter-parent','debt-filter-tipo','debt-filter-busca'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    ['debt-filter-parent','debt-filter-tipo','debt-filter-busca','debt-filter-status','debt-filter-ordem'].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (id === 'debt-filter-status') el.value = 'ativos';
+      else if (id === 'debt-filter-ordem') el.value = 'maior-parcela';
+      else el.value = '';
+    });
     renderDividas();
   };
 
@@ -4298,20 +4332,50 @@ window.addEventListener('DOMContentLoaded',()=>{
     const box = document.getElementById('dividas-itens-list');
     if (!box) return;
     updateFilterOptions(dividas);
+
     const parent = document.getElementById('debt-filter-parent')?.value || '';
     const tipo = document.getElementById('debt-filter-tipo')?.value || '';
     const busca = (document.getElementById('debt-filter-busca')?.value || '').toLowerCase().trim();
-    let items = detailedItems(dividas).filter(x => x.info.parcelasRestantes > 0);
+    const status = document.getElementById('debt-filter-status')?.value || 'ativos';
+    const ordem = document.getElementById('debt-filter-ordem')?.value || 'maior-parcela';
+
+    let items = detailedItems(dividas);
+
+    if (status === 'ativos') items = items.filter(x => x.info.parcelasRestantes > 0);
+    if (status === 'quitados') items = items.filter(x => x.info.parcelasRestantes <= 0);
     if (parent) items = items.filter(x => x.parent.id === parent);
     if (tipo) items = items.filter(x => tipoNormal(x.parent.tipo) === tipoNormal(tipo));
-    if (busca) items = items.filter(x => `${x.parent.nome} ${x.parent.credor} ${x.item.nome}`.toLowerCase().includes(busca));
+    if (busca) items = items.filter(x => `${x.parent.nome} ${x.parent.credor} ${x.item.nome} ${tipoNormal(x.parent.tipo)}`.toLowerCase().includes(busca));
+
+    const ordenadores = {
+      'maior-parcela': (a,b) => b.info.valorParcela - a.info.valorParcela,
+      'menor-parcela': (a,b) => a.info.valorParcela - b.info.valorParcela,
+      'maior-falta': (a,b) => b.info.falta - a.info.falta,
+      'menor-falta': (a,b) => a.info.falta - b.info.falta,
+      'az': (a,b) => String(a.item.nome || a.parent.nome || '').localeCompare(String(b.item.nome || b.parent.nome || ''),'pt-BR'),
+      'za': (a,b) => String(b.item.nome || b.parent.nome || '').localeCompare(String(a.item.nome || a.parent.nome || ''),'pt-BR'),
+      'cartao-az': (a,b) => String(a.parent.nome || '').localeCompare(String(b.parent.nome || ''),'pt-BR') || String(a.item.nome || '').localeCompare(String(b.item.nome || ''),'pt-BR'),
+      'vencimento-proximo': (a,b) => String(a.info.fimMes || '').localeCompare(String(b.info.fimMes || '')),
+      'vencimento-distante': (a,b) => String(b.info.fimMes || '').localeCompare(String(a.info.fimMes || '')),
+      'mais-parcelas': (a,b) => b.info.parcelasRestantes - a.info.parcelasRestantes,
+    };
+    items.sort(ordenadores[ordem] || ordenadores['maior-parcela']);
+
     const mensal = items.reduce((s,x)=>s+x.info.valorParcela,0);
     const falta = items.reduce((s,x)=>s+x.info.falta,0);
+    const totalItens = items.length;
+
     if (!items.length) {
-      box.innerHTML = `<div class="debt-items-head"><div class="debt-items-title">📋 Lista detalhada das dívidas</div><div class="debt-item-small">Nenhum item ativo no filtro atual.</div></div><div class="debt-item-empty">Crie um cartão e adicione itens dentro dele, ou cadastre um financiamento/parcelamento direto.</div>`;
+      box.innerHTML = `<div class="debt-items-head"><div><div class="debt-items-title">📋 Lista detalhada das dívidas</div><div class="debt-item-small">Nenhum item encontrado com os filtros atuais.</div></div><div class="debt-item-small">Tente mudar o status para <strong>Todos</strong> ou limpar os filtros.</div></div><div class="debt-item-empty">Crie um cartão e adicione itens dentro dele, ou cadastre um financiamento/parcelamento direto.</div>`;
       return;
     }
-    box.innerHTML = `<div class="debt-items-head"><div><div class="debt-items-title">📋 Lista detalhada das dívidas</div><div class="debt-item-small">Tudo aparece separado por cartão/dívida.</div></div><div style="text-align:right"><div class="debt-item-small">Mensal no filtro</div><div class="debt-item-money" style="color:var(--red)">${money(mensal)}</div><div class="debt-item-small">Falta: <strong>${money(falta)}</strong></div></div></div>` + items.map(x => `<div class="debt-item-row"><div><span class="debt-parent-badge">${isCartao(x.parent) ? '💳' : '📌'} ${safe(x.parent.nome)}</span></div><div class="debt-item-name"><strong>${safe(x.item.nome || x.parent.nome)}</strong><span>${safe(tipoNormal(x.parent.tipo))}${x.parent.credor ? ' · ' + safe(x.parent.credor) : ''}</span></div><div class="debt-item-small">Parcela <strong>${x.info.parcelaAtual}/${x.info.totalParcelas}</strong></div><div class="debt-item-money" style="color:var(--amber)">${money(x.info.valorParcela)}/mês</div><div class="debt-item-small">Falta <strong style="color:var(--red)">${money(x.info.falta)}</strong><br>até ${monthName(x.info.fimMes)}</div><div style="text-align:right"><button class="debt-mini-btn" onclick="${x.component ? `pagarParcelaComponente('${x.parent.id}','${x.item.id}')` : `pagarParcelaDivida('${x.parent.id}')`}">pagar</button></div></div>`).join('');
+
+    box.innerHTML = `<div class="debt-items-head"><div><div class="debt-items-title">📋 Lista detalhada das dívidas</div><div class="debt-item-small">${totalItens} item(ns) no filtro atual · ordenado por ${safe(document.getElementById('debt-filter-ordem')?.selectedOptions?.[0]?.textContent || '')}</div></div><div style="text-align:right"><div class="debt-item-small">Mensal no filtro</div><div class="debt-item-money" style="color:var(--red)">${money(mensal)}</div><div class="debt-item-small">Falta: <strong>${money(falta)}</strong></div></div></div>` + items.map(x => {
+      const quitado = x.info.parcelasRestantes <= 0;
+      const tipoTxt = tipoNormal(x.parent.tipo);
+      const marcador = tipoTxt === 'Cartão' ? '💳' : tipoTxt === 'Financiamento' ? '🏗️' : tipoTxt === 'Empréstimo' ? '🏦' : tipoTxt === 'Loja' ? '🛍️' : '📌';
+      return `<div class="debt-item-row ${quitado ? 'debt-item-quitado' : ''}"><div><span class="debt-parent-badge">${marcador} ${safe(x.parent.nome || 'Dívida')}</span></div><div class="debt-item-name"><strong>${safe(x.item.nome || x.parent.nome)}</strong><span>${safe(tipoTxt)}${x.parent.credor ? ' · ' + safe(x.parent.credor) : ''}${quitado ? ' · quitado' : ''}</span></div><div class="debt-item-small">Parcela <strong>${x.info.parcelaAtual}/${x.info.totalParcelas}</strong></div><div class="debt-item-money" style="color:var(--amber)">${money(x.info.valorParcela)}/mês</div><div class="debt-item-small">Falta <strong style="color:${quitado ? 'var(--green)' : 'var(--red)'}">${money(x.info.falta)}</strong><br>até ${monthName(x.info.fimMes)}</div><div style="text-align:right">${quitado ? '<span class="debt-item-small" style="color:var(--green);font-weight:800">quitado</span>' : `<button class="debt-mini-btn" onclick="${x.component ? `pagarParcelaComponente('${x.parent.id}','${x.item.id}')` : `pagarParcelaDivida('${x.parent.id}')`}">pagar</button>`}</div></div>`;
+    }).join('');
   }
 
   window.renderDividas = function(){
