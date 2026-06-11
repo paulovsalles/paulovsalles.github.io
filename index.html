@@ -955,6 +955,8 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
       <span id="theme-label">Escuro</span>
     </div>
     <button class="btn btn-sm" onclick="exportExcel()" title="Exportar para Excel">📥 Excel</button>
+    <button class="btn btn-sm" onclick="gerarPdfGeral()" title="Gerar relatório do panorama geral">📄 PDF geral</button>
+    <button class="btn btn-sm" onclick="gerarPdfMensal()" title="Gerar relatório do mês selecionado">📄 PDF mensal</button>
     <button class="btn btn-sm" onclick="gerarPdfDividas()" title="Gerar relatório detalhado das dívidas">📄 PDF dívidas</button>
     <button class="btn btn-sm" onclick="resetAll()">Limpar</button>
     <button class="btn btn-save btn-sm" onclick="salvarFirestore()">☁️ Salvar</button>
@@ -4642,6 +4644,181 @@ window.addEventListener('DOMContentLoaded',()=>{
   }
   window.gerarPdfDividas = exportDebtsPDF;
 })();
+
+
+/* PATCH - PDF GERAL E PDF MENSAL */
+(function(){
+  function loadPDF(cb){
+    if(window.jspdf && window.jspdf.jsPDF){ cb(); return; }
+    const existing=[...document.scripts].find(sc=>(sc.src||'').includes('jspdf'));
+    if(existing){ existing.addEventListener('load',cb,{once:true}); return; }
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload=cb;
+    s.onerror=()=>{ if(window.showToast) showToast('Não consegui carregar o gerador de PDF. Verifique a internet.', true); };
+    document.head.appendChild(s);
+  }
+  function brl(v){ return 'R$ ' + (Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function clean(v){ return String(v ?? '').replace(/[\u{1F300}-\u{1FAFF}]/gu,'').replace(/\s+/g,' ').trim(); }
+  function pct(v,t){ return t>0 ? (v/t*100).toFixed(1)+'%' : '—'; }
+  function monthName(key){
+    if(!key) return '—';
+    const nomes=window.MESES_NOMES || ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const [a,m]=String(key).split('-').map(Number);
+    if(!a || !m) return key;
+    return `${nomes[m-1] || m} ${a}`;
+  }
+  function sum(arr,field='val'){ return (arr||[]).reduce((s,i)=>s+(Number(i?.[field])||0),0); }
+  function page(doc,y,need=20){ if(y>285-need){ doc.addPage(); return 16; } return y; }
+  function header(doc,titulo,sub){
+    doc.setFillColor(15,166,147); doc.rect(0,0,210,34,'F');
+    doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.text('PainelFin',14,15);
+    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.text(titulo,14,23);
+    doc.text(sub || `Gerado em ${new Date().toLocaleDateString('pt-BR')}`,196,23,{align:'right'});
+  }
+  function footer(doc,titulo){
+    const pages=doc.getNumberOfPages();
+    for(let i=1;i<=pages;i++){
+      doc.setPage(i); doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(154,160,180);
+      doc.text(`PainelFin - ${titulo}`,14,287); doc.text(`Página ${i} de ${pages}`,196,287,{align:'right'});
+    }
+  }
+  function card(doc,x,y,w,label,value,rgb){
+    doc.setDrawColor(226,232,240); doc.setFillColor(248,250,252); doc.roundedRect(x,y,w,24,4,4,'FD');
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(90,100,128); doc.text(label,x+5,y+8);
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(rgb[0],rgb[1],rgb[2]); doc.text(String(value),x+5,y+18);
+  }
+  function section(doc,title,y,rgb=[15,166,147]){
+    y=page(doc,y,18); doc.setFillColor(rgb[0],rgb[1],rgb[2]); doc.roundedRect(14,y,3,7,1,1,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(26,31,46); doc.text(title,20,y+6); return y+12;
+  }
+  function paragraph(doc,lines,y){
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(75,85,99);
+    lines.filter(Boolean).forEach(line=>{ y=page(doc,y,14); const split=doc.splitTextToSize('- '+clean(line),178); doc.text(split,18,y); y+=split.length*5+1; });
+    return y+4;
+  }
+  function tableHeader(doc,y,cols,widths){
+    y=page(doc,y,16); doc.setFillColor(241,245,249); doc.setDrawColor(226,232,240); doc.rect(14,y,182,8,'FD');
+    doc.setFont('helvetica','bold'); doc.setFontSize(7.2); doc.setTextColor(75,85,99); let x=16;
+    cols.forEach((c,i)=>{ doc.text(c,x,y+5.3); x+=widths[i]; });
+    return y+9;
+  }
+  function rowLine(doc,y,cells,widths,colors={}){
+    y=page(doc,y,14); doc.setDrawColor(236,240,245); doc.line(14,y+8,196,y+8);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); let x=16;
+    cells.forEach((c,i)=>{ const rgb=colors[i]||[26,31,46]; doc.setTextColor(rgb[0],rgb[1],rgb[2]); const lines=doc.splitTextToSize(clean(c), widths[i]-2); doc.text(lines,x,y+5); x+=widths[i]; });
+    return y+10;
+  }
+  function getDebtRowsSimple(){
+    const dividas=Array.isArray(window.state?.dividasParceladas) ? window.state.dividasParceladas : [];
+    const rows=[];
+    dividas.forEach(d=>{
+      const comps=Array.isArray(d.componentes)?d.componentes:[];
+      if(comps.length){
+        comps.forEach(c=>{
+          const info=typeof infoParcelamento==='function' ? infoParcelamento({...c,inicio:c.inicio||d.inicio}) : null;
+          rows.push({grupo:d.nome||'Dívida', item:c.nome||'Item', tipo:d.tipo||'Outros', parcela:info?.valorParcela ?? Number(c.valorParcela)||0, falta:info?.falta ?? 0, fim:info?.fimMes || d.inicio || ''});
+        });
+      } else {
+        const info=typeof infoDivida==='function' ? infoDivida(d) : null;
+        rows.push({grupo:d.nome||'Dívida', item:d.nome||'Dívida', tipo:d.tipo||'Outros', parcela:info?.valorParcela ?? Number(d.valorParcela)||0, falta:info?.falta ?? 0, fim:info?.fimMes || d.inicio || ''});
+      }
+    });
+    return rows;
+  }
+  function dadosGerais(){
+    const renda=typeof getRenda==='function' ? getRenda() : sum(window.state?.rendas||[]);
+    const ticket=Number(document.getElementById('ticket')?.value)||0;
+    const despesas=(window.state?.expenses||[]).filter(e=>Number(e.val)>0);
+    const totalDesp=sum(despesas);
+    const saldo=renda-totalDesp;
+    const dizimo=Number(document.getElementById('dizimo-atual')?.value)||0;
+    const missionarios=sum(window.state?.missionarios||[]);
+    const outrasDoa=Number(document.getElementById('outras-doacoes')?.value)||0;
+    const doacoes=dizimo+missionarios+outrasDoa;
+    const porCat={}; despesas.forEach(e=>{ porCat[e.cat]=(porCat[e.cat]||0)+Number(e.val||0); });
+    const debtRows=getDebtRowsSimple();
+    const divMensal=debtRows.reduce((s,r)=>s+(Number(r.parcela)||0),0);
+    const divFalta=debtRows.reduce((s,r)=>s+(Number(r.falta)||0),0);
+    return {renda,ticket,despesas,totalDesp,saldo,dizimo,missionarios,outrasDoa,doacoes,porCat,debtRows,divMensal,divFalta};
+  }
+  window.gerarPdfGeral=function(){
+    loadPDF(()=>{
+      try{
+        if(typeof calcular==='function') calcular();
+        const {jsPDF}=window.jspdf; const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+        const d=dadosGerais(); header(doc,'Relatório do panorama geral'); let y=43;
+        card(doc,14,y,39,'Renda',brl(d.renda),[15,166,147]); card(doc,57,y,39,'Despesas',brl(d.totalDesp),[220,38,38]);
+        card(doc,100,y,39,'Saldo',brl(d.saldo),d.saldo>=0?[22,163,74]:[220,38,38]); card(doc,143,y,53,'Dívidas restantes',brl(d.divFalta),[217,119,6]); y+=34;
+        y=section(doc,'Análise resumida',y);
+        const maiorCat=Object.entries(d.porCat).sort((a,b)=>b[1]-a[1])[0];
+        const catsLabels=(window.CATS||{});
+        y=paragraph(doc,[
+          d.renda>0 ? `Sua renda cadastrada é ${brl(d.renda)} e suas despesas planejadas somam ${brl(d.totalDesp)} (${pct(d.totalDesp,d.renda)} da renda).` : 'Ainda não há renda cadastrada.',
+          d.saldo>=0 ? `O panorama geral está positivo em ${brl(d.saldo)}.` : `O panorama geral está negativo em ${brl(Math.abs(d.saldo))}.`,
+          maiorCat ? `A maior categoria de despesa é ${catsLabels[maiorCat[0]]?.label || maiorCat[0]}, com ${brl(maiorCat[1])}.` : 'Não há despesas cadastradas por categoria.',
+          d.divFalta>0 ? `No controle de dívidas há ${brl(d.divFalta)} restantes e ${brl(d.divMensal)} de compromisso mensal.` : 'Não há saldo restante de dívidas no controle de dívidas.',
+          'Sugestão: acompanhe mensalmente o saldo disponível, evite novas parcelas e use qualquer sobra para acelerar a dívida com maior parcela ou maior saldo restante.'
+        ],y);
+        y=section(doc,'Despesas planejadas por categoria',y,[220,38,38]);
+        y=tableHeader(doc,y,['Categoria','Valor','% da renda'],[80,50,35]);
+        Object.entries(d.porCat).sort((a,b)=>b[1]-a[1]).forEach(([cat,val])=>{ y=rowLine(doc,y,[catsLabels[cat]?.label||cat,brl(val),pct(val,d.renda)],[80,50,35]); });
+        y=section(doc,'Fontes de renda e doações',y,[124,58,237]);
+        y=tableHeader(doc,y,['Item','Valor','Observação'],[80,45,55]);
+        (window.state?.rendas||[]).filter(r=>Number(r.val)>0).forEach(r=>{ y=rowLine(doc,y,[r.nome,brl(r.val),'Fonte de renda'],[80,45,55]); });
+        if(d.ticket>0) y=rowLine(doc,y,['Ticket alimentação',brl(d.ticket),'Benefício / bônus'],[80,45,55]);
+        if(d.doacoes>0) y=rowLine(doc,y,['Total de doações',brl(d.doacoes),'Dízimo + missões + outras'],[80,45,55]);
+        if(d.debtRows.length){
+          y=section(doc,'Resumo das dívidas cadastradas',y,[217,119,6]);
+          y=tableHeader(doc,y,['Dívida/cartão','Item','Parcela','Falta'],[50,60,35,35]);
+          d.debtRows.sort((a,b)=>b.falta-a.falta).slice(0,18).forEach(r=>{ y=rowLine(doc,y,[r.grupo,r.item,brl(r.parcela),brl(r.falta)],[50,60,35,35]); });
+        }
+        footer(doc,'Panorama geral'); doc.save(`painelfin_panorama_geral_${new Date().toISOString().slice(0,10)}.pdf`);
+        if(window.showToast) showToast('PDF geral gerado!');
+      }catch(e){ console.error(e); if(window.showToast) showToast('Erro ao gerar PDF geral: '+(e.message||e), true); }
+    });
+  };
+  function dadosMes(){
+    const mes=typeof getMes==='function' ? getMes(anoAtual,mesAtual) : {receitas:[],fixas:[],variaveis:[],doacoes:[],inesperadas:[]};
+    const rec=sum(mes.receitas), fixas=sum(mes.fixas), variaveis=sum(mes.variaveis), doacoes=sum(mes.doacoes), inesperadas=sum(mes.inesperadas);
+    const despesas=fixas+variaveis+doacoes+inesperadas; const saldo=rec-despesas;
+    return {mes,rec,fixas,variaveis,doacoes,inesperadas,despesas,saldo,nome:`${(window.MESES_NOMES||[])[mesAtual]||''} ${anoAtual}`};
+  }
+  function secList(doc,title,items,y,color){
+    y=section(doc,title,y,color); y=tableHeader(doc,y,['Item','Previsto','Real'],[100,35,35]);
+    if(!items || !items.length){ y=rowLine(doc,y,['Sem lançamentos','—','—'],[100,35,35]); return y+2; }
+    items.forEach(i=>{ y=rowLine(doc,y,[i.nome||'Item', i.planejado!=null?brl(i.planejado):'—', brl(i.val)],[100,35,35]); });
+    return y+2;
+  }
+  window.gerarPdfMensal=function(){
+    loadPDF(()=>{
+      try{
+        if(typeof renderLancamentos==='function') renderLancamentos();
+        const {jsPDF}=window.jspdf; const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+        const d=dadosMes(); header(doc,`Relatório mensal - ${d.nome}`); let y=43;
+        card(doc,14,y,39,'Receitas',brl(d.rec),[22,163,74]); card(doc,57,y,39,'Despesas',brl(d.despesas),[220,38,38]);
+        card(doc,100,y,39,'Doações',brl(d.doacoes),[124,58,237]); card(doc,143,y,53,'Saldo',brl(d.saldo),d.saldo>=0?[22,163,74]:[220,38,38]); y+=34;
+        y=section(doc,'Análise do mês',y);
+        const maior=[['Fixas',d.fixas],['Variáveis',d.variaveis],['Doações',d.doacoes],['Inesperadas',d.inesperadas]].sort((a,b)=>b[1]-a[1])[0];
+        y=paragraph(doc,[
+          d.rec>0 ? `No mês de ${d.nome}, as receitas somam ${brl(d.rec)} e as saídas somam ${brl(d.despesas)} (${pct(d.despesas,d.rec)} das receitas).` : `No mês de ${d.nome}, ainda não há receitas registradas.`,
+          d.saldo>=0 ? `O mês fecha positivo em ${brl(d.saldo)}.` : `O mês fecha negativo em ${brl(Math.abs(d.saldo))}.`,
+          maior && maior[1]>0 ? `O maior bloco de saída do mês é ${maior[0]}, com ${brl(maior[1])}.` : 'Ainda não há saídas registradas para este mês.',
+          d.inesperadas>0 ? `Há ${brl(d.inesperadas)} em gastos inesperados; vale revisar se são exceções ou despesas recorrentes.` : 'Não há gastos inesperados registrados neste mês.',
+          'Sugestão: compare o previsto com o realizado e ajuste o planejamento do próximo mês antes de assumir novas parcelas.'
+        ],y);
+        y=secList(doc,'Valores a receber',d.mes.receitas,y,[22,163,74]);
+        y=secList(doc,'Despesas fixas',d.mes.fixas,y,[220,38,38]);
+        y=secList(doc,'Despesas variáveis',d.mes.variaveis,y,[217,119,6]);
+        y=secList(doc,'Doações',d.mes.doacoes,y,[124,58,237]);
+        if((d.mes.inesperadas||[]).length) y=secList(doc,'Gastos inesperados',d.mes.inesperadas,y,[234,88,12]);
+        footer(doc,`Mensal - ${d.nome}`); doc.save(`painelfin_mensal_${anoAtual}_${String(mesAtual+1).padStart(2,'0')}.pdf`);
+        if(window.showToast) showToast('PDF mensal gerado!');
+      }catch(e){ console.error(e); if(window.showToast) showToast('Erro ao gerar PDF mensal: '+(e.message||e), true); }
+    });
+  };
+})();
+
 </script>
 
 </body></html>
