@@ -5367,4 +5367,216 @@ window.addEventListener('DOMContentLoaded',()=>{
 })();
 </script>
 
+
+
+<style>
+/* PATCH — SIMULADOR DO ZERO */
+.sim-form-grid{display:grid;grid-template-columns:1.4fr 150px 170px auto;gap:10px;align-items:end;margin-top:10px}
+.sim-form-grid.receita{grid-template-columns:1.8fr 170px auto}
+.sim-mini-label{display:block;font-size:10px;font-weight:900;color:var(--di);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px}
+.sim-input,.sim-select2{width:100%;height:40px;border:1px solid var(--bd);border-radius:10px;background:var(--s2);color:var(--tx);padding:0 12px;font-family:'Inter',sans-serif;outline:none}
+.sim-input:focus,.sim-select2:focus{border-color:var(--tbd)}
+.sim-item-row{display:grid;grid-template-columns:minmax(0,1fr) 120px 150px 34px;gap:10px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--bd)}
+.sim-item-row.receita{grid-template-columns:minmax(0,1fr) 130px 34px}
+.sim-item-row:last-child{border-bottom:none}
+.sim-item-name{font-weight:700;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sim-item-meta{font-size:11px;color:var(--di);margin-top:1px}
+.sim-delete{width:32px;height:32px;border:0;border-radius:8px;background:var(--s2);color:var(--di);cursor:pointer;font-size:18px}
+.sim-delete:hover{background:rgba(248,113,113,.12);color:var(--red)}
+.sim-empty{padding:22px;text-align:center;color:var(--mu)}
+@media(max-width:850px){.sim-form-grid,.sim-form-grid.receita,.sim-item-row,.sim-item-row.receita{grid-template-columns:1fr}.sim-delete{width:100%}}
+</style>
+<script>
+/* PATCH FINAL — GUIA DE SIMULAÇÃO INDEPENDENTE, SEM PUXAR VALORES DO PLANO */
+(function(){
+  const DEFAULT_ZERO = { essencial:50, lazer:30, investimento:20, receitas:[], despesas:[], nextReceitaId:1, nextDespesaId:1 };
+
+  function moeda(v){ return (typeof fmt === 'function') ? fmt(Number(v)||0) : ('R$ ' + Math.round(Number(v)||0).toLocaleString('pt-BR')); }
+  function esc(v){ return String(v ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;'); }
+
+  function sim(){
+    if(!window.state) window.state = {};
+    if(!state.simulacao || Array.isArray(state.simulacao)) state.simulacao = {};
+    const s = state.simulacao;
+    ['essencial','lazer','investimento'].forEach(k=>{ if(s[k]===undefined || s[k]===null || s[k]==='') s[k]=DEFAULT_ZERO[k]; });
+    if(!Array.isArray(s.receitas)) s.receitas = [];
+    if(!Array.isArray(s.despesas)) s.despesas = [];
+    if(!s.nextReceitaId) s.nextReceitaId = Math.max(1, ...s.receitas.map(r=>Number(String(r.id||'').replace(/\D/g,''))||0)) + 1;
+    if(!s.nextDespesaId) s.nextDespesaId = Math.max(1, ...s.despesas.map(d=>Number(String(d.id||'').replace(/\D/g,''))||0)) + 1;
+    return s;
+  }
+
+  function agenda(){ if(window.agendarAutoSave) window.agendarAutoSave(700); }
+  function totais(){
+    const s=sim();
+    const receita=s.receitas.reduce((acc,r)=>acc+(Number(r.val)||0),0);
+    const essencial=s.despesas.filter(d=>d.grupo==='essencial').reduce((acc,d)=>acc+(Number(d.val)||0),0);
+    const lazer=s.despesas.filter(d=>d.grupo==='lazer').reduce((acc,d)=>acc+(Number(d.val)||0),0);
+    const investimento=s.despesas.filter(d=>d.grupo==='investimento').reduce((acc,d)=>acc+(Number(d.val)||0),0);
+    const despesas=essencial+lazer+investimento;
+    return {receita,essencial,lazer,investimento,despesas,saldo:receita-despesas};
+  }
+
+  window.simAddReceita = function(){
+    const nome=(document.getElementById('sim-rec-nome')?.value||'').trim();
+    const val=Number(document.getElementById('sim-rec-val')?.value)||0;
+    if(!nome || val<=0){ showToast && showToast('Informe nome e valor da receita da simulação.', true); return; }
+    const s=sim(); s.receitas.push({id:'sr'+s.nextReceitaId++, nome, val});
+    document.getElementById('sim-rec-nome').value=''; document.getElementById('sim-rec-val').value='';
+    renderSimulacaoZero(); agenda();
+  };
+  window.simAddDespesa = function(){
+    const nome=(document.getElementById('sim-desp-nome')?.value||'').trim();
+    const val=Number(document.getElementById('sim-desp-val')?.value)||0;
+    const grupo=document.getElementById('sim-desp-grupo')?.value || 'essencial';
+    if(!nome || val<=0){ showToast && showToast('Informe nome e valor da despesa da simulação.', true); return; }
+    const s=sim(); s.despesas.push({id:'sd'+s.nextDespesaId++, nome, val, grupo});
+    document.getElementById('sim-desp-nome').value=''; document.getElementById('sim-desp-val').value='';
+    renderSimulacaoZero(); agenda();
+  };
+  window.simDelReceita = function(id){ const s=sim(); s.receitas=s.receitas.filter(r=>r.id!==id); renderSimulacaoZero(); agenda(); };
+  window.simDelDespesa = function(id){ const s=sim(); s.despesas=s.despesas.filter(d=>d.id!==id); renderSimulacaoZero(); agenda(); };
+  window.simSetPct = function(k,v){ const s=sim(); s[k]=Number(v)||0; renderSimulacaoZero(); agenda(); };
+  window.simPreset502010 = function(){ const s=sim(); s.essencial=50; s.lazer=30; s.investimento=20; renderSimulacaoZero(); agenda(); };
+  window.simResetZero = function(){ if(!confirm('Limpar apenas a simulação?')) return; state.simulacao={...DEFAULT_ZERO, receitas:[], despesas:[]}; renderSimulacaoZero(); agenda(); };
+
+  function card(nome,meta,atual,cor,sub){
+    const diff=meta-atual; const passou=atual>meta; const pct=meta>0?Math.min(100, atual/meta*100):0;
+    return `<div class="sim-card">
+      <div class="sim-card-title">${esc(nome)}</div>
+      <div class="sim-card-value" style="color:${cor}">${moeda(atual)}</div>
+      <div class="sim-card-sub">Meta: <strong>${moeda(meta)}</strong> · ${sub}</div>
+      <div class="sim-bar"><div class="sim-bar-fill" style="width:${pct.toFixed(1)}%;background:${passou?'var(--red)':cor}"></div></div>
+      <div class="sim-card-sub" style="color:${passou?'var(--red)':'var(--mu)'}">${passou?'Acima da meta em '+moeda(Math.abs(diff)):'Dentro da meta: sobra '+moeda(Math.max(0,diff))}</div>
+    </div>`;
+  }
+
+  window.renderSimulacaoZero = function(){
+    const s=sim();
+    const box=document.getElementById('sec-simulacao'); if(!box) return;
+    const t=totais();
+    const somaPct=(Number(s.essencial)||0)+(Number(s.lazer)||0)+(Number(s.investimento)||0);
+    const metaEss=t.receita*(Number(s.essencial)||0)/100;
+    const metaLaz=t.receita*(Number(s.lazer)||0)/100;
+    const metaInv=t.receita*(Number(s.investimento)||0)/100;
+
+    let diag='Monte uma simulação do zero: cadastre as receitas, as despesas simuladas e escolha os percentuais da regra.';
+    if(t.receita<=0) diag='Comece adicionando pelo menos uma receita para calcular o panorama.';
+    else if(somaPct!==100) diag=`A regra está somando ${somaPct}%. Ajuste para 100% para uma leitura mais correta.`;
+    else if(t.essencial>metaEss) diag=`Essencial acima da meta em ${moeda(t.essencial-metaEss)}. Tente reduzir fixos, dívidas ou obrigações.`;
+    else if(t.lazer>metaLaz) diag=`Lazer/luxo acima da meta em ${moeda(t.lazer-metaLaz)}. Dá para cortar aqui sem mexer no essencial.`;
+    else if(t.investimento<metaInv) diag=`Investimento abaixo da meta em ${moeda(metaInv-t.investimento)}. Veja se sobra saldo para direcionar.`;
+    else diag='Simulação equilibrada dentro da regra escolhida.';
+
+    const recRows=s.receitas.map(r=>`<div class="sim-item-row receita"><div><div class="sim-item-name">💰 ${esc(r.nome)}</div><div class="sim-item-meta">Receita simulada</div></div><div class="sim-money" style="color:var(--green)">${moeda(r.val)}</div><button class="sim-delete" onclick="simDelReceita('${esc(r.id)}')">×</button></div>`).join('') || `<div class="sim-empty">Nenhuma receita simulada ainda.</div>`;
+    const despRows=s.despesas.map(d=>{
+      const label=d.grupo==='essencial'?'Essencial':d.grupo==='lazer'?'Lazer/Luxo':'Investimento';
+      const color=d.grupo==='essencial'?'var(--teal)':d.grupo==='lazer'?'var(--pink)':'var(--green)';
+      return `<div class="sim-item-row"><div><div class="sim-item-name">📌 ${esc(d.nome)}</div><div class="sim-item-meta">${label}</div></div><div class="sim-money">${moeda(d.val)}</div><div style="color:${color};font-weight:800;font-size:12px;text-align:right">${label}</div><button class="sim-delete" onclick="simDelDespesa('${esc(d.id)}')">×</button></div>`;
+    }).join('') || `<div class="sim-empty">Nenhuma despesa simulada ainda.</div>`;
+
+    box.innerHTML=`
+      <div class="section-header">
+        <div class="section-eyebrow">simulação</div>
+        <div class="section-title">Simulador financeiro do zero</div>
+        <div class="section-desc">Aqui não puxa seus valores do painel. Você informa receitas, despesas e percentuais para testar uma regra tipo 50/30/20.</div>
+      </div>
+
+      <div class="sim-toolbar">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+          <div style="font-size:11px;font-weight:900;color:var(--di);letter-spacing:.08em;text-transform:uppercase">1. Defina a regra</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-sm" onclick="simPreset502010()">Usar 50/30/20</button><button class="btn btn-sm" onclick="simResetZero()">Limpar simulação</button></div>
+        </div>
+        <div class="sim-rule-grid">
+          <div class="sim-rule-card"><label>Essencial</label><div class="sim-rule-input"><input type="number" value="${esc(s.essencial)}" min="0" max="100" oninput="simSetPct('essencial',this.value)"><span>%</span></div></div>
+          <div class="sim-rule-card"><label>Lazer / luxo</label><div class="sim-rule-input"><input type="number" value="${esc(s.lazer)}" min="0" max="100" oninput="simSetPct('lazer',this.value)"><span>%</span></div></div>
+          <div class="sim-rule-card"><label>Investimento</label><div class="sim-rule-input"><input type="number" value="${esc(s.investimento)}" min="0" max="100" oninput="simSetPct('investimento',this.value)"><span>%</span></div></div>
+        </div>
+        <div style="margin-top:10px;font-size:12px;font-weight:900;color:${somaPct===100?'var(--green)':'var(--amber)'}">Soma da regra: ${somaPct}%</div>
+      </div>
+
+      <div class="sim-grid-2">
+        <div class="sim-list">
+          <div class="sim-list-head"><div class="sim-list-title">2. Receitas da simulação</div><div class="sim-money" style="color:var(--green)">${moeda(t.receita)}</div></div>
+          <div style="padding:14px 16px;border-bottom:1px solid var(--bd)">
+            <div class="sim-form-grid receita">
+              <div><label class="sim-mini-label">Nome da receita</label><input class="sim-input" id="sim-rec-nome" placeholder="ex: salário, aulas, extra"></div>
+              <div><label class="sim-mini-label">Valor</label><input class="sim-input" id="sim-rec-val" type="number" placeholder="0"></div>
+              <button class="btn btn-primary" onclick="simAddReceita()">Adicionar</button>
+            </div>
+          </div>
+          ${recRows}
+        </div>
+
+        <div class="sim-list">
+          <div class="sim-list-head"><div class="sim-list-title">3. Despesas da simulação</div><div class="sim-money" style="color:var(--red)">${moeda(t.despesas)}</div></div>
+          <div style="padding:14px 16px;border-bottom:1px solid var(--bd)">
+            <div class="sim-form-grid">
+              <div><label class="sim-mini-label">Nome da despesa</label><input class="sim-input" id="sim-desp-nome" placeholder="ex: aluguel, mercado, viagem"></div>
+              <div><label class="sim-mini-label">Valor</label><input class="sim-input" id="sim-desp-val" type="number" placeholder="0"></div>
+              <div><label class="sim-mini-label">Grupo</label><select class="sim-select2" id="sim-desp-grupo"><option value="essencial">Essencial</option><option value="lazer">Lazer/Luxo</option><option value="investimento">Investimento</option></select></div>
+              <button class="btn btn-primary" onclick="simAddDespesa()">Adicionar</button>
+            </div>
+          </div>
+          ${despRows}
+          <div class="sim-total-line"><span>Saldo livre da simulação</span><strong style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moeda(t.saldo)}</strong></div>
+        </div>
+      </div>
+
+      <div class="sim-alert">💡 ${diag}</div>
+
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Receitas simuladas</div><div class="stat-value" style="color:var(--teal)">${moeda(t.receita)}</div><div class="stat-sub">informado manualmente</div></div>
+        <div class="stat-card"><div class="stat-label">Despesas simuladas</div><div class="stat-value" style="color:var(--red)">${moeda(t.despesas)}</div><div class="stat-sub">essencial + lazer + investimento</div></div>
+        <div class="stat-card"><div class="stat-label">Saldo simulado</div><div class="stat-value" style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moeda(t.saldo)}</div><div class="stat-sub">receitas - despesas</div></div>
+      </div>
+
+      <div class="sim-cards">
+        ${card('Essencial',metaEss,t.essencial,'var(--teal)','necessidades')}
+        ${card('Lazer / luxo',metaLaz,t.lazer,'var(--pink)','flexíveis')}
+        ${card('Investimento',metaInv,t.investimento,'var(--green)','futuro')}
+      </div>
+
+      <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><button class="btn" onclick="goTo('investir')">← Investimentos</button><button class="btn btn-primary" onclick="goTo('dashboard')">Dashboard →</button></div>`;
+  };
+
+  window.renderSimulacao = window.renderSimulacaoZero;
+
+  const antigoColetar = window.coletarDados;
+  window.coletarDados = function(){
+    const base = antigoColetar ? antigoColetar() : {};
+    sim();
+    return {...base, simulacao: state.simulacao};
+  };
+
+  const antigoApply = window.applyData;
+  window.applyData = function(d){
+    if(antigoApply) antigoApply(d||{});
+    if(d && d.simulacao){ state.simulacao = {...DEFAULT_ZERO, ...d.simulacao, receitas:Array.isArray(d.simulacao.receitas)?d.simulacao.receitas:[], despesas:Array.isArray(d.simulacao.despesas)?d.simulacao.despesas:[]}; }
+    sim();
+    if(document.getElementById('sec-simulacao')?.classList.contains('active')) renderSimulacaoZero();
+  };
+
+  const antigoGoTo = window.goTo;
+  window.goTo = function(id){
+    if(id==='simulacao'){
+      if(typeof _syncModeUI === 'function') _syncModeUI('geral');
+      if(!document.getElementById('sec-simulacao')){
+        const content=document.querySelector('.content');
+        const sec=document.createElement('div'); sec.id='sec-simulacao'; sec.className='page-section'; content?.appendChild(sec);
+      }
+      document.querySelectorAll('.page-section').forEach(el=>{el.style.display='none';el.classList.remove('active');});
+      const sec=document.getElementById('sec-simulacao'); sec.style.display='block'; sec.classList.add('active');
+      document.querySelectorAll('#nav-geral .nav-item').forEach(n=>n.classList.remove('active'));
+      document.getElementById('nav-simulacao')?.classList.add('active');
+      const title=document.getElementById('topbar-title'); if(title) title.textContent='Simulação financeira';
+      renderSimulacaoZero(); window.scrollTo(0,0); return;
+    }
+    return antigoGoTo ? antigoGoTo(id) : undefined;
+  };
+
+  document.addEventListener('DOMContentLoaded',()=>{ sim(); });
+})();
+</script>
+
 </body></html>
