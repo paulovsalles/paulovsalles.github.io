@@ -4717,11 +4717,11 @@ window.addEventListener('DOMContentLoaded',()=>{
       if(comps.length){
         comps.forEach(c=>{
           const info=typeof infoParcelamento==='function' ? infoParcelamento({...c,inicio:c.inicio||d.inicio}) : null;
-          rows.push({grupo:d.nome||'Dívida', item:c.nome||'Item', tipo:d.tipo||'Outros', parcela:info?.valorParcela ?? Number(c.valorParcela)||0, falta:info?.falta ?? 0, fim:info?.fimMes || d.inicio || ''});
+          rows.push({grupo:d.nome||'Dívida', item:c.nome||'Item', tipo:d.tipo||'Outros', parcela:(info?.valorParcela ?? Number(c.valorParcela) || 0), falta:(info?.falta ?? 0), fim:(info?.fimMes || d.inicio || '')});
         });
       } else {
         const info=typeof infoDivida==='function' ? infoDivida(d) : null;
-        rows.push({grupo:d.nome||'Dívida', item:d.nome||'Dívida', tipo:d.tipo||'Outros', parcela:info?.valorParcela ?? Number(d.valorParcela)||0, falta:info?.falta ?? 0, fim:info?.fimMes || d.inicio || ''});
+        rows.push({grupo:d.nome||'Dívida', item:d.nome||'Dívida', tipo:d.tipo||'Outros', parcela:(info?.valorParcela ?? Number(d.valorParcela) || 0), falta:(info?.falta ?? 0), fim:(info?.fimMes || d.inicio || '')});
       }
     });
     return rows;
@@ -4819,6 +4819,298 @@ window.addEventListener('DOMContentLoaded',()=>{
   };
 })();
 
+</script>
+
+
+
+<script>
+/* PATCH FINAL - BOTÕES PDF ROBUSTOS */
+(function(){
+  try { if (typeof state !== 'undefined') window.state = state; } catch(e) {}
+
+  function toast(msg, err){
+    if (typeof window.showToast === 'function') window.showToast(msg, !!err);
+    else alert(msg);
+  }
+
+  function loadPDFLib(cb){
+    if (window.jspdf && window.jspdf.jsPDF) { cb(); return; }
+    const urls = [
+      'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+      'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js'
+    ];
+    let i = 0;
+    function next(){
+      if (window.jspdf && window.jspdf.jsPDF) { cb(); return; }
+      if (i >= urls.length) { toast('Não consegui carregar o gerador de PDF. Verifique a internet e tente novamente.', true); return; }
+      const s = document.createElement('script');
+      s.src = urls[i++];
+      s.onload = () => (window.jspdf && window.jspdf.jsPDF) ? cb() : next();
+      s.onerror = next;
+      document.head.appendChild(s);
+    }
+    next();
+  }
+
+  function brl(v){
+    return 'R$ ' + (Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
+  }
+  function num(v){ return Number(v)||0; }
+  function sum(arr, field='val'){
+    return (Array.isArray(arr)?arr:[]).reduce((s,x)=>s+num(x && x[field]),0);
+  }
+  function clean(t){
+    return String(t ?? '')
+      .replace(/[\u{1F300}-\u{1FAFF}]/gu,'')
+      .replace(/\s+/g,' ')
+      .trim();
+  }
+  function pct(v,t){ return t>0 ? (v/t*100).toFixed(1)+'%' : '0,0%'; }
+  function fileDate(){ return new Date().toISOString().slice(0,10); }
+  function mesNomeAtual(){
+    try { return `${MESES_NOMES[mesAtual]} ${anoAtual}`; } catch(e) { return new Date().toLocaleDateString('pt-BR',{month:'long', year:'numeric'}); }
+  }
+
+  function header(doc, title){
+    doc.setFillColor(15,166,147);
+    doc.rect(0,0,210,32,'F');
+    doc.setTextColor(255,255,255);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(18);
+    doc.text('PainelFin',14,14);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(10);
+    doc.text(clean(title),14,23);
+    doc.text(new Date().toLocaleDateString('pt-BR'),196,23,{align:'right'});
+  }
+  function footer(doc, label){
+    const pages = doc.getNumberOfPages();
+    for(let i=1;i<=pages;i++){
+      doc.setPage(i);
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(8);
+      doc.setTextColor(150,158,176);
+      doc.text(clean(label),14,287);
+      doc.text(`Página ${i} de ${pages}`,196,287,{align:'right'});
+    }
+  }
+  function page(doc,y){ if(y > 275){ doc.addPage(); return 16; } return y; }
+  function card(doc,x,y,w,title,value,color){
+    doc.setDrawColor(226,232,240);
+    doc.setFillColor(248,250,252);
+    doc.roundedRect(x,y,w,24,4,4,'FD');
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(8);
+    doc.setTextColor(90,100,128);
+    doc.text(clean(title),x+5,y+8);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(12);
+    doc.setTextColor(color[0],color[1],color[2]);
+    doc.text(clean(value),x+5,y+18);
+  }
+  function section(doc,title,y,color=[15,166,147]){
+    y = page(doc,y);
+    doc.setFillColor(color[0],color[1],color[2]);
+    doc.roundedRect(14,y,3,7,1,1,'F');
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(11);
+    doc.setTextColor(26,31,46);
+    doc.text(clean(title),20,y+6);
+    return y+12;
+  }
+  function paragraph(doc, lines, y){
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(9);
+    doc.setTextColor(90,100,128);
+    (lines||[]).forEach(line=>{
+      y = page(doc,y);
+      const split = doc.splitTextToSize('• '+clean(line),176);
+      doc.text(split,18,y);
+      y += split.length*5 + 1;
+    });
+    return y+4;
+  }
+  function tableHeader(doc,y,heads,widths){
+    y=page(doc,y);
+    doc.setFillColor(240,242,248);
+    doc.roundedRect(14,y,182,8,2,2,'F');
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(8);
+    doc.setTextColor(90,100,128);
+    let x=16;
+    heads.forEach((h,i)=>{ doc.text(clean(h),x,y+5.5); x+=widths[i]; });
+    return y+10;
+  }
+  function row(doc,y,cells,widths,accentIndex=-1,accentColor=[15,166,147]){
+    y=page(doc,y);
+    doc.setDrawColor(236,240,245);
+    doc.line(14,y+8,196,y+8);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(8);
+    let x=16;
+    cells.forEach((c,i)=>{
+      const color = i===accentIndex ? accentColor : [26,31,46];
+      doc.setTextColor(color[0],color[1],color[2]);
+      const lines=doc.splitTextToSize(clean(c),widths[i]-2);
+      doc.text(lines,x,y+5);
+      x += widths[i];
+    });
+    return y+10;
+  }
+
+  function getState(){
+    try { if (typeof state !== 'undefined') return state; } catch(e) {}
+    return window.state || {};
+  }
+
+  function debtInfo(obj){
+    try { if (typeof infoParcelamento === 'function') return infoParcelamento(obj); } catch(e) {}
+    const total = Math.max(1, parseInt(obj.totalParcelas || obj.parcelas || 1, 10));
+    const atual = Math.max(1, parseInt(obj.parcelaAtual || 1, 10));
+    const val = num(obj.valorParcela || obj.val || obj.valor);
+    const pagas = Math.max(0, atual-1);
+    const restantes = Math.max(0, total-pagas);
+    return {valorParcela:val,totalParcelas:total,parcelaAtual:atual,parcelasPagas:pagas,parcelasRestantes:restantes,pago:pagas*val,falta:restantes*val,fimMes:obj.inicio||''};
+  }
+  function debtRows(){
+    const st=getState();
+    const divs = Array.isArray(st.dividasParceladas) ? st.dividasParceladas : [];
+    const rows=[];
+    divs.forEach(d=>{
+      const comps=Array.isArray(d.componentes) ? d.componentes : [];
+      if(comps.length){
+        comps.forEach(c=>{
+          const info=debtInfo({...c, inicio:c.inicio||d.inicio});
+          rows.push({grupo:d.nome||d.credor||'Dívida', item:c.nome||'Item', tipo:d.tipo||'Cartão', parcela:info.valorParcela, falta:info.falta, pago:info.pago, restantes:info.parcelasRestantes, fim:info.fimMes||d.inicio||''});
+        });
+      } else {
+        const info=debtInfo(d);
+        rows.push({grupo:d.nome||d.credor||'Dívida', item:d.nome||'Dívida', tipo:d.tipo||'Outros', parcela:info.valorParcela, falta:info.falta, pago:info.pago, restantes:info.parcelasRestantes, fim:info.fimMes||d.inicio||''});
+      }
+    });
+    return rows;
+  }
+
+  window.gerarPdfDividas = function(){
+    loadPDFLib(()=>{
+      try{
+        const rows=debtRows();
+        if(!rows.length){ toast('Cadastre dívidas ou itens no cartão antes de gerar o relatório.', true); return; }
+        const {jsPDF}=window.jspdf;
+        const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+        const mensal=rows.reduce((s,r)=>s+r.parcela,0), falta=rows.reduce((s,r)=>s+r.falta,0), pago=rows.reduce((s,r)=>s+r.pago,0);
+        header(doc,'Relatório detalhado de dívidas'); let y=43;
+        card(doc,14,y,42,'Itens ativos',String(rows.length),[220,38,38]);
+        card(doc,61,y,42,'Compromisso mensal',brl(mensal),[217,119,6]);
+        card(doc,108,y,42,'Falta pagar',brl(falta),[220,38,38]);
+        card(doc,155,y,41,'Já pago',brl(pago),[22,163,74]); y+=34;
+        y=section(doc,'Análise e plano de quitação',y,[124,58,237]);
+        const foco=[...rows].sort((a,b)=>b.falta-a.falta)[0];
+        y=paragraph(doc,[
+          `Você possui ${rows.length} item(ns) de dívida, com compromisso mensal de ${brl(mensal)} e saldo restante de ${brl(falta)}.`,
+          foco ? `Prioridade sugerida: ${foco.item} (${foco.grupo}), pois possui saldo restante de ${brl(foco.falta)}.` : 'Não há prioridade definida.',
+          'Estratégia prática: evite assumir novas parcelas, mantenha o pagamento mínimo em todas e direcione qualquer sobra para a dívida foco até quitar.',
+          'Revise mensalmente os cartões para separar compras essenciais de compras que podem esperar.'
+        ],y);
+        const grupos={}; rows.forEach(r=>{ (grupos[r.grupo] ||= []).push(r); });
+        Object.entries(grupos).forEach(([grupo,itens])=>{
+          y=section(doc,grupo,y,[217,119,6]);
+          y=tableHeader(doc,y,['Item','Tipo','Parcela','Falta','Rest.'],[58,34,30,35,22]);
+          itens.sort((a,b)=>b.falta-a.falta).forEach(r=>{ y=row(doc,y,[r.item,r.tipo,brl(r.parcela),brl(r.falta),String(r.restantes)],[58,34,30,35,22],3,[220,38,38]); });
+        });
+        footer(doc,'Relatório de dívidas'); doc.save('painelfin_dividas_'+fileDate()+'.pdf'); toast('PDF de dívidas gerado!');
+      }catch(e){ console.error(e); toast('Erro ao gerar PDF de dívidas: '+(e.message||e), true); }
+    });
+  };
+
+  window.gerarPdfGeral = function(){
+    loadPDFLib(()=>{
+      try{
+        if(typeof calcular==='function') calcular();
+        const st=getState(); const rows=debtRows();
+        const renda = typeof getRenda==='function' ? getRenda() : sum(st.rendas||[]);
+        const despesas=(st.expenses||[]).filter(e=>num(e.val)>0);
+        const totalDesp=sum(despesas);
+        const saldo=renda-totalDesp;
+        const divFalta=rows.reduce((s,r)=>s+r.falta,0);
+        const divMensal=rows.reduce((s,r)=>s+r.parcela,0);
+        const doc=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+        header(doc,'Relatório do panorama geral'); let y=43;
+        card(doc,14,y,42,'Renda',brl(renda),[15,166,147]);
+        card(doc,61,y,42,'Despesas',brl(totalDesp),[220,38,38]);
+        card(doc,108,y,42,'Saldo',brl(saldo),saldo>=0?[22,163,74]:[220,38,38]);
+        card(doc,155,y,41,'Dívidas',brl(divFalta),[217,119,6]); y+=34;
+        y=section(doc,'Análise geral',y);
+        const porCat={}; despesas.forEach(e=>{ porCat[e.cat]=(porCat[e.cat]||0)+num(e.val); });
+        const maior=Object.entries(porCat).sort((a,b)=>b[1]-a[1])[0];
+        y=paragraph(doc,[
+          renda>0 ? `Sua renda cadastrada é ${brl(renda)} e suas despesas planejadas somam ${brl(totalDesp)} (${pct(totalDesp,renda)} da renda).` : 'Ainda não há renda cadastrada.',
+          saldo>=0 ? `O saldo geral está positivo em ${brl(saldo)}.` : `O saldo geral está negativo em ${brl(Math.abs(saldo))}.`,
+          maior ? `A maior categoria de despesa é ${maior[0]}, com ${brl(maior[1])}.` : 'Ainda não há despesas planejadas cadastradas.',
+          divFalta>0 ? `No controle de dívidas, faltam ${brl(divFalta)} e o compromisso mensal é ${brl(divMensal)}.` : 'Não há dívidas cadastradas no controle de dívidas.',
+          'Sugestão: use o panorama geral para decidir quanto pode ir para reserva, investimento e quitação acelerada das dívidas.'
+        ],y);
+        y=section(doc,'Despesas planejadas',y,[220,38,38]);
+        y=tableHeader(doc,y,['Despesa','Categoria','Valor','% renda'],[70,45,35,28]);
+        despesas.sort((a,b)=>num(b.val)-num(a.val)).forEach(e=>{ y=row(doc,y,[e.name,e.cat,brl(e.val),pct(e.val,renda)],[70,45,35,28],2,[220,38,38]); });
+        y=section(doc,'Fontes de renda',y,[15,166,147]);
+        y=tableHeader(doc,y,['Fonte','Valor','Observação'],[85,45,45]);
+        (st.rendas||[]).filter(r=>num(r.val)>0).forEach(r=>{ y=row(doc,y,[r.nome,brl(r.val),'Renda cadastrada'],[85,45,45],1,[15,166,147]); });
+        footer(doc,'Panorama geral'); doc.save('painelfin_panorama_geral_'+fileDate()+'.pdf'); toast('PDF geral gerado!');
+      }catch(e){ console.error(e); toast('Erro ao gerar PDF geral: '+(e.message||e), true); }
+    });
+  };
+
+  function monthData(){
+    try { if(typeof getMes==='function') return getMes(anoAtual,mesAtual); } catch(e) {}
+    return {receitas:[],fixas:[],variaveis:[],doacoes:[],inesperadas:[]};
+  }
+  function listSec(doc,title,items,y,color){
+    y=section(doc,title,y,color); y=tableHeader(doc,y,['Item','Previsto','Real'],[98,38,38]);
+    if(!items || !items.length) return row(doc,y,['Sem lançamentos','—','—'],[98,38,38])+2;
+    items.forEach(i=>{ y=row(doc,y,[i.nome||'Item', i.planejado!=null?brl(i.planejado):'—', brl(i.val)],[98,38,38],2,color); });
+    return y+2;
+  }
+  window.gerarPdfMensal = function(){
+    loadPDFLib(()=>{
+      try{
+        const mes=monthData(); const nome=mesNomeAtual();
+        const rec=sum(mes.receitas), fixas=sum(mes.fixas), variaveis=sum(mes.variaveis), doacoes=sum(mes.doacoes), inesperadas=sum(mes.inesperadas);
+        const despesas=fixas+variaveis+doacoes+inesperadas, saldo=rec-despesas;
+        const doc=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+        header(doc,'Relatório mensal - '+nome); let y=43;
+        card(doc,14,y,42,'Receitas',brl(rec),[22,163,74]);
+        card(doc,61,y,42,'Despesas',brl(despesas),[220,38,38]);
+        card(doc,108,y,42,'Doações',brl(doacoes),[124,58,237]);
+        card(doc,155,y,41,'Saldo',brl(saldo),saldo>=0?[22,163,74]:[220,38,38]); y+=34;
+        y=section(doc,'Análise do mês',y);
+        const maior=[['fixas',fixas],['variáveis',variaveis],['doações',doacoes],['inesperadas',inesperadas]].sort((a,b)=>b[1]-a[1])[0];
+        y=paragraph(doc,[
+          rec>0 ? `No mês de ${nome}, as receitas somam ${brl(rec)} e as saídas somam ${brl(despesas)} (${pct(despesas,rec)} das receitas).` : `No mês de ${nome}, ainda não há receitas registradas.`,
+          saldo>=0 ? `O mês fecha positivo em ${brl(saldo)}.` : `O mês fecha negativo em ${brl(Math.abs(saldo))}.`,
+          maior && maior[1]>0 ? `O maior bloco de saída é ${maior[0]}, com ${brl(maior[1])}.` : 'Ainda não há saídas registradas.',
+          inesperadas>0 ? `Há ${brl(inesperadas)} em gastos inesperados.` : 'Não há gastos inesperados registrados neste mês.',
+          'Sugestão: compare o previsto com o realizado antes de assumir novas parcelas.'
+        ],y);
+        y=listSec(doc,'Valores a receber',mes.receitas,y,[22,163,74]);
+        y=listSec(doc,'Despesas fixas',mes.fixas,y,[220,38,38]);
+        y=listSec(doc,'Despesas variáveis',mes.variaveis,y,[217,119,6]);
+        y=listSec(doc,'Doações',mes.doacoes,y,[124,58,237]);
+        if((mes.inesperadas||[]).length) y=listSec(doc,'Gastos inesperados',mes.inesperadas,y,[234,88,12]);
+        footer(doc,'Mensal - '+nome); doc.save('painelfin_mensal_'+nome.toLowerCase().replace(/\s+/g,'_')+'.pdf'); toast('PDF mensal gerado!');
+      }catch(e){ console.error(e); toast('Erro ao gerar PDF mensal: '+(e.message||e), true); }
+    });
+  };
+
+  window.addEventListener('DOMContentLoaded', function(){
+    document.querySelectorAll('button').forEach(btn=>{
+      const txt=(btn.textContent||'').toLowerCase();
+      if(txt.includes('pdf geral')) btn.onclick=window.gerarPdfGeral;
+      if(txt.includes('pdf mensal')) btn.onclick=window.gerarPdfMensal;
+      if(txt.includes('pdf dívidas') || txt.includes('pdf dividas')) btn.onclick=window.gerarPdfDividas;
+    });
+  });
+})();
 </script>
 
 </body></html>
