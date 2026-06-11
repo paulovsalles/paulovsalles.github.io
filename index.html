@@ -955,6 +955,7 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
       <span id="theme-label">Escuro</span>
     </div>
     <button class="btn btn-sm" onclick="exportExcel()" title="Exportar para Excel">📥 Excel</button>
+    <button class="btn btn-sm" onclick="gerarPdfDividas()" title="Gerar relatório detalhado das dívidas">📄 PDF dívidas</button>
     <button class="btn btn-sm" onclick="resetAll()">Limpar</button>
     <button class="btn btn-save btn-sm" onclick="salvarFirestore()">☁️ Salvar</button>
     <button class="btn btn-primary btn-sm" onclick="calcular();goTo(&#39;plano&#39;)">Ver plano →</button>
@@ -4430,6 +4431,214 @@ window.addEventListener('DOMContentLoaded',()=>{
     onDebtTipoChange();
     renderDividas();
   });
+})();
+</script>
+
+
+
+<script>
+/* PATCH - RELATORIO PDF DETALHADO DE DIVIDAS */
+(function(){
+  function loadJsPDF(cb){
+    if(window.jspdf && window.jspdf.jsPDF){ cb(); return; }
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload=cb;
+    s.onerror=()=>{ if(window.showToast) showToast('Não consegui carregar o gerador de PDF. Verifique a internet.', true); };
+    document.head.appendChild(s);
+  }
+  function n(v){ return Number(String(v ?? '').replace(',','.')) || 0; }
+  function money(v){ return 'R$ ' + (Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function txt(v){ return String(v ?? '').replace(/[\u{1F300}-\u{1FAFF}]/gu,'').replace(/\s+/g,' ').trim(); }
+  function normTipo(tipo){
+    const t=String(tipo||'').toLowerCase();
+    if(t.includes('cart')) return 'Cartão';
+    if(t.includes('financ')) return 'Financiamento';
+    if(t.includes('empr')) return 'Empréstimo';
+    if(t.includes('loja')) return 'Loja';
+    return tipo || 'Outros';
+  }
+  function monthDefault(){
+    if(typeof mesInicioPadrao==='function') return mesInicioPadrao();
+    const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  }
+  function addMonths(month, qty){
+    const [y,m]=String(month||monthDefault()).split('-').map(Number);
+    const d=new Date(y||new Date().getFullYear(), (m||1)-1 + Number(qty||0), 1);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  }
+  function monthLong(month){
+    if(!month) return '-';
+    if(typeof nomeMesLongo==='function') return nomeMesLongo(month);
+    const nomes=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const [y,m]=String(month).split('-');
+    return `${nomes[(Number(m)||1)-1]||m} ${y}`;
+  }
+  function parcelaInfo(obj){
+    const valor=n(obj && obj.valorParcela);
+    const total=Math.max(1, parseInt((obj && obj.totalParcelas) || 1, 10));
+    const atual=Math.min(Math.max(1, parseInt((obj && obj.parcelaAtual) || 1, 10)), total+1);
+    const pagas=Math.min(total, Math.max(0, atual-1));
+    const restantes=Math.max(0, total-pagas);
+    const inicio=(obj && obj.inicio) || monthDefault();
+    return {
+      valorParcela:valor, totalParcelas:total, parcelaAtual:atual, parcelasPagas:pagas,
+      parcelasRestantes:restantes, total:valor*total, pago:valor*pagas, falta:valor*restantes,
+      inicio, proximoMes:restantes>0?addMonths(inicio,pagas):'', fimMes:addMonths(inicio,total-1),
+      progresso: valor*total>0 ? Math.min(100,(valor*pagas)/(valor*total)*100) : 0
+    };
+  }
+  function collectDebtRows(){
+    const dividas = Array.isArray(window.state?.dividasParceladas) ? window.state.dividasParceladas : [];
+    const rows=[];
+    dividas.forEach(d=>{
+      const tipo=normTipo(d.tipo);
+      const comps=Array.isArray(d.componentes) ? d.componentes : [];
+      if(comps.length){
+        comps.forEach(c=>{
+          const info=parcelaInfo({...c, inicio:c.inicio || d.inicio || monthDefault()});
+          rows.push({parentId:d.id,parent:txt(d.nome||'Cartão'),tipo,credor:txt(d.credor||''),item:txt(c.nome||'Item'),info,component:true});
+        });
+      } else if(tipo!=='Cartão'){
+        const info=parcelaInfo(d);
+        rows.push({parentId:d.id,parent:txt(d.nome||'Dívida'),tipo,credor:txt(d.credor||''),item:txt(d.nome||'Dívida'),info,component:false});
+      } else {
+        rows.push({parentId:d.id,parent:txt(d.nome||'Cartão'),tipo,credor:txt(d.credor||''),item:'Sem itens detalhados',info:{valorParcela:0,totalParcelas:0,parcelaAtual:1,parcelasPagas:0,parcelasRestantes:0,total:0,pago:0,falta:0,inicio:d.inicio||monthDefault(),fimMes:d.inicio||monthDefault(),progresso:0},component:false,emptyCard:true});
+      }
+    });
+    return rows;
+  }
+  function summary(rows){
+    const active=rows.filter(r=>!r.emptyCard && r.info.parcelasRestantes>0);
+    return {
+      cards:[...new Set(rows.map(r=>r.parentId))].length,
+      activeItems:active.length,
+      monthly:active.reduce((s,r)=>s+r.info.valorParcela,0),
+      falta:active.reduce((s,r)=>s+r.info.falta,0),
+      pago:rows.filter(r=>!r.emptyCard).reduce((s,r)=>s+r.info.pago,0),
+      last:active.map(r=>r.info.fimMes).sort().pop() || ''
+    };
+  }
+  function groupByParent(rows){
+    const map={};
+    rows.filter(r=>!r.emptyCard).forEach(r=>{
+      if(!map[r.parentId]) map[r.parentId]={nome:r.parent,tipo:r.tipo,credor:r.credor,mensal:0,falta:0,pago:0,total:0,last:''};
+      const g=map[r.parentId];
+      g.mensal += r.info.parcelasRestantes>0 ? r.info.valorParcela : 0; g.falta += r.info.falta; g.pago += r.info.pago; g.total += r.info.total;
+      if(r.info.fimMes > (g.last||'')) g.last=r.info.fimMes;
+    });
+    return Object.values(map).sort((a,b)=>b.falta-a.falta);
+  }
+  function monthlyProjection(rows, limit=12){
+    const active=rows.filter(r=>!r.emptyCard && r.info.parcelasRestantes>0);
+    const start=monthDefault(); const months=[];
+    for(let i=0;i<limit;i++) months.push({key:addMonths(start,i),total:0,count:0});
+    active.forEach(r=>{
+      for(let k=0;k<r.info.parcelasRestantes;k++){
+        const due=addMonths(r.info.proximoMes || start, k);
+        const m=months.find(x=>x.key===due);
+        if(m){ m.total += r.info.valorParcela; m.count += 1; }
+      }
+    });
+    return months;
+  }
+  function drawCard(doc,x,y,w,h,label,value,color){
+    doc.setDrawColor(226,232,240); doc.setFillColor(248,250,252); doc.roundedRect(x,y,w,h,4,4,'FD');
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(90,100,128); doc.text(label,x+5,y+8);
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(color[0],color[1],color[2]); doc.text(value,x+5,y+19);
+  }
+  function pageCheck(doc,y,needed=20){ if(y>285-needed){ doc.addPage(); return 16; } return y; }
+  function sectionTitle(doc,title,y,color){
+    color=color||[15,166,147]; y=pageCheck(doc,y,16);
+    doc.setFillColor(color[0],color[1],color[2]); doc.roundedRect(14,y,3,7,1,1,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(26,31,46); doc.text(title,20,y+6);
+    return y+12;
+  }
+  function writeParagraph(doc,lines,y){
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(75,85,99);
+    lines.forEach(line=>{ y=pageCheck(doc,y,14); const split=doc.splitTextToSize('- '+txt(line),178); doc.text(split,18,y); y+=split.length*5+1; });
+    return y+4;
+  }
+  function makeSuggestions(rows, sum){
+    const active=rows.filter(r=>!r.emptyCard && r.info.parcelasRestantes>0);
+    const byFalta=[...active].sort((a,b)=>b.info.falta-a.info.falta)[0];
+    const byMonthly=[...active].sort((a,b)=>b.info.valorParcela-a.info.valorParcela)[0];
+    const cards=active.filter(r=>r.tipo==='Cartão');
+    const sugest=[];
+    if(!active.length){ sugest.push('Não há parcelas ativas cadastradas. Mantenha o controle atualizado para não assumir novas dívidas sem planejamento.'); return sugest; }
+    sugest.push(`Hoje o compromisso mensal das dívidas cadastradas é ${money(sum.monthly)} e o saldo restante ativo é ${money(sum.falta)}.`);
+    if(cards.length) sugest.push('Como há cartão de crédito parcelado, evite criar novas compras parceladas até reduzir a fatura comprometida.');
+    if(byMonthly) sugest.push(`Prioridade prática: atacar primeiro "${byMonthly.item}" (${byMonthly.parent}), pois libera ${money(byMonthly.info.valorParcela)} por mês quando quitar.`);
+    if(byFalta && byFalta!==byMonthly) sugest.push(`Maior saldo restante: "${byFalta.item}" (${byFalta.parent}), com ${money(byFalta.info.falta)} a pagar.`);
+    sugest.push('Estratégia sugerida: pague todas as parcelas obrigatórias e escolha uma dívida foco para receber qualquer valor extra do mês.');
+    sugest.push('Quando uma dívida quitar, use a parcela que sobrou para acelerar a próxima dívida da lista, em vez de assumir uma nova parcela.');
+    sugest.push('Sem taxa de juros informada, o relatório prioriza valor restante, parcela mensal e prazo. Se uma dívida tiver juros altos, ela deve virar prioridade.');
+    return sugest;
+  }
+  function addTableHeader(doc,y,headers,widths){
+    doc.setFillColor(241,245,249); doc.setDrawColor(226,232,240); doc.rect(14,y,182,8,'FD');
+    doc.setFont('helvetica','bold'); doc.setFontSize(7.2); doc.setTextColor(75,85,99);
+    let x=16; headers.forEach((h,i)=>{ doc.text(h,x,y+5.3); x+=widths[i]; }); return y+9;
+  }
+  function exportDebtsPDF(){
+    const rows=collectDebtRows();
+    if(!rows.length || rows.every(r=>r.emptyCard)){ if(window.showToast) showToast('Cadastre dívidas ou itens no cartão antes de gerar o relatório.', true); return; }
+    loadJsPDF(()=>{
+      try{
+        const {jsPDF}=window.jspdf; const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+        const sum=summary(rows); const groups=groupByParent(rows); const now=new Date();
+        doc.setFillColor(15,166,147); doc.rect(0,0,210,34,'F');
+        doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.text('PainelFin',14,15);
+        doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.text('Relatorio detalhado de dividas',14,23);
+        doc.text(`Gerado em ${now.toLocaleDateString('pt-BR')}`,196,23,{align:'right'});
+        let y=43;
+        drawCard(doc,14,y,34,25,'Dividas',String(sum.cards),[220,38,38]);
+        drawCard(doc,52,y,42,25,'Mensal',money(sum.monthly),[217,119,6]);
+        drawCard(doc,98,y,42,25,'Falta pagar',money(sum.falta),[220,38,38]);
+        drawCard(doc,144,y,25,25,'Itens',String(sum.activeItems),[37,99,235]);
+        drawCard(doc,173,y,23,25,'Fim',sum.last?monthLong(sum.last).split(' ')[0]:'-',[26,31,46]);
+        y+=35;
+        y=sectionTitle(doc,'Analise e plano de quitacao',y,[15,166,147]);
+        y=writeParagraph(doc,makeSuggestions(rows,sum),y);
+        y=sectionTitle(doc,'Resumo por cartao/divida',y,[124,58,237]);
+        groups.forEach(g=>{
+          y=pageCheck(doc,y,16); doc.setDrawColor(236,240,245); doc.line(14,y+8,196,y+8);
+          doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(26,31,46);
+          doc.text(doc.splitTextToSize(`${g.tipo} - ${g.nome}${g.credor?' ('+g.credor+')':''}`,84),16,y+5);
+          doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(90,100,128);
+          doc.text(`Mensal: ${money(g.mensal)}`,108,y+5); doc.text(`Falta: ${money(g.falta)}`,150,y+5); y+=11;
+        });
+        y+=3;
+        y=sectionTitle(doc,'Lista detalhada das dividas',y,[220,38,38]);
+        const headers=['Cartao/Divida','Item','Parcela','Progresso','Falta','Termina']; const widths=[34,48,25,28,25,22];
+        y=addTableHeader(doc,y,headers,widths);
+        rows.filter(r=>!r.emptyCard).sort((a,b)=>b.info.falta-a.info.falta).forEach(r=>{
+          y=pageCheck(doc,y,18); if(y<20) y=addTableHeader(doc,y,headers,widths);
+          const lineH=4.2; const parentLines=doc.splitTextToSize(r.parent,32); const itemLines=doc.splitTextToSize(r.item,46);
+          const h=Math.max(9,parentLines.length*lineH,itemLines.length*lineH)+3;
+          doc.setDrawColor(236,240,245); doc.line(14,y+h,196,y+h);
+          doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(26,31,46);
+          let x=16; doc.text(parentLines,x,y+4); x+=widths[0]; doc.text(itemLines,x,y+4); x+=widths[1];
+          doc.setFont('helvetica','bold'); doc.text(money(r.info.valorParcela),x,y+4); x+=widths[2];
+          doc.setFont('helvetica','normal'); doc.text(`${r.info.parcelaAtual}/${r.info.totalParcelas}`,x,y+4); x+=widths[3];
+          doc.setTextColor(r.info.falta>0?220:22, r.info.falta>0?38:163, r.info.falta>0?38:74); doc.setFont('helvetica','bold'); doc.text(money(r.info.falta),x,y+4); x+=widths[4];
+          doc.setTextColor(75,85,99); doc.setFont('helvetica','normal'); doc.text(monthLong(r.info.fimMes),x,y+4); y+=h+1;
+        });
+        y=sectionTitle(doc,'Projecao dos proximos 12 meses',y,[217,119,6]);
+        const proj=monthlyProjection(rows,12); const max=Math.max(1,...proj.map(m=>m.total));
+        proj.forEach(m=>{
+          y=pageCheck(doc,y,12); doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(75,85,99); doc.text(monthLong(m.key),16,y+5);
+          doc.setFillColor(226,232,240); doc.roundedRect(60,y+1,92,5,2,2,'F'); doc.setFillColor(217,119,6); doc.roundedRect(60,y+1,92*(m.total/max),5,2,2,'F');
+          doc.setFont('helvetica','bold'); doc.setTextColor(26,31,46); doc.text(money(m.total),158,y+5); y+=9;
+        });
+        const pages=doc.getNumberOfPages();
+        for(let i=1;i<=pages;i++){ doc.setPage(i); doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(154,160,180); doc.text('PainelFin - Relatorio de dividas',14,287); doc.text(`Pagina ${i} de ${pages}`,196,287,{align:'right'}); }
+        doc.save(`painelfin_relatorio_dividas_${now.getFullYear()}_${String(now.getMonth()+1).padStart(2,'0')}.pdf`);
+        if(window.showToast) showToast('PDF de dívidas gerado!');
+      }catch(e){ console.error(e); if(window.showToast) showToast('Erro ao gerar PDF de dívidas: '+(e.message||e), true); }
+    });
+  }
+  window.gerarPdfDividas = exportDebtsPDF;
 })();
 </script>
 
