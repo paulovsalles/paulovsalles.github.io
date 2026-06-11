@@ -5389,7 +5389,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 <script>
 /* PATCH FINAL — GUIA DE SIMULAÇÃO INDEPENDENTE, SEM PUXAR VALORES DO PLANO */
 (function(){
-  const DEFAULT_ZERO = { essencial:50, lazer:30, investimento:20, labelEssencial:'Essencial', labelLazer:'Lazer/Luxo', labelInvestimento:'Investimento', receitas:[], despesas:[], nextReceitaId:1, nextDespesaId:1 };
+  const DEFAULT_ZERO = { essencial:50, lazer:30, investimento:20, receitas:[], despesas:[], nextReceitaId:1, nextDespesaId:1 };
 
   function moeda(v){ return (typeof fmt === 'function') ? fmt(Number(v)||0) : ('R$ ' + Math.round(Number(v)||0).toLocaleString('pt-BR')); }
   function esc(v){ return String(v ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;'); }
@@ -5399,9 +5399,6 @@ window.addEventListener('DOMContentLoaded',()=>{
     if(!state.simulacao || Array.isArray(state.simulacao)) state.simulacao = {};
     const s = state.simulacao;
     ['essencial','lazer','investimento'].forEach(k=>{ if(s[k]===undefined || s[k]===null || s[k]==='') s[k]=DEFAULT_ZERO[k]; });
-    if(!s.labelEssencial) s.labelEssencial = DEFAULT_ZERO.labelEssencial;
-    if(!s.labelLazer) s.labelLazer = DEFAULT_ZERO.labelLazer;
-    if(!s.labelInvestimento) s.labelInvestimento = DEFAULT_ZERO.labelInvestimento;
     if(!Array.isArray(s.receitas)) s.receitas = [];
     if(!Array.isArray(s.despesas)) s.despesas = [];
     if(!s.nextReceitaId) s.nextReceitaId = Math.max(1, ...s.receitas.map(r=>Number(String(r.id||'').replace(/\D/g,''))||0)) + 1;
@@ -5440,8 +5437,6 @@ window.addEventListener('DOMContentLoaded',()=>{
   window.simDelReceita = function(id){ const s=sim(); s.receitas=s.receitas.filter(r=>r.id!==id); renderSimulacaoZero(); agenda(); };
   window.simDelDespesa = function(id){ const s=sim(); s.despesas=s.despesas.filter(d=>d.id!==id); renderSimulacaoZero(); agenda(); };
   window.simSetPct = function(k,v){ const s=sim(); s[k]=Number(v)||0; renderSimulacaoZero(); agenda(); };
-  window.simSetLabel = function(k,v){ const s=sim(); const val=String(v||'').trim(); if(k==='essencial') s.labelEssencial=val||DEFAULT_ZERO.labelEssencial; if(k==='lazer') s.labelLazer=val||DEFAULT_ZERO.labelLazer; if(k==='investimento') s.labelInvestimento=val||DEFAULT_ZERO.labelInvestimento; renderSimulacaoZero(); agenda(); };
-  function labelGrupo(g){ const s=sim(); return g==='essencial' ? (s.labelEssencial||'Essencial') : g==='lazer' ? (s.labelLazer||'Lazer/Luxo') : (s.labelInvestimento||'Investimento'); }
   window.simPreset502010 = function(){ const s=sim(); s.essencial=50; s.lazer=30; s.investimento=20; renderSimulacaoZero(); agenda(); };
   window.simResetZero = function(){ if(!confirm('Limpar apenas a simulação?')) return; state.simulacao={...DEFAULT_ZERO, receitas:[], despesas:[]}; renderSimulacaoZero(); agenda(); };
 
@@ -5464,21 +5459,18 @@ window.addEventListener('DOMContentLoaded',()=>{
     const metaEss=t.receita*(Number(s.essencial)||0)/100;
     const metaLaz=t.receita*(Number(s.lazer)||0)/100;
     const metaInv=t.receita*(Number(s.investimento)||0)/100;
-    const labelEss=labelGrupo('essencial');
-    const labelLaz=labelGrupo('lazer');
-    const labelInv=labelGrupo('investimento');
 
     let diag='Monte uma simulação do zero: cadastre as receitas, as despesas simuladas e escolha os percentuais da regra.';
     if(t.receita<=0) diag='Comece adicionando pelo menos uma receita para calcular o panorama.';
     else if(somaPct!==100) diag=`A regra está somando ${somaPct}%. Ajuste para 100% para uma leitura mais correta.`;
-    else if(t.essencial>metaEss) diag=`${labelEss} acima da meta em ${moeda(t.essencial-metaEss)}. Tente reduzir os itens desse grupo.`;
-    else if(t.lazer>metaLaz) diag=`${labelLaz} acima da meta em ${moeda(t.lazer-metaLaz)}. Dá para ajustar esse grupo sem mexer no ${labelEss}.`;
-    else if(t.investimento<metaInv) diag=`${labelInv} abaixo da meta em ${moeda(metaInv-t.investimento)}. Veja se sobra saldo para direcionar.`;
+    else if(t.essencial>metaEss) diag=`Essencial acima da meta em ${moeda(t.essencial-metaEss)}. Tente reduzir fixos, dívidas ou obrigações.`;
+    else if(t.lazer>metaLaz) diag=`Lazer/luxo acima da meta em ${moeda(t.lazer-metaLaz)}. Dá para cortar aqui sem mexer no essencial.`;
+    else if(t.investimento<metaInv) diag=`Investimento abaixo da meta em ${moeda(metaInv-t.investimento)}. Veja se sobra saldo para direcionar.`;
     else diag='Simulação equilibrada dentro da regra escolhida.';
 
     const recRows=s.receitas.map(r=>`<div class="sim-item-row receita"><div><div class="sim-item-name">💰 ${esc(r.nome)}</div><div class="sim-item-meta">Receita simulada</div></div><div class="sim-money" style="color:var(--green)">${moeda(r.val)}</div><button class="sim-delete" onclick="simDelReceita('${esc(r.id)}')">×</button></div>`).join('') || `<div class="sim-empty">Nenhuma receita simulada ainda.</div>`;
     const despRows=s.despesas.map(d=>{
-      const label=labelGrupo(d.grupo);
+      const label=d.grupo==='essencial'?'Essencial':d.grupo==='lazer'?'Lazer/Luxo':'Investimento';
       const color=d.grupo==='essencial'?'var(--teal)':d.grupo==='lazer'?'var(--pink)':'var(--green)';
       return `<div class="sim-item-row"><div><div class="sim-item-name">📌 ${esc(d.nome)}</div><div class="sim-item-meta">${label}</div></div><div class="sim-money">${moeda(d.val)}</div><div style="color:${color};font-weight:800;font-size:12px;text-align:right">${label}</div><button class="sim-delete" onclick="simDelDespesa('${esc(d.id)}')">×</button></div>`;
     }).join('') || `<div class="sim-empty">Nenhuma despesa simulada ainda.</div>`;
@@ -5495,18 +5487,10 @@ window.addEventListener('DOMContentLoaded',()=>{
           <div style="font-size:11px;font-weight:900;color:var(--di);letter-spacing:.08em;text-transform:uppercase">1. Defina a regra</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-sm" onclick="simPreset502010()">Usar 50/30/20</button><button class="btn btn-sm" onclick="simResetZero()">Limpar simulação</button></div>
         </div>
-        <div style="margin-top:12px;margin-bottom:12px">
-          <div style="font-size:11px;font-weight:900;color:var(--di);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">Renomear grupos</div>
-          <div class="sim-rule-grid">
-            <div><label class="sim-mini-label">Grupo 1</label><input class="sim-input" value="${esc(labelEss)}" oninput="simSetLabel('essencial',this.value)" placeholder="Essencial"></div>
-            <div><label class="sim-mini-label">Grupo 2</label><input class="sim-input" value="${esc(labelLaz)}" oninput="simSetLabel('lazer',this.value)" placeholder="Lazer/Luxo"></div>
-            <div><label class="sim-mini-label">Grupo 3</label><input class="sim-input" value="${esc(labelInv)}" oninput="simSetLabel('investimento',this.value)" placeholder="Investimento"></div>
-          </div>
-        </div>
         <div class="sim-rule-grid">
-          <div class="sim-rule-card"><label>${esc(labelEss)}</label><div class="sim-rule-input"><input type="number" value="${esc(s.essencial)}" min="0" max="100" oninput="simSetPct('essencial',this.value)"><span>%</span></div></div>
-          <div class="sim-rule-card"><label>${esc(labelLaz)}</label><div class="sim-rule-input"><input type="number" value="${esc(s.lazer)}" min="0" max="100" oninput="simSetPct('lazer',this.value)"><span>%</span></div></div>
-          <div class="sim-rule-card"><label>${esc(labelInv)}</label><div class="sim-rule-input"><input type="number" value="${esc(s.investimento)}" min="0" max="100" oninput="simSetPct('investimento',this.value)"><span>%</span></div></div>
+          <div class="sim-rule-card"><label>Essencial</label><div class="sim-rule-input"><input type="number" value="${esc(s.essencial)}" min="0" max="100" oninput="simSetPct('essencial',this.value)"><span>%</span></div></div>
+          <div class="sim-rule-card"><label>Lazer / luxo</label><div class="sim-rule-input"><input type="number" value="${esc(s.lazer)}" min="0" max="100" oninput="simSetPct('lazer',this.value)"><span>%</span></div></div>
+          <div class="sim-rule-card"><label>Investimento</label><div class="sim-rule-input"><input type="number" value="${esc(s.investimento)}" min="0" max="100" oninput="simSetPct('investimento',this.value)"><span>%</span></div></div>
         </div>
         <div style="margin-top:10px;font-size:12px;font-weight:900;color:${somaPct===100?'var(--green)':'var(--amber)'}">Soma da regra: ${somaPct}%</div>
       </div>
@@ -5530,7 +5514,7 @@ window.addEventListener('DOMContentLoaded',()=>{
             <div class="sim-form-grid">
               <div><label class="sim-mini-label">Nome da despesa</label><input class="sim-input" id="sim-desp-nome" placeholder="ex: aluguel, mercado, viagem"></div>
               <div><label class="sim-mini-label">Valor</label><input class="sim-input" id="sim-desp-val" type="number" placeholder="0"></div>
-              <div><label class="sim-mini-label">Grupo</label><select class="sim-select2" id="sim-desp-grupo"><option value="essencial">${esc(labelEss)}</option><option value="lazer">${esc(labelLaz)}</option><option value="investimento">${esc(labelInv)}</option></select></div>
+              <div><label class="sim-mini-label">Grupo</label><select class="sim-select2" id="sim-desp-grupo"><option value="essencial">Essencial</option><option value="lazer">Lazer/Luxo</option><option value="investimento">Investimento</option></select></div>
               <button class="btn btn-primary" onclick="simAddDespesa()">Adicionar</button>
             </div>
           </div>
@@ -5543,14 +5527,14 @@ window.addEventListener('DOMContentLoaded',()=>{
 
       <div class="stats-grid">
         <div class="stat-card"><div class="stat-label">Receitas simuladas</div><div class="stat-value" style="color:var(--teal)">${moeda(t.receita)}</div><div class="stat-sub">informado manualmente</div></div>
-        <div class="stat-card"><div class="stat-label">Despesas simuladas</div><div class="stat-value" style="color:var(--red)">${moeda(t.despesas)}</div><div class="stat-sub">${esc(labelEss)} + ${esc(labelLaz)} + ${esc(labelInv)}</div></div>
+        <div class="stat-card"><div class="stat-label">Despesas simuladas</div><div class="stat-value" style="color:var(--red)">${moeda(t.despesas)}</div><div class="stat-sub">essencial + lazer + investimento</div></div>
         <div class="stat-card"><div class="stat-label">Saldo simulado</div><div class="stat-value" style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moeda(t.saldo)}</div><div class="stat-sub">receitas - despesas</div></div>
       </div>
 
       <div class="sim-cards">
-        ${card(labelEss,metaEss,t.essencial,'var(--teal)','necessidades')}
-        ${card(labelLaz,metaLaz,t.lazer,'var(--pink)','flexíveis')}
-        ${card(labelInv,metaInv,t.investimento,'var(--green)','futuro')}
+        ${card('Essencial',metaEss,t.essencial,'var(--teal)','necessidades')}
+        ${card('Lazer / luxo',metaLaz,t.lazer,'var(--pink)','flexíveis')}
+        ${card('Investimento',metaInv,t.investimento,'var(--green)','futuro')}
       </div>
 
       <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><button class="btn" onclick="goTo('investir')">← Investimentos</button><button class="btn btn-primary" onclick="goTo('dashboard')">Dashboard →</button></div>`;
@@ -5594,5 +5578,90 @@ window.addEventListener('DOMContentLoaded',()=>{
   document.addEventListener('DOMContentLoaded',()=>{ sim(); });
 })();
 </script>
+
+
+
+<style>
+/* PATCH — melhoria visual da guia Simulação */
+#sec-simulacao .sim-grid-2{
+  align-items:start;
+}
+#sec-simulacao .sim-list{
+  overflow:visible;
+}
+#sec-simulacao .sim-list-head{
+  min-height:52px;
+}
+#sec-simulacao .sim-form-grid{
+  width:100%;
+  gap:12px;
+}
+#sec-simulacao .sim-form-grid:not(.receita){
+  grid-template-columns:minmax(220px,1fr) 145px;
+  align-items:end;
+}
+#sec-simulacao .sim-form-grid:not(.receita) > div:nth-child(1){
+  grid-column:1 / 2;
+}
+#sec-simulacao .sim-form-grid:not(.receita) > div:nth-child(2){
+  grid-column:2 / 3;
+}
+#sec-simulacao .sim-form-grid:not(.receita) > div:nth-child(3){
+  grid-column:1 / 2;
+}
+#sec-simulacao .sim-form-grid:not(.receita) > button{
+  grid-column:2 / 3;
+  width:100%;
+  min-width:0;
+  height:44px;
+}
+#sec-simulacao .sim-form-grid.receita{
+  grid-template-columns:minmax(230px,1fr) 160px 105px;
+}
+#sec-simulacao .sim-form-grid.receita > button{
+  width:100%;
+  height:44px;
+}
+#sec-simulacao .sim-input,
+#sec-simulacao .sim-select2{
+  min-width:0;
+  height:44px;
+  font-size:14px;
+}
+#sec-simulacao .sim-mini-label{
+  min-height:24px;
+  display:flex;
+  align-items:flex-end;
+}
+#sec-simulacao .sim-item-row{
+  grid-template-columns:minmax(0,1fr) 120px 120px 34px;
+}
+#sec-simulacao .sim-item-row.receita{
+  grid-template-columns:minmax(0,1fr) 120px 34px;
+}
+#sec-simulacao .sim-total-line{
+  border-radius:0 0 14px 14px;
+}
+@media(max-width:1150px){
+  #sec-simulacao .sim-grid-2{grid-template-columns:1fr;}
+  #sec-simulacao .sim-form-grid:not(.receita){grid-template-columns:minmax(260px,1fr) 160px 190px 120px;}
+  #sec-simulacao .sim-form-grid:not(.receita) > div,
+  #sec-simulacao .sim-form-grid:not(.receita) > button{grid-column:auto;}
+}
+@media(max-width:760px){
+  #sec-simulacao .sim-form-grid,
+  #sec-simulacao .sim-form-grid.receita,
+  #sec-simulacao .sim-form-grid:not(.receita),
+  #sec-simulacao .sim-item-row,
+  #sec-simulacao .sim-item-row.receita{
+    grid-template-columns:1fr;
+  }
+  #sec-simulacao .sim-form-grid:not(.receita) > div,
+  #sec-simulacao .sim-form-grid:not(.receita) > button{
+    grid-column:auto;
+  }
+  #sec-simulacao .sim-delete{width:100%;}
+}
+</style>
 
 </body></html>
