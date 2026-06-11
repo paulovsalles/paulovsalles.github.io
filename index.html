@@ -4489,7 +4489,9 @@ window.addEventListener('DOMContentLoaded',()=>{
     };
   }
   function collectDebtRows(){
-    const dividas = Array.isArray(window.state?.dividasParceladas) ? window.state.dividasParceladas : [];
+    const dividas = (typeof state !== 'undefined' && Array.isArray(state.dividasParceladas))
+      ? state.dividasParceladas
+      : (Array.isArray(window.state?.dividasParceladas) ? window.state.dividasParceladas : []);
     const rows=[];
     dividas.forEach(d=>{
       const tipo=normTipo(d.tipo);
@@ -4582,14 +4584,14 @@ window.addEventListener('DOMContentLoaded',()=>{
   }
   function exportDebtsPDF(){
     const rows=collectDebtRows();
-    if(!rows.length || rows.every(r=>r.emptyCard)){ if(window.showToast) showToast('Cadastre dívidas ou itens no cartão antes de gerar o relatório.', true); return; }
+    if(!rows.length || rows.every(r=>r.emptyCard)){ if(window.showToast) showToast('Nenhuma dívida encontrada nesta guia para gerar o PDF.', true); return; }
     loadJsPDF(()=>{
       try{
         const {jsPDF}=window.jspdf; const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
         const sum=summary(rows); const groups=groupByParent(rows); const now=new Date();
         doc.setFillColor(15,166,147); doc.rect(0,0,210,34,'F');
         doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.text('PainelFin',14,15);
-        doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.text('Relatorio detalhado de dividas',14,23);
+        doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.text('Relatorio da guia de dividas',14,23);
         doc.text(`Gerado em ${now.toLocaleDateString('pt-BR')}`,196,23,{align:'right'});
         let y=43;
         drawCard(doc,14,y,34,25,'Dividas',String(sum.cards),[220,38,38]);
