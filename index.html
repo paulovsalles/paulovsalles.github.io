@@ -5113,4 +5113,258 @@ window.addEventListener('DOMContentLoaded',()=>{
 })();
 </script>
 
+
+
+<style>
+/* PATCH — GUIA DE SIMULAÇÃO FINANCEIRA */
+.sim-toolbar{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:16px}
+.sim-rule-grid{display:grid;grid-template-columns:repeat(3,minmax(150px,1fr));gap:12px;margin-top:10px}
+.sim-rule-card{background:var(--s2);border:1px solid var(--bd);border-radius:12px;padding:12px}
+.sim-rule-card label{display:block;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--mu);margin-bottom:6px}
+.sim-rule-input{display:flex;align-items:center;background:var(--s3);border:1px solid var(--bd);border-radius:9px;overflow:hidden}
+.sim-rule-input input{width:100%;height:38px;border:0;background:transparent;outline:none;color:var(--tx);font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:16px;padding:0 10px;text-align:right}
+.sim-rule-input span{padding:0 10px;color:var(--di);font-weight:800}
+.sim-cards{display:grid;grid-template-columns:repeat(3,minmax(180px,1fr));gap:12px;margin-bottom:16px}
+.sim-card{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:14px 16px;overflow:hidden}
+.sim-card-title{font-size:12px;font-weight:800;color:var(--mu);letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px}
+.sim-card-value{font-family:'Space Grotesk',sans-serif;font-size:21px;font-weight:800;color:var(--tx)}
+.sim-card-sub{font-size:11px;color:var(--di);margin-top:3px}
+.sim-bar{height:7px;background:var(--bd);border-radius:999px;margin-top:10px;overflow:hidden}
+.sim-bar-fill{height:7px;border-radius:999px;transition:width .35s ease}
+.sim-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.sim-list{background:var(--s1);border:1px solid var(--bd);border-radius:14px;overflow:hidden}
+.sim-list-head{padding:12px 16px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.sim-list-title{font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:14px}
+.sim-row{display:grid;grid-template-columns:minmax(0,1fr) 110px 145px;gap:10px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--bd)}
+.sim-row:last-child{border-bottom:none}
+.sim-name{min-width:0;color:var(--tx);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sim-money{font-family:'Space Grotesk',sans-serif;font-weight:800;text-align:right;color:var(--tx)}
+.sim-select{width:100%;height:34px;border:1px solid var(--bd);background:var(--s2);color:var(--tx);border-radius:8px;padding:0 8px;outline:none}
+.sim-alert{border-radius:12px;padding:12px 14px;background:var(--tbg);border:1px solid var(--tbd);color:var(--teal);font-size:13px;line-height:1.5;margin-bottom:14px}
+.sim-total-line{display:flex;justify-content:space-between;gap:12px;padding:10px 16px;background:var(--s2);border-top:1px solid var(--bd);font-size:13px}
+@media(max-width:850px){.sim-rule-grid,.sim-cards,.sim-grid-2{grid-template-columns:1fr}.sim-row{grid-template-columns:1fr}.sim-money{text-align:left}}
+</style>
+
+<script>
+/* PATCH — GUIA DE SIMULAÇÃO FINANCEIRA 50/30/20 */
+(function(){
+  const DEFAULT_SIM = {
+    essencial: 50,
+    lazer: 30,
+    investimento: 20,
+    gruposDespesa: {}
+  };
+
+  function moeda(v){ return (typeof fmt === 'function') ? fmt(Number(v)||0) : ('R$ ' + Math.round(Number(v)||0).toLocaleString('pt-BR')); }
+  function esc(v){
+    return String(v ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;');
+  }
+  function garantirSimulacao(){
+    if(!window.state) return DEFAULT_SIM;
+    if(!state.simulacao) state.simulacao = JSON.parse(JSON.stringify(DEFAULT_SIM));
+    if(!state.simulacao.gruposDespesa) state.simulacao.gruposDespesa = {};
+    ['essencial','lazer','investimento'].forEach(k=>{
+      if(state.simulacao[k] === undefined || state.simulacao[k] === null || state.simulacao[k] === '') state.simulacao[k] = DEFAULT_SIM[k];
+    });
+    return state.simulacao;
+  }
+  function grupoPadrao(exp){
+    const cat = exp?.cat || '';
+    if(['moradia','alimentacao','transporte','saude','obrigacoes','dividas'].includes(cat)) return 'essencial';
+    if(['lazer','outros'].includes(cat)) return 'lazer';
+    return 'essencial';
+  }
+  function grupoDespesa(exp){
+    const sim = garantirSimulacao();
+    return sim.gruposDespesa[String(exp.id)] || grupoPadrao(exp);
+  }
+  function setGrupoDespesa(id,grupo){
+    const sim = garantirSimulacao();
+    sim.gruposDespesa[String(id)] = grupo;
+    renderSimulacao();
+    if(window.agendarAutoSave) window.agendarAutoSave(700);
+  }
+  window.setGrupoDespesaSimulacao = setGrupoDespesa;
+
+  function totalRendaSim(){
+    const rendas = (state.rendas||[]).reduce((s,r)=>s+(Number(r.val)||0),0);
+    const outras = Number(document.getElementById('outras')?.value)||0;
+    return rendas + outras;
+  }
+  function ticketSim(){ return Number(document.getElementById('ticket')?.value)||0; }
+  function despesasPorGrupo(){
+    const res = {essencial:0,lazer:0,investimento:0,total:0};
+    (state.expenses||[]).forEach(e=>{
+      const val = Number(e.val)||0;
+      const g = grupoDespesa(e);
+      if(res[g] === undefined) res[g] = 0;
+      res[g] += val;
+      res.total += val;
+    });
+    return res;
+  }
+
+  function card(nome, meta, atual, cor, dica){
+    const diff = meta - atual;
+    const pctUso = meta>0 ? Math.min(140, atual/meta*100) : 0;
+    const passou = atual > meta;
+    return `<div class="sim-card">
+      <div class="sim-card-title">${nome}</div>
+      <div class="sim-card-value" style="color:${cor}">${moeda(atual)}</div>
+      <div class="sim-card-sub">Meta pela regra: <strong>${moeda(meta)}</strong></div>
+      <div class="sim-bar"><div class="sim-bar-fill" style="width:${Math.min(100,pctUso).toFixed(1)}%;background:${passou?'var(--red)':cor}"></div></div>
+      <div class="sim-card-sub" style="color:${passou?'var(--red)':'var(--mu)'}">${passou?'Passou '+moeda(Math.abs(diff)):'Sobra '+moeda(Math.max(0,diff))} ${dica||''}</div>
+    </div>`;
+  }
+
+  function renderSimulacao(){
+    garantirSimulacao();
+    const box = document.getElementById('sec-simulacao');
+    if(!box) return;
+    const sim = state.simulacao;
+    const renda = totalRendaSim();
+    const ticket = ticketSim();
+    const grupos = despesasPorGrupo();
+    const pctTotal = (Number(sim.essencial)||0)+(Number(sim.lazer)||0)+(Number(sim.investimento)||0);
+    const metaEss = renda*(Number(sim.essencial)||0)/100;
+    const metaLaz = renda*(Number(sim.lazer)||0)/100;
+    const metaInv = renda*(Number(sim.investimento)||0)/100;
+    const saldoDepois = renda - grupos.essencial - grupos.lazer - grupos.investimento;
+    const potencialInvest = Math.max(0, saldoDepois);
+    const investAtual = grupos.investimento + potencialInvest;
+
+    const receitas = [...(state.rendas||[]).map(r=>({nome:r.nome||'Receita', val:Number(r.val)||0, tipo:'Renda'}))];
+    if(ticket>0) receitas.push({nome:'Ticket alimentação',val:ticket,tipo:'Benefício'});
+    const outras = Number(document.getElementById('outras')?.value)||0;
+    if(outras>0) receitas.push({nome:'Outros benefícios/rendas',val:outras,tipo:'Extra'});
+
+    const despesasRows = (state.expenses||[]).map(e=>{
+      const g = grupoDespesa(e);
+      return `<div class="sim-row">
+        <div class="sim-name">${esc(e.icon||'📌')} ${esc(e.name||'Despesa')} <span style="color:var(--di);font-size:11px">· ${esc((window.CATS&&CATS[e.cat]?.label)||e.cat||'categoria')}</span></div>
+        <div class="sim-money">${moeda(Number(e.val)||0)}</div>
+        <select class="sim-select" onchange="setGrupoDespesaSimulacao('${esc(e.id)}',this.value)">
+          <option value="essencial" ${g==='essencial'?'selected':''}>Essencial</option>
+          <option value="lazer" ${g==='lazer'?'selected':''}>Lazer/Luxo</option>
+          <option value="investimento" ${g==='investimento'?'selected':''}>Investimento</option>
+        </select>
+      </div>`;
+    }).join('') || `<div style="padding:18px;text-align:center;color:var(--mu)">Nenhuma despesa cadastrada ainda.</div>`;
+
+    const receitaRows = receitas.map(r=>`<div class="sim-row" style="grid-template-columns:minmax(0,1fr) 110px 100px">
+      <div class="sim-name">💰 ${esc(r.nome)} <span style="color:var(--di);font-size:11px">· ${esc(r.tipo)}</span></div>
+      <div class="sim-money" style="color:var(--green)">${moeda(r.val)}</div>
+      <div style="font-size:11px;color:var(--di);text-align:right">entrada</div>
+    </div>`).join('') || `<div style="padding:18px;text-align:center;color:var(--mu)">Nenhuma receita cadastrada ainda.</div>`;
+
+    let diagnostico = '';
+    if(renda<=0) diagnostico = 'Preencha suas receitas para simular uma regra de divisão.';
+    else if(pctTotal !== 100) diagnostico = `Atenção: sua regra soma ${pctTotal}%. O ideal é fechar em 100% para o panorama ficar redondo.`;
+    else if(grupos.essencial > metaEss) diagnostico = `Seu essencial está acima da meta em ${moeda(grupos.essencial-metaEss)}. Vale revisar gastos fixos, dívidas e obrigações.`;
+    else if(investAtual < metaInv) diagnostico = `Seu investimento está abaixo da meta em ${moeda(metaInv-investAtual)}. Uma opção é reduzir lazer/luxo ou renegociar parcelas.`;
+    else diagnostico = 'Seu panorama está saudável dentro da regra escolhida. Continue acompanhando mensalmente.';
+
+    box.innerHTML = `
+      <div class="section-header">
+        <div class="section-eyebrow">simulação</div>
+        <div class="section-title">Simulador de regra financeira</div>
+        <div class="section-desc">Monte sua própria regra, tipo 50/30/20, e veja suas receitas/despesas divididas entre essencial, lazer/luxo e investimento.</div>
+      </div>
+
+      <div class="sim-toolbar">
+        <div style="font-size:11px;font-weight:800;color:var(--di);letter-spacing:.08em;text-transform:uppercase">⚙️ Regra personalizada</div>
+        <div class="sim-rule-grid">
+          <div class="sim-rule-card"><label>Essencial</label><div class="sim-rule-input"><input type="number" value="${esc(sim.essencial)}" min="0" max="100" oninput="state.simulacao.essencial=Number(this.value)||0;renderSimulacao(); if(window.agendarAutoSave) window.agendarAutoSave()"><span>%</span></div></div>
+          <div class="sim-rule-card"><label>Lazer / luxo</label><div class="sim-rule-input"><input type="number" value="${esc(sim.lazer)}" min="0" max="100" oninput="state.simulacao.lazer=Number(this.value)||0;renderSimulacao(); if(window.agendarAutoSave) window.agendarAutoSave()"><span>%</span></div></div>
+          <div class="sim-rule-card"><label>Investimento</label><div class="sim-rule-input"><input type="number" value="${esc(sim.investimento)}" min="0" max="100" oninput="state.simulacao.investimento=Number(this.value)||0;renderSimulacao(); if(window.agendarAutoSave) window.agendarAutoSave()"><span>%</span></div></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap">
+          <div style="font-size:12px;color:${pctTotal===100?'var(--green)':'var(--amber)'};font-weight:800">Soma da regra: ${pctTotal}%</div>
+          <button class="btn btn-sm" onclick="state.simulacao.essencial=50;state.simulacao.lazer=30;state.simulacao.investimento=20;renderSimulacao();if(window.agendarAutoSave)window.agendarAutoSave()">Usar 50/30/20</button>
+        </div>
+      </div>
+
+      <div class="sim-alert">💡 ${diagnostico}</div>
+
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Renda base</div><div class="stat-value" style="color:var(--teal)">${moeda(renda)}</div><div class="stat-sub">sem contar ticket</div></div>
+        <div class="stat-card"><div class="stat-label">Ticket / benefícios</div><div class="stat-value" style="color:var(--blue)">${moeda(ticket)}</div><div class="stat-sub">separado da regra</div></div>
+        <div class="stat-card"><div class="stat-label">Despesas classificadas</div><div class="stat-value" style="color:var(--red)">${moeda(grupos.total)}</div><div class="stat-sub">somatório atual</div></div>
+        <div class="stat-card"><div class="stat-label">Potencial livre</div><div class="stat-value" style="color:${saldoDepois>=0?'var(--green)':'var(--red)'}">${moeda(saldoDepois)}</div><div class="stat-sub">renda - despesas</div></div>
+      </div>
+
+      <div class="sim-cards">
+        ${card('Essencial', metaEss, grupos.essencial, 'var(--teal)', 'moradia, saúde, transporte, dívidas')}
+        ${card('Lazer / luxo', metaLaz, grupos.lazer, 'var(--pink)', 'pessoal, lazer e flexíveis')}
+        ${card('Investimento', metaInv, investAtual, 'var(--green)', 'classificado + saldo livre')}
+      </div>
+
+      <div class="sim-grid-2">
+        <div class="sim-list"><div class="sim-list-head"><div class="sim-list-title">💰 Receitas consideradas</div><div class="sim-money" style="color:var(--green)">${moeda(renda+ticket)}</div></div>${receitaRows}</div>
+        <div class="sim-list"><div class="sim-list-head"><div class="sim-list-title">📋 Despesas e classificação</div><div class="sim-money" style="color:var(--red)">${moeda(grupos.total)}</div></div>${despesasRows}<div class="sim-total-line"><span>Saldo livre após despesas</span><strong style="color:${saldoDepois>=0?'var(--green)':'var(--red)'}">${moeda(saldoDepois)}</strong></div></div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <button class="btn" onclick="goTo('investir')">← Investimentos</button>
+        <button class="btn btn-primary" onclick="goTo('dashboard')">Dashboard →</button>
+      </div>`;
+  }
+  window.renderSimulacao = renderSimulacao;
+
+  function criarGuiaSimulacao(){
+    if(document.getElementById('nav-simulacao')) return;
+    const navInvestir = document.getElementById('nav-investir');
+    if(navInvestir){
+      navInvestir.insertAdjacentHTML('afterend', `<button class="nav-item" onclick="goTo('simulacao')" id="nav-simulacao"><span class="nav-icon">🧮</span><span>Simulação</span><span class="nav-status" id="dot-simulacao"></span></button>`);
+    }
+    const content = document.querySelector('.content');
+    const dash = document.getElementById('sec-dashboard');
+    if(content && !document.getElementById('sec-simulacao')){
+      const sec = document.createElement('div');
+      sec.className = 'page-section';
+      sec.id = 'sec-simulacao';
+      if(dash) content.insertBefore(sec,dash); else content.appendChild(sec);
+    }
+  }
+
+  const oldColetar = window.coletarDados;
+  window.coletarDados = function(){
+    const base = oldColetar ? oldColetar() : {};
+    garantirSimulacao();
+    return {...base, simulacao: state.simulacao};
+  };
+
+  const oldApply = window.applyData;
+  window.applyData = function(d){
+    if(oldApply) oldApply(d||{});
+    if(d && d.simulacao){ garantirSimulacao(); state.simulacao = {...state.simulacao, ...d.simulacao, gruposDespesa:{...(state.simulacao.gruposDespesa||{}), ...(d.simulacao.gruposDespesa||{})}}; }
+    if(document.getElementById('sec-simulacao')?.classList.contains('active')) renderSimulacao();
+  };
+
+  const oldGoTo = window.goTo;
+  window.goTo = function(id){
+    criarGuiaSimulacao();
+    const simSec = document.getElementById('sec-simulacao');
+    if(id === 'simulacao'){
+      if(typeof _syncModeUI === 'function') _syncModeUI('geral');
+      document.querySelectorAll('.page-section').forEach(el=>{el.style.display='none'; el.classList.remove('active');});
+      if(simSec){ simSec.style.display='block'; simSec.classList.add('active'); }
+      document.querySelectorAll('#nav-geral .nav-item').forEach(n=>n.classList.remove('active'));
+      document.getElementById('nav-simulacao')?.classList.add('active');
+      const title = document.getElementById('topbar-title'); if(title) title.textContent = 'Simulação financeira';
+      renderSimulacao();
+      window.scrollTo(0,0);
+      return;
+    }
+    if(simSec){ simSec.style.display='none'; simSec.classList.remove('active'); }
+    return oldGoTo ? oldGoTo(id) : undefined;
+  };
+
+  document.addEventListener('DOMContentLoaded', function(){
+    garantirSimulacao();
+    criarGuiaSimulacao();
+  });
+})();
+</script>
+
 </body></html>
