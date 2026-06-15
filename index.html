@@ -19,12 +19,12 @@ import { getFirestore, doc, setDoc, getDoc, onSnapshot }
 // ─── COLE AQUI AS SUAS CREDENCIAIS DO FIREBASE ───────────────────────────
 // Acesse: https://console.firebase.google.com → Seu projeto → ⚙️ → Config do app
 const firebaseConfig = {
-  apiKey:            "AIzaSyDHEoutiYZFHk-yrc7Esd1zi42AVdFrK4g",
-  authDomain:        "painelfinanceiro-9e7fd.firebaseapp.com",
-  projectId:         "painelfinanceiro-9e7fd",
-  storageBucket:     "painelfinanceiro-9e7fd.firebasestorage.app",
-  messagingSenderId: "316636554656",
-  appId:             "1:316636554656:web:47a25062b4bfe191af70c5"
+  apiKey:            "AIzaSyCCWJqv_61xQY8DfTKGOSlcRPOn1WXUI90",
+  authDomain:        "umquartodeaula-38669.firebaseapp.com",
+  projectId:         "umquartodeaula-38669",
+  storageBucket:     "umquartodeaula-38669.firebasestorage.app",
+  messagingSenderId: "963220554878",
+  appId:             "1:963220554878:web:8c4bf1400f7b6462e9c42f"
 };
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -3046,42 +3046,71 @@ function renderMesList(elId,items,tipo,cor){
   if(!el) return;
   const key=mesKey(anoAtual,mesAtual);
   const canDelTypes=['receita','inesperada'];
+
   el.innerHTML=items.map((item,idx)=>{
     const diff=item.planejado!=null?item.val-item.planejado:null;
     const diffHTML=diff!=null?`<span class="mes-diff ${diff>0&&tipo!=='receita'?'neg':diff<0&&tipo!=='receita'?'pos':'zero'}">${diff>0?'+':''} ${fmt(Math.abs(diff))}</span>`:'';
     const planHTML=item.planejado!=null?`<span class="mes-item-plan">prev: ${fmt(item.planejado)}</span>`:'';
     const canDel=canDelTypes.includes(tipo);
+    const nomeSeguro=escapeHTML(item.nome||'Item');
+
     return `<div class="mes-item">
       <div class="mes-item-icon" style="background:rgba(127,127,127,.1)">${item.icon||'📦'}</div>
-      <div class="mes-item-name" style="flex:1;font-size:13px;color:var(--tx)">${item.nome}${planHTML}</div>
+
+      <div style="flex:1;min-width:0">
+        <input
+          type="text"
+          value="${nomeSeguro}"
+          aria-label="Nome do lançamento"
+          title="Clique para renomear"
+          style="width:100%;background:transparent;border:1px solid transparent;border-radius:6px;outline:none;color:var(--tx);font-family:'Inter',sans-serif;font-size:13px;padding:5px 7px;transition:all .15s"
+          onfocus="this.style.borderColor='var(--tbd)';this.style.background='var(--s2)'"
+          onblur="this.style.borderColor='transparent';this.style.background='transparent';updateMesItem('${key}','${tipo}',${idx},'nome',this.value)"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
+        >
+        ${planHTML}
+      </div>
+
       ${diffHTML}
       <div class="mes-item-val-wrap">
         <span class="mes-item-prefix">R$</span>
         <input class="mes-item-input" type="number" value="${item.val||''}" placeholder="0" style="color:${cor}"
-          oninput="updateMesItem('${key}','${tipo}',${idx},this.value)">
+          oninput="updateMesItem('${key}','${tipo}',${idx},'val',this.value)">
       </div>
       ${canDel?`<button onclick="delMesItem('${key}','${tipo}',${idx})" style="background:none;border:none;cursor:pointer;color:var(--di);font-size:18px;padding:2px 5px;border-radius:5px" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--di)'">×</button>`:'<div style="width:26px"></div>'}
     </div>`;
   }).join('');
 }
 
-function updateMesItem(key,tipo,idx,val){
+function updateMesItem(key,tipo,idx,campo,val){
   const m={receita:'receitas',fixa:'fixas',variavel:'variaveis',doacao:'doacoes',inesperada:'inesperadas'};
   const lista=mesesData[key]?.[m[tipo]];
-  if(lista&&lista[idx]!==undefined){
-    lista[idx].val=parseFloat(val)||0;
-    const mes=mesesData[key];
-    const tR=mes.receitas.reduce((s,r)=>s+r.val,0);
-    const tD=mes.fixas.reduce((s,r)=>s+r.val,0)+mes.variaveis.reduce((s,r)=>s+r.val,0)+mes.doacoes.reduce((s,r)=>s+r.val,0)+mes.inesperadas.reduce((s,r)=>s+r.val,0);
-    const sl=tR-tD;
-    const b=document.getElementById('mes-saldo-badge');
-    if(b){b.textContent=(sl>=0?'+':'')+fmt(sl);b.className='mes-status '+(sl>0?'ok':sl===0?'warn':'bad');}
-    document.getElementById('total-receitas-mes').textContent=fmt(tR);
-    document.getElementById('total-fixas-mes').textContent=fmt(mes.fixas.reduce((s,r)=>s+r.val,0));
-    document.getElementById('total-variaveis-mes').textContent=fmt(mes.variaveis.reduce((s,r)=>s+r.val,0));
-    document.getElementById('total-doacoes-mes').textContent=fmt(mes.doacoes.reduce((s,r)=>s+r.val,0));
-    document.getElementById('total-inesperadas-mes').textContent=fmt(mes.inesperadas.reduce((s,r)=>s+r.val,0));
+  if(!lista || lista[idx]===undefined) return;
+
+  if(campo==='nome'){
+    const novoNome=String(val||'').trim();
+    lista[idx].nome=novoNome || 'Item sem nome';
+    if(window.agendarAutoSave) window.agendarAutoSave(500);
+    return;
   }
+
+  lista[idx].val=parseFloat(val)||0;
+  const mes=mesesData[key];
+  const tR=mes.receitas.reduce((s,r)=>s+r.val,0);
+  const tD=mes.fixas.reduce((s,r)=>s+r.val,0)+mes.variaveis.reduce((s,r)=>s+r.val,0)+mes.doacoes.reduce((s,r)=>s+r.val,0)+mes.inesperadas.reduce((s,r)=>s+r.val,0);
+  const sl=tR-tD;
+  const b=document.getElementById('mes-saldo-badge');
+  if(b){
+    b.textContent=(sl>=0?'+':'')+fmt(sl);
+    b.className='mes-status '+(sl>0?'ok':sl===0?'warn':'bad');
+  }
+  document.getElementById('total-receitas-mes').textContent=fmt(tR);
+  document.getElementById('total-fixas-mes').textContent=fmt(mes.fixas.reduce((s,r)=>s+r.val,0));
+  document.getElementById('total-variaveis-mes').textContent=fmt(mes.variaveis.reduce((s,r)=>s+r.val,0));
+  document.getElementById('total-doacoes-mes').textContent=fmt(mes.doacoes.reduce((s,r)=>s+r.val,0));
+  document.getElementById('total-inesperadas-mes').textContent=fmt(mes.inesperadas.reduce((s,r)=>s+r.val,0));
+
+  if(window.agendarAutoSave) window.agendarAutoSave(700);
 }
 
 function delMesItem(key,tipo,idx){
