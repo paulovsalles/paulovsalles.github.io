@@ -1598,6 +1598,7 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
     </div>
     <div class="mes-block-body" id="body-fixas">
       <div id="mes-fixas-list"></div>
+      <button class="add-mes-item" onclick="addMesItem('fixa')"><span>+</span> Adicionar despesa fixa</button>
     </div>
   </div>
 
@@ -1612,6 +1613,7 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
     </div>
     <div class="mes-block-body" id="body-variaveis">
       <div id="mes-variaveis-list"></div>
+      <button class="add-mes-item" onclick="addMesItem('variavel')"><span>+</span> Adicionar despesa variável</button>
     </div>
   </div>
 
@@ -3045,7 +3047,7 @@ function renderMesList(elId,items,tipo,cor){
   const el=document.getElementById(elId);
   if(!el) return;
   const key=mesKey(anoAtual,mesAtual);
-  const canDelTypes=['receita','inesperada'];
+  const canDelTypes=['receita','fixa','variavel','inesperada'];
 
   el.innerHTML=items.map((item,idx)=>{
     const diff=item.planejado!=null?item.val-item.planejado:null;
@@ -3114,7 +3116,7 @@ function updateMesItem(key,tipo,idx,campo,val){
 }
 
 function delMesItem(key,tipo,idx){
-  const m={receita:'receitas',inesperada:'inesperadas'};
+  const m={receita:'receitas',fixa:'fixas',variavel:'variaveis',inesperada:'inesperadas'};
   const lista=mesesData[key]?.[m[tipo]];
   if(lista){lista.splice(idx,1);renderLancamentos();}
 }
@@ -3123,6 +3125,8 @@ window.addMesItem=(tipo)=>{
   const key=mesKey(anoAtual,mesAtual);
   const mes=getMes(anoAtual,mesAtual);
   if(tipo==='receita') mes.receitas.push({id:'rx'+(mes.nextId||1),nome:'Nova receita',val:0,icon:'💰'});
+  else if(tipo==='fixa') mes.fixas.push({id:'fx'+(mes.nextId||1),nome:'Nova despesa fixa',planejado:0,val:0,icon:'📌'});
+  else if(tipo==='variavel') mes.variaveis.push({id:'vx'+(mes.nextId||1),nome:'Nova despesa variável',planejado:0,val:0,icon:'🔄'});
   else mes.inesperadas.push({id:'ix'+(mes.nextId||1),nome:'Gasto inesperado',val:0,icon:'⚡'});
   mes.nextId=(mes.nextId||1)+1;
   renderLancamentos();
