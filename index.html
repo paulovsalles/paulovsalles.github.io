@@ -8,168 +8,231 @@
 
 <!-- ══════════ FIREBASE SDK ══════════ -->
 <script type="module">
-import { initializeApp }        from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, signInWithPopup, signOut, onAuthStateChanged,
-         GoogleAuthProvider, createUserWithEmailAndPassword,
-         signInWithEmailAndPassword, sendPasswordResetEmail,
-         updateProfile } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, onSnapshot }
-                                from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth,
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged,
+  GoogleAuthProvider,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
+  updateProfile
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getDatabase,
+  ref,
+  set,
+  onValue
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-// ─── COLE AQUI AS SUAS CREDENCIAIS DO FIREBASE ───────────────────────────
-// Acesse: https://console.firebase.google.com → Seu projeto → ⚙️ → Config do app
 const firebaseConfig = {
-  apiKey:            "AIzaSyCCWJqv_61xQY8DfTKGOSlcRPOn1WXUI90",
-  authDomain:        "umquartodeaula-38669.firebaseapp.com",
-  projectId:         "umquartodeaula-38669",
-  storageBucket:     "umquartodeaula-38669.firebasestorage.app",
-  messagingSenderId: "963220554878",
-  appId:             "1:963220554878:web:8c4bf1400f7b6462e9c42f"
+  apiKey: "AIzaSyDHEoutiYZFHk-yrc7Esd1zi42AVdFrK4g",
+  authDomain: "painelfinanceiro-9e7fd.firebaseapp.com",
+  databaseURL: "https://painelfinanceiro-9e7fd-default-rtdb.firebaseio.com",
+  projectId: "painelfinanceiro-9e7fd",
+  storageBucket: "painelfinanceiro-9e7fd.firebasestorage.app",
+  messagingSenderId: "316636554656",
+  appId: "1:316636554656:web:47a25062b4bfe191af70c5"
 };
-// ─────────────────────────────────────────────────────────────────────────
 
-const app  = initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db   = getFirestore(app);
+const db = getDatabase(app);
 const provider = new GoogleAuthProvider();
+provider.setCustomParameters({ prompt: "select_account" });
 
 let currentUser = null;
 let unsubscribe = null;
 
-/* ── AUTH ── */
 window.loginGoogle = async () => {
+  setLoginLoading(true);
   try {
     await signInWithPopup(auth, provider);
-  } catch(e) { showToast("❌ " + traduzErro(e.code), true); }
+  } catch (e) {
+    showToast("❌ " + traduzErro(e.code), true);
+    setLoginLoading(false);
+  }
 };
 
 window.loginEmail = async () => {
-  const email = document.getElementById('login-email').value.trim();
-  const senha = document.getElementById('login-senha').value;
-  if (!email || !senha) { showToast("Preencha email e senha.", true); return; }
+  const email = document.getElementById("login-email").value.trim();
+  const senha = document.getElementById("login-senha").value;
+  if (!email || !senha) {
+    showToast("Preencha email e senha.", true);
+    return;
+  }
   setLoginLoading(true);
   try {
     await signInWithEmailAndPassword(auth, email, senha);
-  } catch(e) {
+  } catch (e) {
     showToast("❌ " + traduzErro(e.code), true);
     setLoginLoading(false);
   }
 };
 
 window.cadastrarEmail = async () => {
-  const nome  = document.getElementById('cad-nome').value.trim();
-  const email = document.getElementById('cad-email').value.trim();
-  const senha = document.getElementById('cad-senha').value;
-  const conf  = document.getElementById('cad-conf').value;
-  if (!nome || !email || !senha) { showToast("Preencha todos os campos.", true); return; }
-  if (senha !== conf) { showToast("As senhas não coincidem.", true); return; }
-  if (senha.length < 6) { showToast("Senha deve ter pelo menos 6 caracteres.", true); return; }
+  const nome = document.getElementById("cad-nome").value.trim();
+  const email = document.getElementById("cad-email").value.trim();
+  const senha = document.getElementById("cad-senha").value;
+  const conf = document.getElementById("cad-conf").value;
+
+  if (!nome || !email || !senha || !conf) {
+    showToast("Preencha todos os campos.", true);
+    return;
+  }
+  if (senha !== conf) {
+    showToast("As senhas não coincidem.", true);
+    return;
+  }
+  if (senha.length < 6) {
+    showToast("A senha deve ter pelo menos 6 caracteres.", true);
+    return;
+  }
+
   setLoginLoading(true);
   try {
     const cred = await createUserWithEmailAndPassword(auth, email, senha);
     await updateProfile(cred.user, { displayName: nome });
-  } catch(e) {
+  } catch (e) {
     showToast("❌ " + traduzErro(e.code), true);
     setLoginLoading(false);
   }
 };
 
 window.recuperarSenha = async () => {
-  const email = document.getElementById('rec-email').value.trim();
-  if (!email) { showToast("Digite seu email.", true); return; }
+  const email = document.getElementById("rec-email").value.trim();
+  if (!email) {
+    showToast("Digite seu email.", true);
+    return;
+  }
   try {
     await sendPasswordResetEmail(auth, email);
     showToast("✅ Email de recuperação enviado!");
-    setLoginTab('login');
-  } catch(e) { showToast("❌ " + traduzErro(e.code), true); }
+    setLoginTab("login");
+  } catch (e) {
+    showToast("❌ " + traduzErro(e.code), true);
+  }
 };
 
 function traduzErro(code) {
   const erros = {
-    'auth/invalid-credential':       'Email ou senha incorretos.',
-    'auth/user-not-found':           'Usuário não encontrado.',
-    'auth/wrong-password':           'Senha incorreta.',
-    'auth/email-already-in-use':     'Este email já está cadastrado.',
-    'auth/weak-password':            'Senha muito fraca. Use pelo menos 6 caracteres.',
-    'auth/invalid-email':            'Email inválido.',
-    'auth/too-many-requests':        'Muitas tentativas. Tente novamente mais tarde.',
-    'auth/api-key-not-valid.-please-pass-a-valid-api-key.': 'Chave Firebase inválida. Configure as credenciais.',
+    "auth/invalid-credential": "Email ou senha incorretos.",
+    "auth/user-not-found": "Usuário não encontrado.",
+    "auth/wrong-password": "Senha incorreta.",
+    "auth/email-already-in-use": "Este email já está cadastrado.",
+    "auth/weak-password": "Senha muito fraca. Use pelo menos 6 caracteres.",
+    "auth/invalid-email": "Email inválido.",
+    "auth/too-many-requests": "Muitas tentativas. Tente novamente mais tarde.",
+    "auth/popup-blocked": "O navegador bloqueou a janela do Google. Libere pop-ups para este site.",
+    "auth/popup-closed-by-user": "A janela de login do Google foi fechada.",
+    "auth/unauthorized-domain": "Este domínio ainda não foi autorizado no Firebase.",
+    "auth/operation-not-allowed": "Este método de login ainda não foi ativado no Firebase.",
+    "auth/network-request-failed": "Falha de conexão. Verifique sua internet."
   };
-  return erros[code] || 'Erro: ' + code;
+  return erros[code] || "Erro: " + (code || "desconhecido");
 }
 
 function setLoginLoading(on) {
-  const btns = document.querySelectorAll('.login-btn-google, #btn-entrar, #btn-cadastrar, #btn-recuperar');
-  btns.forEach(b => b.disabled = on);
+  document
+    .querySelectorAll(".login-btn-google, #btn-entrar, #btn-cadastrar, #btn-recuperar")
+    .forEach(btn => { btn.disabled = on; });
 }
 
-window.setLoginTab = (tab) => {
-  document.querySelectorAll('.login-tab-content').forEach(el => el.style.display = 'none');
-  document.getElementById('lt-'+tab).style.display = 'block';
-  document.querySelectorAll('.login-tab-btn').forEach(b => b.classList.remove('active'));
+window.setLoginTab = tab => {
+  document.querySelectorAll(".login-tab-content").forEach(el => {
+    el.style.display = "none";
+  });
+  const content = document.getElementById("lt-" + tab);
+  if (content) content.style.display = "block";
+
+  document.querySelectorAll(".login-tab-btn").forEach(btn => {
+    btn.classList.remove("active");
+  });
   const btn = document.querySelector(`.login-tab-btn[data-tab="${tab}"]`);
-  if (btn) btn.classList.add('active');
+  if (btn) btn.classList.add("active");
 };
 
 window.logout = async () => {
   if (!confirm("Sair da conta?")) return;
-  if (unsubscribe) unsubscribe();
+  if (unsubscribe) {
+    unsubscribe();
+    unsubscribe = null;
+  }
   await signOut(auth);
 };
 
 onAuthStateChanged(auth, user => {
   currentUser = user;
+  setLoginLoading(false);
+
   if (user) {
-    // Esconde tela de login, mostra app
     document.getElementById("login-screen").style.display = "none";
-    document.getElementById("app-shell").style.display    = "flex";
-    // Avatar e nome
+    document.getElementById("app-shell").style.display = "flex";
+
     const nome = user.displayName?.split(" ")[0] || user.email?.split("@")[0] || "Usuário";
-    document.getElementById("user-name").textContent  = nome;
-    document.getElementById("user-email").textContent = user.email;
+    document.getElementById("user-name").textContent = nome;
+    document.getElementById("user-email").textContent = user.email || "—";
+
     const avatarEl = document.getElementById("user-avatar");
     if (user.photoURL) {
       avatarEl.style.backgroundImage = `url(${user.photoURL})`;
-      avatarEl.style.backgroundSize  = "cover";
+      avatarEl.style.backgroundSize = "cover";
       avatarEl.textContent = "";
     } else {
       avatarEl.style.backgroundImage = "";
-      avatarEl.textContent = nome[0].toUpperCase();
+      avatarEl.textContent = nome.charAt(0).toUpperCase();
     }
-    // Carrega dados em tempo real
+
     listenData(user.uid);
   } else {
     document.getElementById("login-screen").style.display = "flex";
-    document.getElementById("app-shell").style.display    = "none";
-    if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+    document.getElementById("app-shell").style.display = "none";
+    if (unsubscribe) {
+      unsubscribe();
+      unsubscribe = null;
+    }
   }
 });
 
-/* ── FIRESTORE: escuta em tempo real ── */
+/* Realtime Database: cada usuário acessa somente o próprio registro. */
 function listenData(uid) {
-  const docRef = doc(db, "usuarios", uid);
-  unsubscribe = onSnapshot(docRef, snap => {
-    if (snap.exists()) {
-      const data = snap.data();
-      applyData(data);
-      showToast("☁️ Dados sincronizados");
+  if (unsubscribe) unsubscribe();
+
+  const userRef = ref(db, `usuarios/${uid}`);
+  unsubscribe = onValue(
+    userRef,
+    snapshot => {
+      if (snapshot.exists()) {
+        applyData(snapshot.val());
+        showToast("☁️ Dados sincronizados");
+      }
+    },
+    error => {
+      showToast("⚠️ Erro ao sincronizar: " + error.message, true);
     }
-  }, err => {
-    showToast("⚠️ Erro ao sincronizar: " + err.message, true);
-  });
+  );
 }
 
-/* ── SALVAR NO FIRESTORE ── */
+/* Mantive o nome salvarFirestore para não quebrar os botões existentes,
+   mas agora o salvamento é feito no Realtime Database. */
 window.salvarFirestore = async () => {
-  if (!currentUser) { showToast("Faça login primeiro", true); return; }
+  if (!currentUser) {
+    showToast("Faça login primeiro.", true);
+    return;
+  }
+
   const data = coletarDados();
+  const userRef = ref(db, `usuarios/${currentUser.uid}`);
+
   try {
-    await setDoc(doc(db, "usuarios", currentUser.uid), {
+    await set(userRef, {
       ...data,
       updatedAt: new Date().toISOString()
     });
     showToast("✅ Salvo na nuvem!");
-  } catch(e) {
+  } catch (e) {
     showToast("❌ Erro ao salvar: " + e.message, true);
   }
 };
@@ -881,7 +944,7 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
     abra o arquivo HTML, localize o bloco <code>firebaseConfig</code> e cole as credenciais do seu projeto.
     <a href="https://console.firebase.google.com/" target="_blank" style="color:var(--teal);text-decoration:none;font-weight:600">→ Abrir console Firebase</a>
     &nbsp;·&nbsp;
-    <a href="file:///C:/Users/lais_/Downloads/index_10.html#" onclick="document.getElementById(&#39;setup-banner&#39;).classList.remove(&#39;show&#39;)" style="color:var(--di)">fechar</a>
+    <a href="#" onclick="document.getElementById(&#39;setup-banner&#39;).classList.remove(&#39;show&#39;)" style="color:var(--di)">fechar</a>
   </div>
 </div>
 
@@ -5961,6 +6024,176 @@ window.addEventListener('DOMContentLoaded',()=>{
   window.setMode=function(mode){appMode=mode;document.getElementById('nav-geral').style.display=mode==='geral'?'flex':'none';document.getElementById('nav-mensal').style.display=mode==='mensal'?'flex':'none';document.getElementById('nav-livre').style.display=mode==='livre'?'flex':'none';document.getElementById('mode-geral-btn').classList.toggle('active',mode==='geral');document.getElementById('mode-mensal-btn').classList.toggle('active',mode==='mensal');document.getElementById('mode-livre-btn').classList.toggle('active',mode==='livre');_hideAll(SECS_G);_hideAll(SECS_M);_hideAll(SECS_L);if(mode==='geral')goTo('plano');else if(mode==='mensal')goToMensal('mes-lancamentos');else goToLivre('livre-lancamentos')};
   const collectPrev=window.coletarDados;window.coletarDados=function(){const base=typeof collectPrev==='function'?collectPrev():{};return {...base,mensalLivreData,livreNextId}};
   const applyPrev=window.applyData;window.applyData=function(d){if(typeof applyPrev==='function')applyPrev(d);mensalLivreData=d?.mensalLivreData&&typeof d.mensalLivreData==='object'?d.mensalLivreData:{};livreNextId=Number(d?.livreNextId)||1;if(appMode==='livre')renderLivre()};
+})();
+</script>
+
+
+<style>
+/* ===== MÓDULO SAÚDE FÍSICA ===== */
+.health-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.health-card{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:16px;box-shadow:var(--shadow)}
+.health-card h3{font-size:15px;margin:0 0 5px;color:var(--tx)}
+.health-card p{font-size:12px;color:var(--di);line-height:1.5;margin:0}
+.health-kpi{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:800;color:var(--teal);margin:7px 0 2px}
+.health-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-bottom:14px}
+.health-form-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.health-form-grid.cols-5{grid-template-columns:repeat(5,minmax(0,1fr))}
+.health-field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.health-field label{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--di)}
+.health-input,.health-select,.health-textarea{width:100%;min-width:0;background:var(--s2);border:1px solid var(--bd);border-radius:9px;padding:9px 10px;color:var(--tx);font:inherit;outline:none}
+.health-input:focus,.health-select:focus,.health-textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(20,184,166,.09)}
+.health-textarea{min-height:78px;resize:vertical}
+.health-section{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:14px}
+.health-section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+.health-section-title{font-weight:800;font-size:16px;color:var(--tx)}
+.health-section-sub{font-size:12px;color:var(--di);line-height:1.45;margin-top:3px}
+.health-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.health-day{background:var(--s2);border:1px solid var(--bd);border-radius:11px;padding:11px;min-height:124px}
+.health-day strong{font-size:12px;color:var(--tx)}
+.health-day .run{font-size:11px;color:var(--blue);margin-top:8px;line-height:1.4}
+.health-day .gym{font-size:11px;color:var(--teal);margin-top:6px;line-height:1.4}
+.health-day .note{font-size:10px;color:var(--di);margin-top:7px;line-height:1.35}
+.health-table-wrap{overflow:auto;border:1px solid var(--bd);border-radius:11px}
+.health-table{width:100%;border-collapse:collapse;min-width:780px}
+.health-table th{background:var(--s2);padding:9px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--di);white-space:nowrap}
+.health-table td{padding:9px 10px;border-top:1px solid var(--bd);font-size:12px;color:var(--tx);vertical-align:middle}
+.health-table td input,.health-table td select{width:100%;background:transparent;border:1px solid transparent;border-radius:7px;padding:6px;color:var(--tx);font:inherit;min-width:70px}
+.health-table td input:focus,.health-table td select:focus{background:var(--s2);border-color:var(--teal);outline:none}
+.health-chip{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;background:var(--tbg);color:var(--teal);font-size:10px;font-weight:800;white-space:nowrap}
+.health-actions{display:flex;gap:6px;justify-content:flex-end}
+.health-empty{text-align:center;padding:28px 16px;color:var(--di);font-size:13px;border:1px dashed var(--bd);border-radius:12px;background:var(--s2)}
+.health-record{display:grid;grid-template-columns:90px 110px minmax(150px,1fr) 90px 90px minmax(150px,1.3fr) 34px;gap:9px;align-items:center;padding:10px 0;border-bottom:1px solid var(--bd)}
+.health-record:last-child{border-bottom:0}
+.health-record .main{font-weight:750;color:var(--tx);font-size:12px}
+.health-record .sub{font-size:10px;color:var(--di);margin-top:2px}
+.health-progress{height:8px;background:var(--s3);border-radius:999px;overflow:hidden;margin-top:8px}
+.health-progress span{display:block;height:100%;background:linear-gradient(90deg,var(--teal),var(--blue));border-radius:inherit}
+.health-note{padding:11px 13px;background:rgba(20,184,166,.08);border:1px solid rgba(20,184,166,.22);border-radius:10px;color:var(--tx);font-size:12px;line-height:1.5}
+@media(max-width:1100px){.health-grid{grid-template-columns:repeat(2,1fr)}.health-form-grid,.health-form-grid.cols-5{grid-template-columns:repeat(2,1fr)}.health-week{grid-template-columns:repeat(2,1fr)}.health-record{grid-template-columns:90px 100px 1fr 80px 34px}.health-record .hr-extra{display:none}}
+@media(max-width:700px){.health-grid{grid-template-columns:1fr}.health-form-grid,.health-form-grid.cols-5{grid-template-columns:1fr}.health-week{grid-template-columns:1fr}.health-record{grid-template-columns:1fr 34px}.health-record>*:not(.health-actions):not(.main-wrap){grid-column:1}.health-record .health-actions{grid-column:2;grid-row:1/5}.mode-switcher{flex-wrap:wrap}.mode-btn{flex:1 1 45%}}
+</style>
+<script>
+(function(){
+  const clone=o=>JSON.parse(JSON.stringify(o));
+  const WEEK_TEMPLATE=[
+    {day:'Segunda',run:'—',gym:'Pernas (leve / força)',note:'Sem corrida. Treino de pernas controlado.'},
+    {day:'Terça',run:'Intervalado (velocidade)',gym:'Push — Peito / Ombro / Tríceps',note:'Separar corrida e musculação por algumas horas.'},
+    {day:'Quarta',run:'Leve / regenerativa (5 km)',gym:'Pull — Costas / Bíceps',note:'Rodagem fácil, em ritmo de conversa.'},
+    {day:'Quinta',run:'—',gym:'Ombro + Braço',note:'Dia sem corrida para recuperação.'},
+    {day:'Sexta',run:'Tempo / ritmo',gym:'Upper — Peito / Costas / Core',note:'Treino de ritmo; musculação mais enxuta.'},
+    {day:'Sábado',run:'Longão progressivo',gym:'—',note:'Treino principal da semana.'},
+    {day:'Domingo',run:'Descanso',gym:'Mobilidade opcional',note:'Descanso total ou mobilidade leve.'}
+  ];
+  const GYM_TEMPLATE=[
+    {id:'g1',name:'Pernas',day:'Segunda',focus:'Força controlada',exercises:[
+      {id:'e1',name:'Agachamento livre ou Leg press',sets:4,reps:'10',load:'',rest:'90 s',notes:''},
+      {id:'e2',name:'Cadeira extensora',sets:3,reps:'12',load:'',rest:'60 s',notes:''},
+      {id:'e3',name:'Mesa flexora',sets:3,reps:'12',load:'',rest:'60 s',notes:''},
+      {id:'e4',name:'Stiff',sets:3,reps:'12',load:'',rest:'90 s',notes:''},
+      {id:'e5',name:'Panturrilha em pé',sets:4,reps:'15-20',load:'',rest:'60 s',notes:''}
+    ]},
+    {id:'g2',name:'Push',day:'Terça',focus:'Peito / Ombro / Tríceps',exercises:[
+      {id:'e6',name:'Supino reto com halteres',sets:4,reps:'10-12',load:'',rest:'90 s',notes:''},
+      {id:'e7',name:'Supino inclinado',sets:3,reps:'12',load:'',rest:'75 s',notes:''},
+      {id:'e8',name:'Desenvolvimento com halteres',sets:4,reps:'10',load:'',rest:'90 s',notes:''},
+      {id:'e9',name:'Elevação lateral',sets:4,reps:'12-15',load:'',rest:'60 s',notes:''},
+      {id:'e10',name:'Tríceps na corda',sets:3,reps:'12',load:'',rest:'60 s',notes:''}
+    ]},
+    {id:'g3',name:'Pull',day:'Quarta',focus:'Costas / Bíceps',exercises:[
+      {id:'e11',name:'Puxada frente',sets:4,reps:'10-12',load:'',rest:'90 s',notes:''},
+      {id:'e12',name:'Remada curvada ou máquina',sets:4,reps:'10',load:'',rest:'90 s',notes:''},
+      {id:'e13',name:'Remada unilateral',sets:3,reps:'12',load:'',rest:'75 s',notes:''},
+      {id:'e14',name:'Rosca direta',sets:4,reps:'10-12',load:'',rest:'75 s',notes:''},
+      {id:'e15',name:'Rosca martelo',sets:3,reps:'12',load:'',rest:'60 s',notes:''}
+    ]},
+    {id:'g4',name:'Ombro + Braço',day:'Quinta',focus:'Treino prioritário',exercises:[
+      {id:'e16',name:'Desenvolvimento militar',sets:4,reps:'8-10',load:'',rest:'90 s',notes:''},
+      {id:'e17',name:'Elevação lateral',sets:4,reps:'15',load:'',rest:'60 s',notes:''},
+      {id:'e18',name:'Crucifixo inverso',sets:3,reps:'15',load:'',rest:'60 s',notes:''},
+      {id:'e19',name:'Rosca direta',sets:4,reps:'10',load:'',rest:'75 s',notes:''},
+      {id:'e20',name:'Tríceps francês',sets:4,reps:'12',load:'',rest:'75 s',notes:''}
+    ]},
+    {id:'g5',name:'Upper',day:'Sexta',focus:'Peito / Costas / Core',exercises:[
+      {id:'e21',name:'Supino inclinado com halteres',sets:4,reps:'12',load:'',rest:'75 s',notes:''},
+      {id:'e22',name:'Crossover',sets:3,reps:'15',load:'',rest:'60 s',notes:''},
+      {id:'e23',name:'Remada baixa',sets:4,reps:'12',load:'',rest:'75 s',notes:''},
+      {id:'e24',name:'Puxada supinada',sets:3,reps:'12',load:'',rest:'75 s',notes:''},
+      {id:'e25',name:'Circuito de core',sets:3,reps:'rodadas',load:'',rest:'60 s',notes:''}
+    ]}
+  ];
+  const RUN_TEMPLATE=[
+    ['15/06','Base','Fartlek 6x(1min forte/1min leve)',7,'4 km contínuo confortável',6,5,11,29],
+    ['22/06','Base','6x400 m',7,'5 km contínuo',7,5,12,31],
+    ['29/06','Base','5x600 m',8,'2x2 km',7,5,13,33],
+    ['06/07','Base','Fartlek leve 5x1 min',6,'4 km leve',6,5,10,27],
+    ['13/07','Base','8x400 m',8,'5 km contínuo',7,5,13,33],
+    ['20/07','Base','4x800 m',8,'6 km contínuo',8,6,14,36],
+    ['27/07','Construção 1','5x800 m',8,'3x2 km',8,5,15,36],
+    ['03/08','Construção 1','6x400 m',7,'4 km leve',6,5,11,29],
+    ['10/08','Construção 1','4x1000 m',8,'6 km contínuo',8,6,15,37],
+    ['17/08','Construção 1','5x1000 m',9,'2x3 km',9,6,16,40],
+    ['24/08','Construção 1','6x400 m',7,'5 km leve',7,5,12,31],
+    ['31/08','Construção 1','3x1600 m',9,'7 km contínuo',9,6,16,40]
+  ].map((r,i)=>({id:'r'+(i+1),week:i+1,start:r[0],phase:r[1],interval:r[2],intervalKm:r[3],tempo:r[4],tempoKm:r[5],easyKm:r[6],longKm:r[7],totalKm:r[8],notes:''}));
+  const DEFAULT_HEALTH={weekPlan:WEEK_TEMPLATE,gymPlans:GYM_TEMPLATE,runPlans:RUN_TEMPLATE,records:[],nextId:100,settings:{weeklyGymGoal:5,weeklyRunGoal:4,weeklyKmGoal:30}};
+  let healthData=clone(DEFAULT_HEALTH),healthSaveTimer=null;
+  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const num=v=>Number(v)||0;
+  const today=()=>new Date().toISOString().slice(0,10);
+  function autosaveHealth(){clearTimeout(healthSaveTimer);healthSaveTimer=setTimeout(()=>window.salvarFirestore?.(),700)}
+  function injectHealthUI(){
+    const switcher=document.querySelector('.mode-switcher');
+    if(switcher&&!document.getElementById('mode-saude-btn'))switcher.insertAdjacentHTML('beforeend',`<button class="mode-btn" id="mode-saude-btn" onclick="setMode('saude')">💪 Saúde</button>`);
+    const navLivre=document.getElementById('nav-livre');
+    if(navLivre&&!document.getElementById('nav-saude'))navLivre.insertAdjacentHTML('afterend',`<div class="nav" id="nav-saude" style="display:none">
+      <button class="nav-item active" onclick="goToSaude('saude-painel')" id="nav-saude-painel"><span class="nav-icon">❤️</span><span>Painel</span></button>
+      <button class="nav-item" onclick="goToSaude('saude-semana')" id="nav-saude-semana"><span class="nav-icon">📅</span><span>Plano semanal</span></button>
+      <button class="nav-item" onclick="goToSaude('saude-musculacao')" id="nav-saude-musculacao"><span class="nav-icon">🏋️</span><span>Musculação</span></button>
+      <button class="nav-item" onclick="goToSaude('saude-corrida')" id="nav-saude-corrida"><span class="nav-icon">🏃</span><span>Corrida</span></button>
+      <button class="nav-item" onclick="goToSaude('saude-registros')" id="nav-saude-registros"><span class="nav-icon">📝</span><span>Registros diários</span></button>
+    </div>`);
+    const content=document.querySelector('.content');
+    if(content&&!document.getElementById('sec-saude-painel'))content.insertAdjacentHTML('beforeend',healthSectionsHtml());
+    const dateEl=document.getElementById('health-rec-date');if(dateEl&&!dateEl.value)dateEl.value=today();
+    renderAllHealth();
+  }
+  function healthSectionsHtml(){return `
+  <div class="page-section" id="sec-saude-painel"><div class="section-header"><div class="section-eyebrow">saúde física</div><div class="section-title">Acompanhamento de treinos</div><div class="section-desc">Planeje musculação e corrida, registre cargas, séries, pace, duração e evolução diária.</div></div><div id="health-dashboard"></div></div>
+  <div class="page-section" id="sec-saude-semana"><div class="section-header"><div class="section-eyebrow">organização</div><div class="section-title">Plano semanal</div><div class="section-desc">Rotina híbrida baseada na planilha enviada. Todos os campos podem ser editados.</div></div><div class="health-section"><div class="health-section-head"><div><div class="health-section-title">Rotina da semana</div><div class="health-section-sub">Edite corrida, musculação e observações de cada dia.</div></div><button class="btn btn-sm" onclick="resetHealthWeek()">Restaurar modelo</button></div><div id="health-week-grid" class="health-week"></div></div></div>
+  <div class="page-section" id="sec-saude-musculacao"><div class="section-header"><div class="section-eyebrow">treino de força</div><div class="section-title">Musculação</div><div class="section-desc">Crie treinos, adicione exercícios e registre séries, repetições, carga, descanso e observações.</div></div><div class="health-section"><div class="health-form-grid"><div class="health-field"><label>Nome do treino</label><input id="gym-new-name" class="health-input" placeholder="Ex.: Push"></div><div class="health-field"><label>Dia</label><select id="gym-new-day" class="health-select"><option>Segunda</option><option>Terça</option><option>Quarta</option><option>Quinta</option><option>Sexta</option><option>Sábado</option><option>Domingo</option></select></div><div class="health-field"><label>Foco</label><input id="gym-new-focus" class="health-input" placeholder="Ex.: Peito e tríceps"></div><div class="health-field"><label>&nbsp;</label><button class="btn btn-primary" onclick="addGymPlan()">+ Criar treino</button></div></div></div><div id="health-gym-list"></div></div>
+  <div class="page-section" id="sec-saude-corrida"><div class="section-header"><div class="section-eyebrow">planejamento aeróbico</div><div class="section-title">Corrida</div><div class="section-desc">Configure as semanas com intervalado, ritmo, rodagem leve, longão e meta de quilometragem.</div></div><div class="health-section"><div class="health-form-grid cols-5"><div class="health-field"><label>Semana</label><input id="run-new-week" type="number" class="health-input" min="1" value="1"></div><div class="health-field"><label>Início</label><input id="run-new-start" type="date" class="health-input"></div><div class="health-field"><label>Fase</label><input id="run-new-phase" class="health-input" placeholder="Base"></div><div class="health-field"><label>Meta total (km)</label><input id="run-new-total" type="number" step="0.1" class="health-input" value="0"></div><div class="health-field"><label>&nbsp;</label><button class="btn btn-primary" onclick="addRunPlan()">+ Adicionar semana</button></div></div></div><div class="health-section"><div class="health-section-head"><div><div class="health-section-title">Plano de corrida</div><div class="health-section-sub">Modelo inicial inspirado na aba “Corrida Anual” da planilha.</div></div><button class="btn btn-sm" onclick="resetRunPlan()">Restaurar modelo</button></div><div id="health-run-table"></div></div></div>
+  <div class="page-section" id="sec-saude-registros"><div class="section-header"><div class="section-eyebrow">registro diário</div><div class="section-title">Diário de treino</div><div class="section-desc">Registre o treino realizado no dia. Os dados ficam salvos na sua conta.</div></div><div class="health-section"><div class="health-form-grid cols-5"><div class="health-field"><label>Data</label><input id="health-rec-date" type="date" class="health-input"></div><div class="health-field"><label>Atividade</label><select id="health-rec-type" class="health-select" onchange="updateRecordPlanOptions()"><option value="musculacao">Musculação</option><option value="corrida">Corrida</option><option value="mobilidade">Mobilidade</option><option value="outro">Outro</option></select></div><div class="health-field"><label>Treino / sessão</label><select id="health-rec-plan" class="health-select"></select></div><div class="health-field"><label>Duração (min)</label><input id="health-rec-duration" type="number" class="health-input" min="0" value="0"></div><div class="health-field"><label>Esforço (1-10)</label><input id="health-rec-effort" type="number" class="health-input" min="1" max="10" value="5"></div></div><div class="health-form-grid" style="margin-top:10px"><div class="health-field"><label>Distância (km)</label><input id="health-rec-distance" type="number" step="0.01" min="0" class="health-input" value="0"></div><div class="health-field"><label>Pace / ritmo</label><input id="health-rec-pace" class="health-input" placeholder="Ex.: 5:20/km"></div><div class="health-field"><label>Observações</label><input id="health-rec-notes" class="health-input" placeholder="Como foi o treino?"></div><div class="health-field"><label>&nbsp;</label><button class="btn btn-primary" onclick="addHealthRecord()">Salvar registro</button></div></div></div><div class="health-section"><div class="health-section-head"><div><div class="health-section-title">Histórico</div><div class="health-section-sub">Mais recentes primeiro.</div></div><button class="btn btn-sm" onclick="clearHealthRecords()">Limpar histórico</button></div><div id="health-records-list"></div></div></div>`}
+  function setFinanceActionsVisible(show){document.querySelectorAll('.topbar-actions button').forEach(b=>{const t=b.textContent||'';if(/Excel|PDF|Limpar|Ver plano/.test(t))b.style.display=show?'':'none'})}
+  const oldSetMode=window.setMode;
+  window.setMode=function(mode){
+    if(mode!=='saude'){setFinanceActionsVisible(true);oldSetMode?.(mode);document.getElementById('nav-saude').style.display='none';document.getElementById('mode-saude-btn')?.classList.remove('active');return}
+    window.appMode='saude';
+    ['nav-geral','nav-mensal','nav-livre'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none'});document.getElementById('nav-saude').style.display='flex';
+    ['mode-geral-btn','mode-mensal-btn','mode-livre-btn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));document.getElementById('mode-saude-btn')?.classList.add('active');
+    document.querySelectorAll('.page-section').forEach(s=>{s.classList.remove('active');s.style.display='none'});setFinanceActionsVisible(false);goToSaude('saude-painel');
+  };
+  window.goToSaude=function(id){document.querySelectorAll('[id^="sec-saude-"]').forEach(s=>{s.classList.remove('active');s.style.display='none'});const sec=document.getElementById('sec-'+id);if(sec){sec.classList.add('active');sec.style.display='block'}document.querySelectorAll('#nav-saude .nav-item').forEach(n=>n.classList.remove('active'));document.getElementById('nav-'+id)?.classList.add('active');document.getElementById('topbar-title').textContent=({"saude-painel":"Saúde física","saude-semana":"Plano semanal","saude-musculacao":"Musculação","saude-corrida":"Corrida","saude-registros":"Registros diários"})[id]||'Saúde física';if(id==='saude-painel')renderHealthDashboard();if(id==='saude-semana')renderWeekPlan();if(id==='saude-musculacao')renderGymPlans();if(id==='saude-corrida')renderRunPlans();if(id==='saude-registros')renderHealthRecords();window.scrollTo(0,0)};
+  function currentWeekRecords(){const now=new Date(),day=(now.getDay()+6)%7,start=new Date(now);start.setDate(now.getDate()-day);start.setHours(0,0,0,0);return healthData.records.filter(r=>new Date(r.date+'T12:00:00')>=start)}
+  function renderHealthDashboard(){const box=document.getElementById('health-dashboard');if(!box)return;const wr=currentWeekRecords(),gym=wr.filter(r=>r.type==='musculacao').length,run=wr.filter(r=>r.type==='corrida'),km=run.reduce((s,r)=>s+num(r.distance),0),mins=wr.reduce((s,r)=>s+num(r.duration),0),goals=healthData.settings||{};const consistency=Math.min(100,Math.round(((gym+run.length)/Math.max(1,num(goals.weeklyGymGoal)+num(goals.weeklyRunGoal)))*100));const last=[...healthData.records].sort((a,b)=>String(b.date).localeCompare(String(a.date))).slice(0,5);box.innerHTML=`<div class="health-grid"><div class="health-card"><p>Treinos na semana</p><div class="health-kpi">${wr.length}</div><p>musculação + corrida + outros</p></div><div class="health-card"><p>Musculação</p><div class="health-kpi">${gym}/${goals.weeklyGymGoal||5}</div><p>sessões realizadas</p></div><div class="health-card"><p>Corrida</p><div class="health-kpi">${km.toFixed(1)} km</div><p>${run.length} sessão(ões)</p></div><div class="health-card"><p>Tempo ativo</p><div class="health-kpi">${mins} min</div><p>registrados nesta semana</p></div></div><div class="health-section"><div class="health-section-head"><div><div class="health-section-title">Consistência semanal</div><div class="health-section-sub">Meta combinada de musculação e corrida.</div></div><span class="health-chip">${consistency}%</span></div><div class="health-progress"><span style="width:${consistency}%"></span></div><div class="health-form-grid" style="margin-top:14px"><div class="health-field"><label>Meta musculação / semana</label><input class="health-input" type="number" min="0" value="${goals.weeklyGymGoal||5}" onchange="updateHealthSetting('weeklyGymGoal',this.value)"></div><div class="health-field"><label>Meta corrida / semana</label><input class="health-input" type="number" min="0" value="${goals.weeklyRunGoal||4}" onchange="updateHealthSetting('weeklyRunGoal',this.value)"></div><div class="health-field"><label>Meta km / semana</label><input class="health-input" type="number" min="0" step="0.1" value="${goals.weeklyKmGoal||30}" onchange="updateHealthSetting('weeklyKmGoal',this.value)"></div><div class="health-field"><label>&nbsp;</label><button class="btn btn-primary" onclick="goToSaude('saude-registros')">+ Registrar treino</button></div></div></div><div class="health-section"><div class="health-section-head"><div><div class="health-section-title">Últimos registros</div><div class="health-section-sub">Acompanhamento recente da rotina.</div></div></div>${last.length?last.map(r=>`<div class="health-record"><div><div class="main">${esc(r.date)}</div><div class="sub">${esc(r.type)}</div></div><div><span class="health-chip">${esc(r.plan||'Treino')}</span></div><div class="main-wrap"><div class="main">${esc(r.plan||'Treino')}</div><div class="sub">${esc(r.notes||'Sem observações')}</div></div><div>${num(r.duration)} min</div><div class="hr-extra">${num(r.distance)?num(r.distance).toFixed(1)+' km':'—'}</div><div class="hr-extra">Esforço ${num(r.effort)}/10</div><div></div></div>`).join(''):'<div class="health-empty">Nenhum treino registrado ainda.</div>'}</div><div class="health-note">Acompanhe evolução de forma sustentável: registre o que foi feito, respeite recuperação e ajuste cargas ou volume gradualmente.</div>`}
+  window.updateHealthSetting=function(k,v){healthData.settings[k]=num(v);renderHealthDashboard();autosaveHealth()};
+  function renderWeekPlan(){const box=document.getElementById('health-week-grid');if(!box)return;box.innerHTML=healthData.weekPlan.map((d,i)=>`<div class="health-day"><strong>${esc(d.day)}</strong><div class="health-field" style="margin-top:8px"><label>Corrida</label><input class="health-input" value="${esc(d.run)}" onchange="updateWeekDay(${i},'run',this.value)"></div><div class="health-field" style="margin-top:7px"><label>Musculação</label><input class="health-input" value="${esc(d.gym)}" onchange="updateWeekDay(${i},'gym',this.value)"></div><div class="health-field" style="margin-top:7px"><label>Observação</label><textarea class="health-textarea" onchange="updateWeekDay(${i},'note',this.value)">${esc(d.note)}</textarea></div></div>`).join('')}
+  window.updateWeekDay=function(i,k,v){healthData.weekPlan[i][k]=v;autosaveHealth()};window.resetHealthWeek=function(){if(confirm('Restaurar o modelo semanal da planilha?')){healthData.weekPlan=clone(WEEK_TEMPLATE);renderWeekPlan();autosaveHealth()}};
+  function renderGymPlans(){const box=document.getElementById('health-gym-list');if(!box)return;if(!healthData.gymPlans.length){box.innerHTML='<div class="health-empty">Nenhum treino criado.</div>';return}box.innerHTML=healthData.gymPlans.map(p=>`<div class="health-section"><div class="health-section-head"><div><div class="health-section-title">${esc(p.name)} <span class="health-chip">${esc(p.day)}</span></div><div class="health-section-sub">${esc(p.focus||'Sem foco definido')}</div></div><div class="health-actions"><button class="btn btn-sm" onclick="addGymExercise('${p.id}')">+ Exercício</button><button class="btn btn-sm" onclick="deleteGymPlan('${p.id}')">Excluir treino</button></div></div><div class="health-table-wrap"><table class="health-table"><thead><tr><th>Exercício</th><th>Séries</th><th>Reps</th><th>Carga (kg)</th><th>Descanso</th><th>Observações</th><th></th></tr></thead><tbody>${p.exercises.map(e=>`<tr><td><input value="${esc(e.name)}" onchange="updateGymExercise('${p.id}','${e.id}','name',this.value)"></td><td><input type="number" min="0" value="${num(e.sets)}" onchange="updateGymExercise('${p.id}','${e.id}','sets',this.value)"></td><td><input value="${esc(e.reps)}" onchange="updateGymExercise('${p.id}','${e.id}','reps',this.value)"></td><td><input type="number" min="0" step="0.5" value="${esc(e.load)}" onchange="updateGymExercise('${p.id}','${e.id}','load',this.value)"></td><td><input value="${esc(e.rest)}" onchange="updateGymExercise('${p.id}','${e.id}','rest',this.value)"></td><td><input value="${esc(e.notes)}" onchange="updateGymExercise('${p.id}','${e.id}','notes',this.value)"></td><td><button class="livre-del" onclick="deleteGymExercise('${p.id}','${e.id}')">×</button></td></tr>`).join('')}</tbody></table></div></div>`).join('')}
+  window.addGymPlan=function(){const name=document.getElementById('gym-new-name').value.trim();if(!name)return alert('Digite o nome do treino.');healthData.gymPlans.push({id:'g'+healthData.nextId++,name,day:document.getElementById('gym-new-day').value,focus:document.getElementById('gym-new-focus').value.trim(),exercises:[]});document.getElementById('gym-new-name').value='';document.getElementById('gym-new-focus').value='';renderGymPlans();autosaveHealth()};
+  window.deleteGymPlan=function(id){if(!confirm('Excluir este treino?'))return;healthData.gymPlans=healthData.gymPlans.filter(p=>p.id!==id);renderGymPlans();autosaveHealth()};
+  window.addGymExercise=function(pid){const p=healthData.gymPlans.find(x=>x.id===pid);if(!p)return;p.exercises.push({id:'e'+healthData.nextId++,name:'Novo exercício',sets:3,reps:'10-12',load:'',rest:'60 s',notes:''});renderGymPlans();autosaveHealth()};
+  window.updateGymExercise=function(pid,eid,k,v){const e=healthData.gymPlans.find(x=>x.id===pid)?.exercises.find(x=>x.id===eid);if(!e)return;e[k]=k==='sets'?num(v):v;autosaveHealth()};
+  window.deleteGymExercise=function(pid,eid){const p=healthData.gymPlans.find(x=>x.id===pid);if(!p)return;p.exercises=p.exercises.filter(e=>e.id!==eid);renderGymPlans();autosaveHealth()};
+  function renderRunPlans(){const box=document.getElementById('health-run-table');if(!box)return;if(!healthData.runPlans.length){box.innerHTML='<div class="health-empty">Nenhuma semana de corrida cadastrada.</div>';return}box.innerHTML=`<div class="health-table-wrap"><table class="health-table" style="min-width:1100px"><thead><tr><th>Semana</th><th>Início</th><th>Fase</th><th>Intervalado</th><th>km</th><th>Tempo/Ritmo</th><th>km</th><th>Leve km</th><th>Longão km</th><th>Total km</th><th></th></tr></thead><tbody>${healthData.runPlans.sort((a,b)=>num(a.week)-num(b.week)).map(r=>`<tr><td><input type="number" value="${num(r.week)}" onchange="updateRunPlan('${r.id}','week',this.value)"></td><td><input value="${esc(r.start)}" onchange="updateRunPlan('${r.id}','start',this.value)"></td><td><input value="${esc(r.phase)}" onchange="updateRunPlan('${r.id}','phase',this.value)"></td><td><input value="${esc(r.interval)}" onchange="updateRunPlan('${r.id}','interval',this.value)"></td><td><input type="number" step="0.1" value="${num(r.intervalKm)}" onchange="updateRunPlan('${r.id}','intervalKm',this.value)"></td><td><input value="${esc(r.tempo)}" onchange="updateRunPlan('${r.id}','tempo',this.value)"></td><td><input type="number" step="0.1" value="${num(r.tempoKm)}" onchange="updateRunPlan('${r.id}','tempoKm',this.value)"></td><td><input type="number" step="0.1" value="${num(r.easyKm)}" onchange="updateRunPlan('${r.id}','easyKm',this.value)"></td><td><input type="number" step="0.1" value="${num(r.longKm)}" onchange="updateRunPlan('${r.id}','longKm',this.value)"></td><td><input type="number" step="0.1" value="${num(r.totalKm)}" onchange="updateRunPlan('${r.id}','totalKm',this.value)"></td><td><button class="livre-del" onclick="deleteRunPlan('${r.id}')">×</button></td></tr>`).join('')}</tbody></table></div>`}
+  window.addRunPlan=function(){healthData.runPlans.push({id:'r'+healthData.nextId++,week:num(document.getElementById('run-new-week').value)||1,start:document.getElementById('run-new-start').value,phase:document.getElementById('run-new-phase').value.trim()||'Base',interval:'',intervalKm:0,tempo:'',tempoKm:0,easyKm:0,longKm:0,totalKm:num(document.getElementById('run-new-total').value),notes:''});renderRunPlans();autosaveHealth()};
+  window.updateRunPlan=function(id,k,v){const r=healthData.runPlans.find(x=>x.id===id);if(!r)return;r[k]=['week','intervalKm','tempoKm','easyKm','longKm','totalKm'].includes(k)?num(v):v;autosaveHealth()};window.deleteRunPlan=function(id){healthData.runPlans=healthData.runPlans.filter(r=>r.id!==id);renderRunPlans();autosaveHealth()};window.resetRunPlan=function(){if(confirm('Restaurar o modelo inicial de corrida?')){healthData.runPlans=clone(RUN_TEMPLATE);renderRunPlans();autosaveHealth()}};
+  window.updateRecordPlanOptions=function(){const type=document.getElementById('health-rec-type')?.value,sel=document.getElementById('health-rec-plan');if(!sel)return;let opts=[];if(type==='musculacao')opts=healthData.gymPlans.map(p=>p.name);else if(type==='corrida')opts=['Intervalado','Leve / regenerativa','Tempo / ritmo','Longão'];else opts=['Sessão livre'];sel.innerHTML=opts.map(x=>`<option>${esc(x)}</option>`).join('')};
+  function renderHealthRecords(){updateRecordPlanOptions();const box=document.getElementById('health-records-list');if(!box)return;const arr=[...healthData.records].sort((a,b)=>String(b.date).localeCompare(String(a.date)));if(!arr.length){box.innerHTML='<div class="health-empty">Nenhum registro diário ainda.</div>';return}box.innerHTML=arr.map(r=>`<div class="health-record"><div><div class="main">${esc(r.date)}</div><div class="sub">${esc(r.type)}</div></div><div><span class="health-chip">${esc(r.type)}</span></div><div class="main-wrap"><div class="main">${esc(r.plan)}</div><div class="sub">${esc(r.notes||'Sem observações')}</div></div><div>${num(r.duration)} min</div><div class="hr-extra">${num(r.distance)?num(r.distance).toFixed(2)+' km':'—'}</div><div class="hr-extra">${esc(r.pace||'—')} · esforço ${num(r.effort)}/10</div><div class="health-actions"><button class="livre-del" onclick="deleteHealthRecord('${r.id}')">×</button></div></div>`).join('')}
+  window.addHealthRecord=function(){const d=document.getElementById('health-rec-date').value;if(!d)return alert('Escolha a data.');healthData.records.push({id:'h'+healthData.nextId++,date:d,type:document.getElementById('health-rec-type').value,plan:document.getElementById('health-rec-plan').value,duration:num(document.getElementById('health-rec-duration').value),effort:num(document.getElementById('health-rec-effort').value),distance:num(document.getElementById('health-rec-distance').value),pace:document.getElementById('health-rec-pace').value.trim(),notes:document.getElementById('health-rec-notes').value.trim()});document.getElementById('health-rec-duration').value=0;document.getElementById('health-rec-distance').value=0;document.getElementById('health-rec-pace').value='';document.getElementById('health-rec-notes').value='';renderHealthRecords();autosaveHealth()};window.deleteHealthRecord=function(id){healthData.records=healthData.records.filter(r=>r.id!==id);renderHealthRecords();autosaveHealth()};window.clearHealthRecords=function(){if(confirm('Apagar todo o histórico de treinos?')){healthData.records=[];renderHealthRecords();autosaveHealth()}};
+  function renderAllHealth(){renderHealthDashboard();renderWeekPlan();renderGymPlans();renderRunPlans();renderHealthRecords()}
+  const collectPrev=window.coletarDados;window.coletarDados=function(){const base=collectPrev?.()||{};return {...base,healthData}};
+  const applyPrev=window.applyData;window.applyData=function(d){applyPrev?.(d);healthData=d?.healthData&&typeof d.healthData==='object'?d.healthData:clone(DEFAULT_HEALTH);healthData.weekPlan=Array.isArray(healthData.weekPlan)?healthData.weekPlan:clone(WEEK_TEMPLATE);healthData.gymPlans=Array.isArray(healthData.gymPlans)?healthData.gymPlans:clone(GYM_TEMPLATE);healthData.runPlans=Array.isArray(healthData.runPlans)?healthData.runPlans:clone(RUN_TEMPLATE);healthData.records=Array.isArray(healthData.records)?healthData.records:[];healthData.settings=healthData.settings||clone(DEFAULT_HEALTH.settings);healthData.nextId=num(healthData.nextId)||100;renderAllHealth()};
+  injectHealthUI();
 })();
 </script>
 
