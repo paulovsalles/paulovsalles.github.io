@@ -844,6 +844,39 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
 .page-section.active{display:block!important}
 </style>
 
+
+<style id="sidebar-clean-overrides">
+.sidebar{width:236px!important}
+.sidebar-logo{padding:18px 20px 12px!important}
+.sidebar-mode-wrap{padding:12px 12px 8px;border-bottom:1px solid var(--bd)}
+.mode-switcher{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px!important;background:transparent!important;padding:0!important}
+.mode-btn{display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:8px!important;padding:10px 12px!important;border-radius:12px!important;border:1px solid var(--bd)!important;background:var(--s2)!important;color:var(--mu)!important;font-size:12px!important;font-weight:700!important;box-shadow:none!important;min-width:0}
+.mode-btn:hover{border-color:var(--tbd)!important;color:var(--tx)!important;transform:translateY(-1px)}
+.mode-btn.active{background:rgba(45,212,191,.11)!important;border-color:rgba(45,212,191,.28)!important;color:var(--teal)!important;box-shadow:none!important}
+.mode-ico{width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;background:rgba(148,163,184,.08);font-size:13px;flex-shrink:0}
+.mode-btn.active .mode-ico{background:rgba(45,212,191,.18)}
+.mode-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav{padding:12px!important;gap:6px!important;flex:1 1 auto}
+.nav-item{padding:10px 12px!important;border-radius:12px!important;font-size:13px!important;font-weight:600!important;color:var(--mu)!important;border:1px solid transparent!important}
+.nav-item:hover{background:var(--s2)!important;border-color:var(--bd)!important;color:var(--tx)!important}
+.nav-item.active{background:rgba(45,212,191,.11)!important;border-color:rgba(45,212,191,.26)!important;color:var(--teal)!important}
+.nav-item .nav-icon{width:24px!important;height:24px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;border-radius:8px!important;background:rgba(148,163,184,.08);font-size:13px!important;flex-shrink:0}
+.nav-item.active .nav-icon{background:rgba(45,212,191,.18)!important}
+.nav-status{opacity:.8}
+.user-card{margin:12px!important;margin-top:auto!important}
+.sidebar-footer{padding:0 12px 12px!important;border-top:none!important}
+@media(max-width:900px){
+  .sidebar{width:74px!important}
+  .sidebar-mode-wrap{padding:10px 8px!important}
+  .mode-switcher{grid-template-columns:1fr!important}
+  .mode-btn{justify-content:center!important;padding:10px 8px!important}
+  .mode-label,.sidebar-logo small,.nav-item span:not(.nav-icon),.user-info,.sidebar-footer{display:none!important}
+  .nav-item{justify-content:center!important;padding:10px!important}
+  .nav-item .nav-icon,.mode-ico{margin:0!important}
+  .user-card{justify-content:center!important;padding:10px!important}
+}
+</style>
+
 </head>
 <body>
 
@@ -963,11 +996,11 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
     <small>Planejamento Financeiro</small>
   </div>
   <!-- MODE SWITCHER -->
-  <div style="padding:10px 10px 4px">
+  <div class="sidebar-mode-wrap">
     <div class="mode-switcher">
-      <button class="mode-btn active" id="mode-geral-btn" onclick="setMode(&#39;geral&#39;)">📊 Geral</button>
-      <button class="mode-btn" id="mode-mensal-btn" onclick="setMode(&#39;mensal&#39;)">📅 Mensal</button>
-      <button class="mode-btn" id="mode-livre-btn" onclick="setMode(&#39;livre&#39;)">🧾 Mensal livre</button>
+      <button class="mode-btn active" id="mode-geral-btn" onclick="setMode(&#39;geral&#39;)" title="Módulo Geral"><span class="mode-ico">📊</span><span class="mode-label">Geral</span></button>
+      <button class="mode-btn" id="mode-mensal-btn" onclick="setMode(&#39;mensal&#39;)" title="Módulo Mensal"><span class="mode-ico">📅</span><span class="mode-label">Mensal</span></button>
+      <button class="mode-btn" id="mode-livre-btn" onclick="setMode(&#39;livre&#39;)" title="Módulo Mensal livre"><span class="mode-ico">🧾</span><span class="mode-label">Livre</span></button>
     </div>
   </div>
 
@@ -995,9 +1028,9 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
 
   <!-- NAV MENSAL LIVRE -->
   <div class="nav" id="nav-livre" style="display:none">
-    <button class="nav-item active" onclick="goToLivre('livre-lancamentos')" id="nav-livre-lancamentos"><span class="nav-icon">🧾</span><span>Lançamentos livres</span></button>
-    <button class="nav-item" onclick="goToLivre('livre-resumo')" id="nav-livre-resumo"><span class="nav-icon">📊</span><span>Resumo livre</span></button>
-    <button class="nav-item" onclick="goToLivre('livre-anual')" id="nav-livre-anual"><span class="nav-icon">📆</span><span>Visão anual livre</span></button>
+    <button class="nav-item active" onclick="goToLivre('livre-lancamentos')" id="nav-livre-lancamentos"><span class="nav-icon">🧾</span><span>Lançamentos</span></button>
+    <button class="nav-item" onclick="goToLivre('livre-resumo')" id="nav-livre-resumo"><span class="nav-icon">📊</span><span>Resumo</span></button>
+    <button class="nav-item" onclick="goToLivre('livre-anual')" id="nav-livre-anual"><span class="nav-icon">📆</span><span>Anual</span></button>
   </div>
 
   <!-- USER CARD -->
@@ -6184,14 +6217,14 @@ window.addEventListener('DOMContentLoaded',()=>{
   function autosaveHealth(){clearTimeout(healthSaveTimer);healthSaveTimer=setTimeout(()=>window.salvarFirestore?.(),700)}
   function injectHealthUI(){
     const switcher=document.querySelector('.mode-switcher');
-    if(switcher&&!document.getElementById('mode-saude-btn'))switcher.insertAdjacentHTML('beforeend',`<button class="mode-btn" id="mode-saude-btn" onclick="setMode('saude')">💪 Saúde</button>`);
+    if(switcher&&!document.getElementById('mode-saude-btn'))switcher.insertAdjacentHTML('beforeend',`<button class="mode-btn" id="mode-saude-btn" onclick="setMode('saude')" title="Módulo Saúde"><span class="mode-ico">💪</span><span class="mode-label">Saúde</span></button>`);
     const navLivre=document.getElementById('nav-livre');
     if(navLivre&&!document.getElementById('nav-saude'))navLivre.insertAdjacentHTML('afterend',`<div class="nav" id="nav-saude" style="display:none">
       <button class="nav-item active" onclick="goToSaude('saude-painel')" id="nav-saude-painel"><span class="nav-icon">❤️</span><span>Painel</span></button>
-      <button class="nav-item" onclick="goToSaude('saude-semana')" id="nav-saude-semana"><span class="nav-icon">📅</span><span>Plano semanal</span></button>
+      <button class="nav-item" onclick="goToSaude('saude-semana')" id="nav-saude-semana"><span class="nav-icon">📅</span><span>Semana</span></button>
       <button class="nav-item" onclick="goToSaude('saude-musculacao')" id="nav-saude-musculacao"><span class="nav-icon">🏋️</span><span>Musculação</span></button>
       <button class="nav-item" onclick="goToSaude('saude-corrida')" id="nav-saude-corrida"><span class="nav-icon">🏃</span><span>Corrida</span></button>
-      <button class="nav-item" onclick="goToSaude('saude-registros')" id="nav-saude-registros"><span class="nav-icon">📝</span><span>Registros diários</span></button>
+      <button class="nav-item" onclick="goToSaude('saude-registros')" id="nav-saude-registros"><span class="nav-icon">📝</span><span>Registros</span></button>
     </div>`);
     const content=document.querySelector('.content');
     if(content&&!document.getElementById('sec-saude-painel'))content.insertAdjacentHTML('beforeend',healthSectionsHtml());
