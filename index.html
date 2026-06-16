@@ -838,6 +838,12 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
 @media(max-width:1100px){.debt-filter-grid{grid-template-columns:1fr 1fr 1fr}}
 @media(max-width:720px){.debt-filter-grid{grid-template-columns:1fr}}
 </style>
+
+<style id="page-visibility-fix">
+.page-section{display:none!important}
+.page-section.active{display:block!important}
+</style>
+
 </head>
 <body>
 
@@ -6047,12 +6053,47 @@ window.addEventListener('DOMContentLoaded',()=>{
 .health-section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
 .health-section-title{font-weight:800;font-size:16px;color:var(--tx)}
 .health-section-sub{font-size:12px;color:var(--di);line-height:1.45;margin-top:3px}
-.health-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
-.health-day{background:var(--s2);border:1px solid var(--bd);border-radius:11px;padding:11px;min-height:124px}
-.health-day strong{font-size:12px;color:var(--tx)}
-.health-day .run{font-size:11px;color:var(--blue);margin-top:8px;line-height:1.4}
-.health-day .gym{font-size:11px;color:var(--teal);margin-top:6px;line-height:1.4}
-.health-day .note{font-size:10px;color:var(--di);margin-top:7px;line-height:1.35}
+.health-week{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(250px,1fr));
+  gap:14px;
+  align-items:stretch;
+}
+.health-day{
+  background:var(--s2);
+  border:1px solid var(--bd);
+  border-radius:14px;
+  padding:15px;
+  min-height:330px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.health-day:hover{border-color:var(--tbd)}
+.health-day strong{
+  display:block;
+  font-family:'Space Grotesk',sans-serif;
+  font-size:15px;
+  color:var(--tx);
+  padding-bottom:9px;
+  border-bottom:1px solid var(--bd);
+}
+.health-day .health-field{margin-top:0!important}
+.health-day .health-field label{font-size:10px;letter-spacing:.08em}
+.health-day .health-input{
+  min-height:44px;
+  line-height:1.35;
+  font-size:13px;
+}
+.health-day .health-textarea{
+  min-height:105px;
+  line-height:1.5;
+  resize:vertical;
+  font-size:13px;
+}
+.health-day .field-run .health-input{border-left:3px solid var(--blue)}
+.health-day .field-gym .health-input{border-left:3px solid var(--teal)}
+.health-day .field-note .health-textarea{border-left:3px solid var(--amber)}
 .health-table-wrap{overflow:auto;border:1px solid var(--bd);border-radius:11px}
 .health-table{width:100%;border-collapse:collapse;min-width:780px}
 .health-table th{background:var(--s2);padding:9px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--di);white-space:nowrap}
@@ -6069,7 +6110,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 .health-progress{height:8px;background:var(--s3);border-radius:999px;overflow:hidden;margin-top:8px}
 .health-progress span{display:block;height:100%;background:linear-gradient(90deg,var(--teal),var(--blue));border-radius:inherit}
 .health-note{padding:11px 13px;background:rgba(20,184,166,.08);border:1px solid rgba(20,184,166,.22);border-radius:10px;color:var(--tx);font-size:12px;line-height:1.5}
-@media(max-width:1100px){.health-grid{grid-template-columns:repeat(2,1fr)}.health-form-grid,.health-form-grid.cols-5{grid-template-columns:repeat(2,1fr)}.health-week{grid-template-columns:repeat(2,1fr)}.health-record{grid-template-columns:90px 100px 1fr 80px 34px}.health-record .hr-extra{display:none}}
+@media(max-width:1100px){.health-grid{grid-template-columns:repeat(2,1fr)}.health-form-grid,.health-form-grid.cols-5{grid-template-columns:repeat(2,1fr)}.health-week{grid-template-columns:repeat(2,minmax(240px,1fr))}.health-record{grid-template-columns:90px 100px 1fr 80px 34px}.health-record .hr-extra{display:none}}
 @media(max-width:700px){.health-grid{grid-template-columns:1fr}.health-form-grid,.health-form-grid.cols-5{grid-template-columns:1fr}.health-week{grid-template-columns:1fr}.health-record{grid-template-columns:1fr 34px}.health-record>*:not(.health-actions):not(.main-wrap){grid-column:1}.health-record .health-actions{grid-column:2;grid-row:1/5}.mode-switcher{flex-wrap:wrap}.mode-btn{flex:1 1 45%}}
 </style>
 <script>
@@ -6166,17 +6207,83 @@ window.addEventListener('DOMContentLoaded',()=>{
   function setFinanceActionsVisible(show){document.querySelectorAll('.topbar-actions button').forEach(b=>{const t=b.textContent||'';if(/Excel|PDF|Limpar|Ver plano/.test(t))b.style.display=show?'':'none'})}
   const oldSetMode=window.setMode;
   window.setMode=function(mode){
-    if(mode!=='saude'){setFinanceActionsVisible(true);oldSetMode?.(mode);document.getElementById('nav-saude').style.display='none';document.getElementById('mode-saude-btn')?.classList.remove('active');return}
+    document.querySelectorAll('.page-section').forEach(section=>{
+      section.classList.remove('active');
+      section.style.display='none';
+    });
+
+    if(mode!=='saude'){
+      setFinanceActionsVisible(true);
+
+      const navSaude=document.getElementById('nav-saude');
+      if(navSaude) navSaude.style.display='none';
+
+      document.getElementById('mode-saude-btn')?.classList.remove('active');
+
+      if(typeof oldSetMode==='function'){
+        oldSetMode(mode);
+      }
+      return;
+    }
+
     window.appMode='saude';
-    ['nav-geral','nav-mensal','nav-livre'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none'});document.getElementById('nav-saude').style.display='flex';
-    ['mode-geral-btn','mode-mensal-btn','mode-livre-btn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));document.getElementById('mode-saude-btn')?.classList.add('active');
-    document.querySelectorAll('.page-section').forEach(s=>{s.classList.remove('active');s.style.display='none'});setFinanceActionsVisible(false);goToSaude('saude-painel');
+
+    ['nav-geral','nav-mensal','nav-livre'].forEach(id=>{
+      const element=document.getElementById(id);
+      if(element) element.style.display='none';
+    });
+
+    const navSaude=document.getElementById('nav-saude');
+    if(navSaude) navSaude.style.display='flex';
+
+    ['mode-geral-btn','mode-mensal-btn','mode-livre-btn'].forEach(id=>{
+      document.getElementById(id)?.classList.remove('active');
+    });
+
+    document.getElementById('mode-saude-btn')?.classList.add('active');
+    setFinanceActionsVisible(false);
+    goToSaude('saude-painel');
   };
   window.goToSaude=function(id){document.querySelectorAll('[id^="sec-saude-"]').forEach(s=>{s.classList.remove('active');s.style.display='none'});const sec=document.getElementById('sec-'+id);if(sec){sec.classList.add('active');sec.style.display='block'}document.querySelectorAll('#nav-saude .nav-item').forEach(n=>n.classList.remove('active'));document.getElementById('nav-'+id)?.classList.add('active');document.getElementById('topbar-title').textContent=({"saude-painel":"Saúde física","saude-semana":"Plano semanal","saude-musculacao":"Musculação","saude-corrida":"Corrida","saude-registros":"Registros diários"})[id]||'Saúde física';if(id==='saude-painel')renderHealthDashboard();if(id==='saude-semana')renderWeekPlan();if(id==='saude-musculacao')renderGymPlans();if(id==='saude-corrida')renderRunPlans();if(id==='saude-registros')renderHealthRecords();window.scrollTo(0,0)};
   function currentWeekRecords(){const now=new Date(),day=(now.getDay()+6)%7,start=new Date(now);start.setDate(now.getDate()-day);start.setHours(0,0,0,0);return healthData.records.filter(r=>new Date(r.date+'T12:00:00')>=start)}
   function renderHealthDashboard(){const box=document.getElementById('health-dashboard');if(!box)return;const wr=currentWeekRecords(),gym=wr.filter(r=>r.type==='musculacao').length,run=wr.filter(r=>r.type==='corrida'),km=run.reduce((s,r)=>s+num(r.distance),0),mins=wr.reduce((s,r)=>s+num(r.duration),0),goals=healthData.settings||{};const consistency=Math.min(100,Math.round(((gym+run.length)/Math.max(1,num(goals.weeklyGymGoal)+num(goals.weeklyRunGoal)))*100));const last=[...healthData.records].sort((a,b)=>String(b.date).localeCompare(String(a.date))).slice(0,5);box.innerHTML=`<div class="health-grid"><div class="health-card"><p>Treinos na semana</p><div class="health-kpi">${wr.length}</div><p>musculação + corrida + outros</p></div><div class="health-card"><p>Musculação</p><div class="health-kpi">${gym}/${goals.weeklyGymGoal||5}</div><p>sessões realizadas</p></div><div class="health-card"><p>Corrida</p><div class="health-kpi">${km.toFixed(1)} km</div><p>${run.length} sessão(ões)</p></div><div class="health-card"><p>Tempo ativo</p><div class="health-kpi">${mins} min</div><p>registrados nesta semana</p></div></div><div class="health-section"><div class="health-section-head"><div><div class="health-section-title">Consistência semanal</div><div class="health-section-sub">Meta combinada de musculação e corrida.</div></div><span class="health-chip">${consistency}%</span></div><div class="health-progress"><span style="width:${consistency}%"></span></div><div class="health-form-grid" style="margin-top:14px"><div class="health-field"><label>Meta musculação / semana</label><input class="health-input" type="number" min="0" value="${goals.weeklyGymGoal||5}" onchange="updateHealthSetting('weeklyGymGoal',this.value)"></div><div class="health-field"><label>Meta corrida / semana</label><input class="health-input" type="number" min="0" value="${goals.weeklyRunGoal||4}" onchange="updateHealthSetting('weeklyRunGoal',this.value)"></div><div class="health-field"><label>Meta km / semana</label><input class="health-input" type="number" min="0" step="0.1" value="${goals.weeklyKmGoal||30}" onchange="updateHealthSetting('weeklyKmGoal',this.value)"></div><div class="health-field"><label>&nbsp;</label><button class="btn btn-primary" onclick="goToSaude('saude-registros')">+ Registrar treino</button></div></div></div><div class="health-section"><div class="health-section-head"><div><div class="health-section-title">Últimos registros</div><div class="health-section-sub">Acompanhamento recente da rotina.</div></div></div>${last.length?last.map(r=>`<div class="health-record"><div><div class="main">${esc(r.date)}</div><div class="sub">${esc(r.type)}</div></div><div><span class="health-chip">${esc(r.plan||'Treino')}</span></div><div class="main-wrap"><div class="main">${esc(r.plan||'Treino')}</div><div class="sub">${esc(r.notes||'Sem observações')}</div></div><div>${num(r.duration)} min</div><div class="hr-extra">${num(r.distance)?num(r.distance).toFixed(1)+' km':'—'}</div><div class="hr-extra">Esforço ${num(r.effort)}/10</div><div></div></div>`).join(''):'<div class="health-empty">Nenhum treino registrado ainda.</div>'}</div><div class="health-note">Acompanhe evolução de forma sustentável: registre o que foi feito, respeite recuperação e ajuste cargas ou volume gradualmente.</div>`}
   window.updateHealthSetting=function(k,v){healthData.settings[k]=num(v);renderHealthDashboard();autosaveHealth()};
-  function renderWeekPlan(){const box=document.getElementById('health-week-grid');if(!box)return;box.innerHTML=healthData.weekPlan.map((d,i)=>`<div class="health-day"><strong>${esc(d.day)}</strong><div class="health-field" style="margin-top:8px"><label>Corrida</label><input class="health-input" value="${esc(d.run)}" onchange="updateWeekDay(${i},'run',this.value)"></div><div class="health-field" style="margin-top:7px"><label>Musculação</label><input class="health-input" value="${esc(d.gym)}" onchange="updateWeekDay(${i},'gym',this.value)"></div><div class="health-field" style="margin-top:7px"><label>Observação</label><textarea class="health-textarea" onchange="updateWeekDay(${i},'note',this.value)">${esc(d.note)}</textarea></div></div>`).join('')}
+  function renderWeekPlan(){
+    const box=document.getElementById('health-week-grid');
+    if(!box) return;
+
+    box.innerHTML=healthData.weekPlan.map((d,i)=>`
+      <div class="health-day">
+        <strong>${esc(d.day)}</strong>
+
+        <div class="health-field field-run">
+          <label>🏃 Corrida</label>
+          <input
+            class="health-input"
+            value="${esc(d.run)}"
+            placeholder="Ex.: leve, intervalado ou descanso"
+            onchange="updateWeekDay(${i},'run',this.value)">
+        </div>
+
+        <div class="health-field field-gym">
+          <label>🏋️ Musculação</label>
+          <input
+            class="health-input"
+            value="${esc(d.gym)}"
+            placeholder="Ex.: pernas, push, pull..."
+            onchange="updateWeekDay(${i},'gym',this.value)">
+        </div>
+
+        <div class="health-field field-note">
+          <label>📝 Detalhes e observações</label>
+          <textarea
+            class="health-textarea"
+            placeholder="Horário, intensidade, recuperação e outros detalhes"
+            onchange="updateWeekDay(${i},'note',this.value)">${esc(d.note)}</textarea>
+        </div>
+      </div>
+    `).join('');
+  }
   window.updateWeekDay=function(i,k,v){healthData.weekPlan[i][k]=v;autosaveHealth()};window.resetHealthWeek=function(){if(confirm('Restaurar o modelo semanal da planilha?')){healthData.weekPlan=clone(WEEK_TEMPLATE);renderWeekPlan();autosaveHealth()}};
   function renderGymPlans(){const box=document.getElementById('health-gym-list');if(!box)return;if(!healthData.gymPlans.length){box.innerHTML='<div class="health-empty">Nenhum treino criado.</div>';return}box.innerHTML=healthData.gymPlans.map(p=>`<div class="health-section"><div class="health-section-head"><div><div class="health-section-title">${esc(p.name)} <span class="health-chip">${esc(p.day)}</span></div><div class="health-section-sub">${esc(p.focus||'Sem foco definido')}</div></div><div class="health-actions"><button class="btn btn-sm" onclick="addGymExercise('${p.id}')">+ Exercício</button><button class="btn btn-sm" onclick="deleteGymPlan('${p.id}')">Excluir treino</button></div></div><div class="health-table-wrap"><table class="health-table"><thead><tr><th>Exercício</th><th>Séries</th><th>Reps</th><th>Carga (kg)</th><th>Descanso</th><th>Observações</th><th></th></tr></thead><tbody>${p.exercises.map(e=>`<tr><td><input value="${esc(e.name)}" onchange="updateGymExercise('${p.id}','${e.id}','name',this.value)"></td><td><input type="number" min="0" value="${num(e.sets)}" onchange="updateGymExercise('${p.id}','${e.id}','sets',this.value)"></td><td><input value="${esc(e.reps)}" onchange="updateGymExercise('${p.id}','${e.id}','reps',this.value)"></td><td><input type="number" min="0" step="0.5" value="${esc(e.load)}" onchange="updateGymExercise('${p.id}','${e.id}','load',this.value)"></td><td><input value="${esc(e.rest)}" onchange="updateGymExercise('${p.id}','${e.id}','rest',this.value)"></td><td><input value="${esc(e.notes)}" onchange="updateGymExercise('${p.id}','${e.id}','notes',this.value)"></td><td><button class="livre-del" onclick="deleteGymExercise('${p.id}','${e.id}')">×</button></td></tr>`).join('')}</tbody></table></div></div>`).join('')}
   window.addGymPlan=function(){const name=document.getElementById('gym-new-name').value.trim();if(!name)return alert('Digite o nome do treino.');healthData.gymPlans.push({id:'g'+healthData.nextId++,name,day:document.getElementById('gym-new-day').value,focus:document.getElementById('gym-new-focus').value.trim(),exercises:[]});document.getElementById('gym-new-name').value='';document.getElementById('gym-new-focus').value='';renderGymPlans();autosaveHealth()};
