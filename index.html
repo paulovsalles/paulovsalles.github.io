@@ -6,275 +6,173 @@
 <title>PainelFin — Planejamento Financeiro</title>
 <link href="./oirk_files/css2" rel="stylesheet">
 
-<!-- ══════════ FIREBASE SDK: AUTH + REALTIME DATABASE ══════════ -->
+<!-- ══════════ FIREBASE SDK ══════════ -->
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getAuth, signInWithPopup, signOut, onAuthStateChanged,
-  GoogleAuthProvider, createUserWithEmailAndPassword,
-  signInWithEmailAndPassword, sendPasswordResetEmail, updateProfile
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import {
-  getDatabase, ref, set, onValue
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { initializeApp }        from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInWithPopup, signOut, onAuthStateChanged,
+         GoogleAuthProvider, createUserWithEmailAndPassword,
+         signInWithEmailAndPassword, sendPasswordResetEmail,
+         updateProfile } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, onSnapshot }
+                                from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+// ─── COLE AQUI AS SUAS CREDENCIAIS DO FIREBASE ───────────────────────────
+// Acesse: https://console.firebase.google.com → Seu projeto → ⚙️ → Config do app
 const firebaseConfig = {
-  apiKey: "AIzaSyDHEoutiYZFHk-yrc7Esd1zi42AVdFrK4g",
-  authDomain: "painelfinanceiro-9e7fd.firebaseapp.com",
-  databaseURL: "https://painelfinanceiro-9e7fd-default-rtdb.firebaseio.com",
-  projectId: "painelfinanceiro-9e7fd",
-  storageBucket: "painelfinanceiro-9e7fd.firebasestorage.app",
-  messagingSenderId: "316636554656",
-  appId: "1:316636554656:web:47a25062b4bfe191af70c5"
+  apiKey:            "AIzaSyCCWJqv_61xQY8DfTKGOSlcRPOn1WXUI90",
+  authDomain:        "umquartodeaula-38669.firebaseapp.com",
+  projectId:         "umquartodeaula-38669",
+  storageBucket:     "umquartodeaula-38669.firebasestorage.app",
+  messagingSenderId: "963220554878",
+  appId:             "1:963220554878:web:8c4bf1400f7b6462e9c42f"
 };
+// ─────────────────────────────────────────────────────────────────────────
 
-const app = initializeApp(firebaseConfig);
+const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getDatabase(app);
+const db   = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
 let currentUser = null;
 let unsubscribe = null;
-let carregandoNuvem = false;
 
-function atualizarStatusNuvem(texto, estado = "ok") {
-  const label = document.getElementById("cloud-label");
-  const dot = document.getElementById("cloud-dot");
-  if (label) label.textContent = texto;
-  if (dot) {
-    dot.classList.toggle("saving", estado === "saving");
-    dot.style.background = estado === "error" ? "var(--red)" : "";
-  }
-}
-
-function limparUndefined(valor) {
-  return JSON.parse(JSON.stringify(valor));
-}
-
+/* ── AUTH ── */
 window.loginGoogle = async () => {
   try {
     await signInWithPopup(auth, provider);
-  } catch (e) {
-    showToast("❌ " + traduzErro(e.code), true);
-  }
+  } catch(e) { showToast("❌ " + traduzErro(e.code), true); }
 };
 
 window.loginEmail = async () => {
-  const email = document.getElementById("login-email").value.trim();
-  const senha = document.getElementById("login-senha").value;
-
-  if (!email || !senha) {
-    showToast("Preencha email e senha.", true);
-    return;
-  }
-
+  const email = document.getElementById('login-email').value.trim();
+  const senha = document.getElementById('login-senha').value;
+  if (!email || !senha) { showToast("Preencha email e senha.", true); return; }
   setLoginLoading(true);
   try {
     await signInWithEmailAndPassword(auth, email, senha);
-  } catch (e) {
+  } catch(e) {
     showToast("❌ " + traduzErro(e.code), true);
     setLoginLoading(false);
   }
 };
 
 window.cadastrarEmail = async () => {
-  const nome = document.getElementById("cad-nome").value.trim();
-  const email = document.getElementById("cad-email").value.trim();
-  const senha = document.getElementById("cad-senha").value;
-  const conf = document.getElementById("cad-conf").value;
-
-  if (!nome || !email || !senha) {
-    showToast("Preencha todos os campos.", true);
-    return;
-  }
-  if (senha !== conf) {
-    showToast("As senhas não coincidem.", true);
-    return;
-  }
-  if (senha.length < 6) {
-    showToast("Senha deve ter pelo menos 6 caracteres.", true);
-    return;
-  }
-
+  const nome  = document.getElementById('cad-nome').value.trim();
+  const email = document.getElementById('cad-email').value.trim();
+  const senha = document.getElementById('cad-senha').value;
+  const conf  = document.getElementById('cad-conf').value;
+  if (!nome || !email || !senha) { showToast("Preencha todos os campos.", true); return; }
+  if (senha !== conf) { showToast("As senhas não coincidem.", true); return; }
+  if (senha.length < 6) { showToast("Senha deve ter pelo menos 6 caracteres.", true); return; }
   setLoginLoading(true);
   try {
     const cred = await createUserWithEmailAndPassword(auth, email, senha);
     await updateProfile(cred.user, { displayName: nome });
-  } catch (e) {
+  } catch(e) {
     showToast("❌ " + traduzErro(e.code), true);
     setLoginLoading(false);
   }
 };
 
 window.recuperarSenha = async () => {
-  const email = document.getElementById("rec-email").value.trim();
-  if (!email) {
-    showToast("Digite seu email.", true);
-    return;
-  }
-
+  const email = document.getElementById('rec-email').value.trim();
+  if (!email) { showToast("Digite seu email.", true); return; }
   try {
     await sendPasswordResetEmail(auth, email);
     showToast("✅ Email de recuperação enviado!");
-    setLoginTab("login");
-  } catch (e) {
-    showToast("❌ " + traduzErro(e.code), true);
-  }
+    setLoginTab('login');
+  } catch(e) { showToast("❌ " + traduzErro(e.code), true); }
 };
 
 function traduzErro(code) {
   const erros = {
-    "auth/invalid-credential": "Email ou senha incorretos.",
-    "auth/user-not-found": "Usuário não encontrado.",
-    "auth/wrong-password": "Senha incorreta.",
-    "auth/email-already-in-use": "Este email já está cadastrado.",
-    "auth/weak-password": "Senha muito fraca. Use pelo menos 6 caracteres.",
-    "auth/invalid-email": "Email inválido.",
-    "auth/too-many-requests": "Muitas tentativas. Tente novamente mais tarde.",
-    "auth/popup-closed-by-user": "A janela de login foi fechada.",
-    "auth/unauthorized-domain": "Este domínio ainda não foi autorizado no Firebase.",
-    "auth/api-key-not-valid.-please-pass-a-valid-api-key.": "Chave Firebase inválida."
+    'auth/invalid-credential':       'Email ou senha incorretos.',
+    'auth/user-not-found':           'Usuário não encontrado.',
+    'auth/wrong-password':           'Senha incorreta.',
+    'auth/email-already-in-use':     'Este email já está cadastrado.',
+    'auth/weak-password':            'Senha muito fraca. Use pelo menos 6 caracteres.',
+    'auth/invalid-email':            'Email inválido.',
+    'auth/too-many-requests':        'Muitas tentativas. Tente novamente mais tarde.',
+    'auth/api-key-not-valid.-please-pass-a-valid-api-key.': 'Chave Firebase inválida. Configure as credenciais.',
   };
-  return erros[code] || "Erro: " + code;
+  return erros[code] || 'Erro: ' + code;
 }
 
 function setLoginLoading(on) {
-  document
-    .querySelectorAll(".login-btn-google, #btn-entrar, #btn-cadastrar, #btn-recuperar")
-    .forEach((botao) => (botao.disabled = on));
+  const btns = document.querySelectorAll('.login-btn-google, #btn-entrar, #btn-cadastrar, #btn-recuperar');
+  btns.forEach(b => b.disabled = on);
 }
 
 window.setLoginTab = (tab) => {
-  document
-    .querySelectorAll(".login-tab-content")
-    .forEach((el) => (el.style.display = "none"));
-
-  const conteudo = document.getElementById("lt-" + tab);
-  if (conteudo) conteudo.style.display = "block";
-
-  document
-    .querySelectorAll(".login-tab-btn")
-    .forEach((botao) => botao.classList.remove("active"));
-
-  const botao = document.querySelector(`.login-tab-btn[data-tab="${tab}"]`);
-  if (botao) botao.classList.add("active");
+  document.querySelectorAll('.login-tab-content').forEach(el => el.style.display = 'none');
+  document.getElementById('lt-'+tab).style.display = 'block';
+  document.querySelectorAll('.login-tab-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.querySelector(`.login-tab-btn[data-tab="${tab}"]`);
+  if (btn) btn.classList.add('active');
 };
 
 window.logout = async () => {
   if (!confirm("Sair da conta?")) return;
-  if (unsubscribe) {
-    unsubscribe();
-    unsubscribe = null;
-  }
+  if (unsubscribe) unsubscribe();
   await signOut(auth);
 };
 
-function caminhoUsuario(uid) {
-  return ref(db, `usuarios/${uid}/painelfin`);
-}
-
-function ouvirDados(uid) {
-  if (unsubscribe) unsubscribe();
-
-  atualizarStatusNuvem("Carregando...", "saving");
-
-  unsubscribe = onValue(
-    caminhoUsuario(uid),
-    (snapshot) => {
-      const dados = snapshot.val();
-
-      if (dados && typeof window.applyData === "function") {
-        carregandoNuvem = true;
-        window.applyData(dados);
-        carregandoNuvem = false;
-        showToast("☁️ Dados sincronizados");
-      }
-
-      atualizarStatusNuvem("Sincronizado");
-    },
-    (erro) => {
-      carregandoNuvem = false;
-      atualizarStatusNuvem("Erro ao sincronizar", "error");
-      showToast("⚠️ Erro ao sincronizar: " + erro.message, true);
-    }
-  );
-}
-
-window.salvarRealtime = async (silencioso = false) => {
-  if (carregandoNuvem) return;
-
-  if (!currentUser) {
-    if (!silencioso) showToast("Faça login primeiro.", true);
-    return;
-  }
-
-  if (typeof window.coletarDados !== "function") {
-    if (!silencioso) showToast("Não foi possível reunir os dados.", true);
-    return;
-  }
-
-  atualizarStatusNuvem("Salvando...", "saving");
-
-  try {
-    const dados = limparUndefined({
-      ...window.coletarDados(),
-      updatedAt: new Date().toISOString()
-    });
-
-    await set(caminhoUsuario(currentUser.uid), dados);
-    atualizarStatusNuvem("Sincronizado");
-
-    if (!silencioso) showToast("✅ Salvo na nuvem!");
-  } catch (e) {
-    atualizarStatusNuvem("Erro ao salvar", "error");
-    if (!silencioso) showToast("❌ Erro ao salvar: " + e.message, true);
-  }
-};
-
-/*
-  Mantém compatibilidade com trechos antigos do próprio HTML que ainda
-  chamam salvarFirestore(). Agora todos eles salvam no Realtime Database.
-*/
-window.salvarFirestore = window.salvarRealtime;
-
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, user => {
   currentUser = user;
-  setLoginLoading(false);
-
   if (user) {
+    // Esconde tela de login, mostra app
     document.getElementById("login-screen").style.display = "none";
-    document.getElementById("app-shell").style.display = "flex";
-
-    const nome =
-      user.displayName?.split(" ")[0] ||
-      user.email?.split("@")[0] ||
-      "Usuário";
-
-    document.getElementById("user-name").textContent = nome;
-    document.getElementById("user-email").textContent = user.email || "—";
-
-    const avatar = document.getElementById("user-avatar");
+    document.getElementById("app-shell").style.display    = "flex";
+    // Avatar e nome
+    const nome = user.displayName?.split(" ")[0] || user.email?.split("@")[0] || "Usuário";
+    document.getElementById("user-name").textContent  = nome;
+    document.getElementById("user-email").textContent = user.email;
+    const avatarEl = document.getElementById("user-avatar");
     if (user.photoURL) {
-      avatar.style.backgroundImage = `url("${user.photoURL}")`;
-      avatar.style.backgroundSize = "cover";
-      avatar.textContent = "";
+      avatarEl.style.backgroundImage = `url(${user.photoURL})`;
+      avatarEl.style.backgroundSize  = "cover";
+      avatarEl.textContent = "";
     } else {
-      avatar.style.backgroundImage = "";
-      avatar.textContent = nome.charAt(0).toUpperCase();
+      avatarEl.style.backgroundImage = "";
+      avatarEl.textContent = nome[0].toUpperCase();
     }
-
-    ouvirDados(user.uid);
+    // Carrega dados em tempo real
+    listenData(user.uid);
   } else {
     document.getElementById("login-screen").style.display = "flex";
-    document.getElementById("app-shell").style.display = "none";
-    atualizarStatusNuvem("Desconectado");
-
-    if (unsubscribe) {
-      unsubscribe();
-      unsubscribe = null;
-    }
+    document.getElementById("app-shell").style.display    = "none";
+    if (unsubscribe) { unsubscribe(); unsubscribe = null; }
   }
 });
+
+/* ── FIRESTORE: escuta em tempo real ── */
+function listenData(uid) {
+  const docRef = doc(db, "usuarios", uid);
+  unsubscribe = onSnapshot(docRef, snap => {
+    if (snap.exists()) {
+      const data = snap.data();
+      applyData(data);
+      showToast("☁️ Dados sincronizados");
+    }
+  }, err => {
+    showToast("⚠️ Erro ao sincronizar: " + err.message, true);
+  });
+}
+
+/* ── SALVAR NO FIRESTORE ── */
+window.salvarFirestore = async () => {
+  if (!currentUser) { showToast("Faça login primeiro", true); return; }
+  const data = coletarDados();
+  try {
+    await setDoc(doc(db, "usuarios", currentUser.uid), {
+      ...data,
+      updatedAt: new Date().toISOString()
+    });
+    showToast("✅ Salvo na nuvem!");
+  } catch(e) {
+    showToast("❌ Erro ao salvar: " + e.message, true);
+  }
+};
 </script>
 
 <style>
@@ -968,7 +866,7 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
       <div class="login-link" onclick="setLoginTab(&#39;login&#39;)">Voltar para o <span>login</span></div>
     </div>
 
-    <div class="login-footer" style="margin-top:16px">Seus dados ficam protegidos na sua conta do Firebase.</div>
+    <div class="login-footer" style="margin-top:16px">Seus dados ficam no Firebase (Google). Ninguém mais tem acesso.</div>
   </div>
 </div>
 
@@ -1000,6 +898,7 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
     <div class="mode-switcher">
       <button class="mode-btn active" id="mode-geral-btn" onclick="setMode(&#39;geral&#39;)">📊 Geral</button>
       <button class="mode-btn" id="mode-mensal-btn" onclick="setMode(&#39;mensal&#39;)">📅 Mensal</button>
+      <button class="mode-btn" id="mode-livre-btn" onclick="setMode(&#39;livre&#39;)">🧾 Mensal livre</button>
     </div>
   </div>
 
@@ -1023,6 +922,13 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
     <button class="nav-item" onclick="goToMensal(&#39;mes-anual&#39;)" id="nav-anual">        <span class="nav-icon">📆</span><span>Visão anual</span></button>
     <div style="height:1px;background:var(--bd);margin:4px 0"></div>
     <button class="nav-item" onclick="goToMensal(&#39;dash-mensal&#39;)" id="nav-dash-mensal">  <span class="nav-icon">🖥️</span><span>Dashboard</span></button>
+  </div>
+
+  <!-- NAV MENSAL LIVRE -->
+  <div class="nav" id="nav-livre" style="display:none">
+    <button class="nav-item active" onclick="goToLivre('livre-lancamentos')" id="nav-livre-lancamentos"><span class="nav-icon">🧾</span><span>Lançamentos livres</span></button>
+    <button class="nav-item" onclick="goToLivre('livre-resumo')" id="nav-livre-resumo"><span class="nav-icon">📊</span><span>Resumo livre</span></button>
+    <button class="nav-item" onclick="goToLivre('livre-anual')" id="nav-livre-anual"><span class="nav-icon">📆</span><span>Visão anual livre</span></button>
   </div>
 
   <!-- USER CARD -->
@@ -1061,7 +967,7 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
     <button class="btn btn-sm" onclick="gerarPdfMensal()" title="Gerar relatório do mês selecionado">📄 PDF mensal</button>
     <button class="btn btn-sm" onclick="gerarPdfDividas()" title="Gerar relatório detalhado das dívidas">📄 PDF dívidas</button>
     <button class="btn btn-sm" onclick="resetAll()">Limpar</button>
-    <button class="btn btn-save btn-sm" onclick="salvarRealtime()">☁️ Salvar</button>
+    <button class="btn btn-save btn-sm" onclick="salvarFirestore()">☁️ Salvar</button>
     <button class="btn btn-primary btn-sm" onclick="calcular();goTo(&#39;plano&#39;)">Ver plano →</button>
   </div>
 </div>
@@ -1785,6 +1691,59 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
 </div>
 
 
+
+<!-- ════════════════════════════════════
+     MENSAL LIVRE — INDEPENDENTE DO GERAL
+════════════════════════════════════ -->
+<div class="page-section" id="sec-livre-lancamentos" style="display:none">
+  <div class="section-header">
+    <div class="section-eyebrow">mensal independente</div>
+    <div class="section-title" id="livre-title">Mensal livre</div>
+    <div class="section-desc">Comece do zero. Nada desta área é puxado do Geral ou do Mensal vinculado.</div>
+  </div>
+  <div class="mes-selector livre-selector">
+    <button class="mes-nav" onclick="navLivre(-1)">‹</button>
+    <div class="mes-label" id="livre-mes-label">—</div>
+    <div class="mes-status" id="livre-mes-badge">independente</div>
+    <button class="mes-nav" onclick="navLivre(1)">›</button>
+  </div>
+  <div class="livre-summary" id="livre-summary"></div>
+  <div class="livre-grid">
+    <div class="card livre-card">
+      <div class="livre-card-head"><div><strong>💰 Receitas do mês</strong><span>Renomeie e adicione quantas quiser</span></div><b id="livre-total-receitas">R$ 0</b></div>
+      <div id="livre-receitas-list"></div>
+      <button class="livre-add" onclick="addLivreItem('receitas')">＋ Adicionar receita</button>
+    </div>
+    <div class="card livre-card">
+      <div class="livre-card-head"><div><strong>📌 Despesas do mês</strong><span>Crie sua própria lista do zero</span></div><b class="red" id="livre-total-despesas">R$ 0</b></div>
+      <div id="livre-despesas-list"></div>
+      <button class="livre-add" onclick="addLivreItem('despesas')">＋ Adicionar despesa</button>
+    </div>
+    <div class="card livre-card">
+      <div class="livre-card-head"><div><strong>🙏 Doações / outros</strong><span>Opcional e independente</span></div><b class="purple" id="livre-total-doacoes">R$ 0</b></div>
+      <div id="livre-doacoes-list"></div>
+      <button class="livre-add" onclick="addLivreItem('doacoes')">＋ Adicionar item</button>
+    </div>
+  </div>
+  <div class="livre-actions">
+    <button class="btn" onclick="limparLivreMes()">Limpar este mês</button>
+    <button class="btn btn-save" onclick="salvarFirestore()">☁️ Salvar mensal livre</button>
+    <button class="btn btn-primary" onclick="goToLivre('livre-resumo')">Ver resumo →</button>
+  </div>
+</div>
+
+<div class="page-section" id="sec-livre-resumo" style="display:none">
+  <div class="section-header"><div class="section-eyebrow">mensal independente</div><div class="section-title" id="livre-resumo-title">Resumo livre</div><div class="section-desc">Panorama criado apenas com os valores lançados nesta área.</div></div>
+  <div class="mes-selector livre-selector"><button class="mes-nav" onclick="navLivre(-1)">‹</button><div class="mes-label" id="livre-resumo-label">—</div><div class="mes-status">sem vínculo</div><button class="mes-nav" onclick="navLivre(1)">›</button></div>
+  <div id="livre-resumo-content"></div>
+  <div class="livre-actions"><button class="btn" onclick="goToLivre('livre-lancamentos')">← Editar lançamentos</button><button class="btn btn-primary" onclick="goToLivre('livre-anual')">Ver ano →</button></div>
+</div>
+
+<div class="page-section" id="sec-livre-anual" style="display:none">
+  <div class="section-header"><div class="section-eyebrow">mensal independente</div><div class="section-title">Visão anual livre</div><div class="section-desc">Comparação somente dos meses preenchidos no Mensal livre.</div></div>
+  <div class="mes-selector livre-selector"><button class="mes-nav" onclick="navAnoLivre(-1)">‹</button><div class="mes-label" id="livre-ano-label">—</div><div class="mes-status">12 meses</div><button class="mes-nav" onclick="navAnoLivre(1)">›</button></div>
+  <div id="livre-anual-content"></div>
+</div>
 
 <!-- ════════════════════════════════════
      DASHBOARD GERAL
@@ -3294,7 +3253,7 @@ function renderAnual(){
 }
 
 
-window.salvarMes=async()=>{if(typeof window.salvarRealtime==='function')await window.salvarRealtime();};
+window.salvarMes=async()=>{if(typeof salvarFirestore==='function')await salvarFirestore();};
 
 /* ══════════════════════════════════════════
    DASHBOARDS + EXPORTAR EXCEL
@@ -3846,7 +3805,7 @@ window.exportExcelMes=()=>{
 };
 
 
-// Integrar mesesData ao salvamento na nuvem
+// Integrar mesesData no Firestore
 const _coletarOrig=window.coletarDados;
 window.coletarDados=()=>({..._coletarOrig(),mesesData});
 const _applyOrig=window.applyData;
@@ -4819,11 +4778,11 @@ window.addEventListener('DOMContentLoaded',()=>{
       if(comps.length){
         comps.forEach(c=>{
           const info=typeof infoParcelamento==='function' ? infoParcelamento({...c,inicio:c.inicio||d.inicio}) : null;
-          rows.push({grupo:d.nome||'Dívida', item:c.nome||'Item', tipo:d.tipo||'Outros', parcela:(info?.valorParcela ?? Number(c.valorParcela) || 0), falta:(info?.falta ?? 0), fim:(info?.fimMes || d.inicio || '')});
+          rows.push({grupo:d.nome||'Dívida', item:c.nome||'Item', tipo:d.tipo||'Outros', parcela:(info?.valorParcela ?? (Number(c.valorParcela) || 0)), falta:(info?.falta ?? 0), fim:(info?.fimMes || d.inicio || '')});
         });
       } else {
         const info=typeof infoDivida==='function' ? infoDivida(d) : null;
-        rows.push({grupo:d.nome||'Dívida', item:d.nome||'Dívida', tipo:d.tipo||'Outros', parcela:(info?.valorParcela ?? Number(d.valorParcela) || 0), falta:(info?.falta ?? 0), fim:(info?.fimMes || d.inicio || '')});
+        rows.push({grupo:d.nome||'Dívida', item:d.nome||'Dívida', tipo:d.tipo||'Outros', parcela:(info?.valorParcela ?? (Number(d.valorParcela) || 0)), falta:(info?.falta ?? 0), fim:(info?.fimMes || d.inicio || '')});
       }
     });
     return rows;
@@ -5943,5 +5902,66 @@ window.addEventListener('DOMContentLoaded',()=>{
   #sec-simulacao .sim-delete{grid-column:2 / 3 !important; grid-row:1 / 4 !important;}
 }
 </style>
+
+
+<style>
+.mode-switcher{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+.mode-btn{padding:7px 7px!important;font-size:11px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.livre-selector{margin-bottom:16px}
+.livre-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.livre-summary .stat-card{min-width:0}
+.livre-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+.livre-card{padding:0!important;overflow:hidden}
+.livre-card:nth-child(3){grid-column:1/-1}
+.livre-card-head{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:15px 16px;border-bottom:1px solid var(--bd)}
+.livre-card-head strong{display:block;font-size:14px}.livre-card-head span{display:block;font-size:11px;color:var(--mu);margin-top:2px}.livre-card-head b{font-family:'Space Grotesk',sans-serif;color:var(--green);white-space:nowrap}.livre-card-head b.red{color:var(--red)}.livre-card-head b.purple{color:var(--purple)}
+.livre-row{display:grid;grid-template-columns:38px minmax(0,1fr) 150px 34px;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--bd)}
+.livre-row:last-child{border-bottom:0}.livre-icon{width:34px;height:34px;border-radius:9px;background:var(--s2);display:grid;place-items:center}.livre-row input{width:100%;height:38px;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--tx);font-family:inherit;font-size:13px;padding:0 10px;outline:none}.livre-row input:hover,.livre-row input:focus{border-color:var(--tbd);background:var(--s2)}
+.livre-money-wrap{display:flex;align-items:center;border:1px solid var(--bd2);border-radius:9px;background:var(--s2);height:38px;overflow:hidden}.livre-money-wrap span{padding-left:10px;color:var(--di);font-size:11px}.livre-money-wrap input{text-align:right;font-weight:800;color:var(--green);border:0;background:transparent;padding-left:4px}.livre-row.despesas .livre-money-wrap input{color:var(--red)}.livre-row.doacoes .livre-money-wrap input{color:var(--purple)}
+.livre-del{width:32px;height:32px;border:0;border-radius:9px;background:var(--s2);color:var(--di);cursor:pointer;font-size:17px}.livre-del:hover{background:rgba(220,38,38,.1);color:var(--red)}
+.livre-add{width:calc(100% - 28px);margin:10px 14px 12px;padding:10px 12px;border:1px dashed var(--bd2);border-radius:10px;background:var(--s2);color:var(--mu);font:600 12px Inter,sans-serif;text-align:left;cursor:pointer}.livre-add:hover{border-color:var(--teal);color:var(--teal)}
+.livre-empty{padding:24px;text-align:center;color:var(--mu);font-size:12px}.livre-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;flex-wrap:wrap}
+.livre-resumo-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.livre-resumo-list{background:var(--s1);border:1px solid var(--bd);border-radius:14px;overflow:hidden}.livre-resumo-list h3{font-size:14px;padding:13px 15px;border-bottom:1px solid var(--bd)}.livre-resumo-item{display:flex;justify-content:space-between;gap:12px;padding:10px 15px;border-bottom:1px solid var(--bd);font-size:12px}.livre-resumo-item:last-child{border-bottom:0}.livre-resumo-item span{color:var(--mu)}.livre-resumo-item strong{white-space:nowrap}
+.livre-anual-table{width:100%;border-collapse:collapse;background:var(--s1);border:1px solid var(--bd);border-radius:14px;overflow:hidden}.livre-anual-table th,.livre-anual-table td{padding:11px 13px;border-bottom:1px solid var(--bd);text-align:right;font-size:12px}.livre-anual-table th:first-child,.livre-anual-table td:first-child{text-align:left}.livre-anual-table th{color:var(--mu);font-size:10px;text-transform:uppercase;letter-spacing:.5px;background:var(--s2)}.livre-anual-table tr.clickable{cursor:pointer}.livre-anual-table tr.clickable:hover td{background:var(--tbg)}
+@media(max-width:900px){.livre-grid,.livre-resumo-grid{grid-template-columns:1fr}.livre-card:nth-child(3){grid-column:auto}.livre-summary{grid-template-columns:1fr 1fr}.mode-btn{font-size:10px!important;padding:7px 3px!important}}
+@media(max-width:620px){.livre-row{grid-template-columns:34px minmax(0,1fr) 32px}.livre-money-wrap{grid-column:2/3}.livre-del{grid-column:3;grid-row:1/3}.livre-summary{grid-template-columns:1fr}.mode-switcher{grid-template-columns:1fr!important}.mode-btn{font-size:11px!important}.livre-actions .btn{flex:1}.livre-anual-table{display:block;overflow-x:auto}}
+</style>
+<script>
+(function(){
+  let mensalLivreData = {};
+  let livreMesAtual = new Date().getMonth();
+  let livreAnoAtual = new Date().getFullYear();
+  let livreAnoVisual = livreAnoAtual;
+  let livreNextId = 1;
+  let livreSaveTimer = null;
+  const SECS_L = ['sec-livre-lancamentos','sec-livre-resumo','sec-livre-anual'];
+  const TITLES_L = {'livre-lancamentos':'Mensal livre','livre-resumo':'Resumo mensal livre','livre-anual':'Visão anual livre'};
+  const mesesLivreNomes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  function keyLivre(a=livreAnoAtual,m=livreMesAtual){return `${a}-${String(m+1).padStart(2,'0')}`}
+  function moneyLivre(v){return (Number(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:2})}
+  function escLivre(v){return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
+  function newMonthLivre(){return {receitas:[],despesas:[],doacoes:[]}}
+  function getLivre(){const k=keyLivre();if(!mensalLivreData[k])mensalLivreData[k]=newMonthLivre();const d=mensalLivreData[k];['receitas','despesas','doacoes'].forEach(t=>{if(!Array.isArray(d[t]))d[t]=[]});return d}
+  function totalsLivre(d=getLivre()){const sum=t=>(d[t]||[]).reduce((s,x)=>s+(Number(x.valor)||0),0);const receitas=sum('receitas'),despesas=sum('despesas'),doacoes=sum('doacoes');return {receitas,despesas,doacoes,saldo:receitas-despesas-doacoes}}
+  function autoSaveLivre(){clearTimeout(livreSaveTimer);livreSaveTimer=setTimeout(()=>{if(typeof window.salvarFirestore==='function')window.salvarFirestore();},700)}
+  function iconLivre(tipo){return tipo==='receitas'?'💰':tipo==='despesas'?'📌':'🙏'}
+  function renderListLivre(tipo){const d=getLivre(),box=document.getElementById(`livre-${tipo}-list`);if(!box)return;const arr=d[tipo];if(!arr.length){box.innerHTML=`<div class="livre-empty">Nenhum item ainda. Use o botão abaixo para começar do zero.</div>`;return}box.innerHTML=arr.map(x=>`<div class="livre-row ${tipo}"><div class="livre-icon">${iconLivre(tipo)}</div><input type="text" value="${escLivre(x.nome)}" placeholder="Nome do item" oninput="updateLivreItem('${tipo}','${x.id}','nome',this.value)"><div class="livre-money-wrap"><span>R$</span><input type="number" min="0" step="0.01" value="${Number(x.valor)||0}" oninput="updateLivreItem('${tipo}','${x.id}','valor',this.value)"></div><button class="livre-del" onclick="deleteLivreItem('${tipo}','${x.id}')" title="Excluir">×</button></div>`).join('')}
+  function renderLivre(){const d=getLivre(),t=totalsLivre(d),nome=`${mesesLivreNomes[livreMesAtual]} ${livreAnoAtual}`;['livre-mes-label','livre-resumo-label'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=nome});const title=document.getElementById('livre-title');if(title)title.textContent=`Mensal livre — ${nome}`;document.getElementById('livre-total-receitas').textContent=moneyLivre(t.receitas);document.getElementById('livre-total-despesas').textContent=moneyLivre(t.despesas);document.getElementById('livre-total-doacoes').textContent=moneyLivre(t.doacoes);const s=document.getElementById('livre-summary');if(s)s.innerHTML=`<div class="stat-card"><div class="stat-label">Receitas</div><div class="stat-value" style="color:var(--green)">${moneyLivre(t.receitas)}</div><div class="stat-sub">criadas nesta área</div></div><div class="stat-card"><div class="stat-label">Despesas</div><div class="stat-value" style="color:var(--red)">${moneyLivre(t.despesas)}</div><div class="stat-sub">sem vínculo com o Geral</div></div><div class="stat-card"><div class="stat-label">Doações/outros</div><div class="stat-value" style="color:var(--purple)">${moneyLivre(t.doacoes)}</div><div class="stat-sub">opcional</div></div><div class="stat-card"><div class="stat-label">Saldo livre</div><div class="stat-value" style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldo)}</div><div class="stat-sub">resultado do mês</div></div>`;['receitas','despesas','doacoes'].forEach(renderListLivre)}
+  function rowsResumo(tipo,d){const arr=d[tipo]||[];if(!arr.length)return '<div class="livre-resumo-item"><span>Nenhum item</span><strong>—</strong></div>';return arr.map(x=>`<div class="livre-resumo-item"><span>${escLivre(x.nome||'Sem nome')}</span><strong>${moneyLivre(x.valor)}</strong></div>`).join('')}
+  function renderResumoLivre(){const d=getLivre(),t=totalsLivre(d),nome=`${mesesLivreNomes[livreMesAtual]} ${livreAnoAtual}`;const tt=document.getElementById('livre-resumo-title');if(tt)tt.textContent=`Resumo livre — ${nome}`;const box=document.getElementById('livre-resumo-content');if(!box)return;box.innerHTML=`<div class="livre-summary"><div class="stat-card"><div class="stat-label">Receitas</div><div class="stat-value" style="color:var(--green)">${moneyLivre(t.receitas)}</div></div><div class="stat-card"><div class="stat-label">Despesas</div><div class="stat-value" style="color:var(--red)">${moneyLivre(t.despesas)}</div></div><div class="stat-card"><div class="stat-label">Doações/outros</div><div class="stat-value" style="color:var(--purple)">${moneyLivre(t.doacoes)}</div></div><div class="stat-card"><div class="stat-label">Saldo</div><div class="stat-value" style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldo)}</div></div></div><div class="livre-resumo-grid"><div class="livre-resumo-list"><h3>💰 Receitas</h3>${rowsResumo('receitas',d)}</div><div class="livre-resumo-list"><h3>📌 Despesas</h3>${rowsResumo('despesas',d)}</div><div class="livre-resumo-list"><h3>🙏 Doações / outros</h3>${rowsResumo('doacoes',d)}</div><div class="livre-resumo-list"><h3>📊 Leitura do mês</h3><div class="livre-resumo-item"><span>Percentual comprometido</span><strong>${t.receitas>0?(((t.despesas+t.doacoes)/t.receitas)*100).toFixed(1):'0.0'}%</strong></div><div class="livre-resumo-item"><span>Sobra da receita</span><strong style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldo)}</strong></div></div></div>`}
+  function renderAnualLivre(){const box=document.getElementById('livre-anual-content');if(!box)return;const label=document.getElementById('livre-ano-label');if(label)label.textContent=livreAnoVisual;let tr='',tot={receitas:0,despesas:0,doacoes:0,saldo:0};for(let m=0;m<12;m++){const d=mensalLivreData[keyLivre(livreAnoVisual,m)]||newMonthLivre(),t=totalsLivre(d);Object.keys(tot).forEach(k=>tot[k]+=t[k]);tr+=`<tr class="clickable" onclick="abrirLivreMes(${livreAnoVisual},${m})"><td>${mesesLivreNomes[m]}</td><td style="color:var(--green)">${moneyLivre(t.receitas)}</td><td style="color:var(--red)">${moneyLivre(t.despesas)}</td><td style="color:var(--purple)">${moneyLivre(t.doacoes)}</td><td style="color:${t.saldo>=0?'var(--green)':'var(--red)'};font-weight:800">${moneyLivre(t.saldo)}</td></tr>`}box.innerHTML=`<div class="livre-summary"><div class="stat-card"><div class="stat-label">Receitas no ano</div><div class="stat-value" style="color:var(--green)">${moneyLivre(tot.receitas)}</div></div><div class="stat-card"><div class="stat-label">Despesas no ano</div><div class="stat-value" style="color:var(--red)">${moneyLivre(tot.despesas)}</div></div><div class="stat-card"><div class="stat-label">Doações/outros</div><div class="stat-value" style="color:var(--purple)">${moneyLivre(tot.doacoes)}</div></div><div class="stat-card"><div class="stat-label">Saldo anual</div><div class="stat-value" style="color:${tot.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(tot.saldo)}</div></div></div><table class="livre-anual-table"><thead><tr><th>Mês</th><th>Receitas</th><th>Despesas</th><th>Doações/outros</th><th>Saldo</th></tr></thead><tbody>${tr}</tbody></table>`}
+  window.addLivreItem=function(tipo){const d=getLivre();d[tipo].push({id:`ml${livreNextId++}`,nome:tipo==='receitas'?'Nova receita':tipo==='despesas'?'Nova despesa':'Novo item',valor:0});renderLivre();autoSaveLivre();setTimeout(()=>{const box=document.getElementById(`livre-${tipo}-list`);const ins=box?.querySelectorAll('input[type=text]');ins?.[ins.length-1]?.select()},30)};
+  window.updateLivreItem=function(tipo,id,campo,valor){const x=getLivre()[tipo].find(i=>String(i.id)===String(id));if(!x)return;x[campo]=campo==='valor'?Math.max(0,Number(valor)||0):valor;renderLivre();autoSaveLivre()};
+  window.deleteLivreItem=function(tipo,id){const d=getLivre();d[tipo]=d[tipo].filter(i=>String(i.id)!==String(id));renderLivre();autoSaveLivre()};
+  window.limparLivreMes=function(){if(!confirm('Limpar todos os lançamentos deste mês livre?'))return;mensalLivreData[keyLivre()]=newMonthLivre();renderLivre();autoSaveLivre()};
+  window.navLivre=function(dir){livreMesAtual+=dir;if(livreMesAtual<0){livreMesAtual=11;livreAnoAtual--}if(livreMesAtual>11){livreMesAtual=0;livreAnoAtual++}const vis=SECS_L.find(id=>document.getElementById(id)?.style.display==='block');if(vis==='sec-livre-resumo')renderResumoLivre();else renderLivre()};
+  window.navAnoLivre=function(dir){livreAnoVisual+=dir;renderAnualLivre()};
+  window.abrirLivreMes=function(a,m){livreAnoAtual=a;livreMesAtual=m;goToLivre('livre-lancamentos')};
+  window.goToLivre=function(id){_hideAll(SECS_L);_show('sec-'+id);document.querySelectorAll('#nav-livre .nav-item').forEach(n=>n.classList.remove('active'));document.getElementById('nav-'+id)?.classList.add('active');document.getElementById('topbar-title').textContent=TITLES_L[id]||'Mensal livre';if(id==='livre-lancamentos')renderLivre();if(id==='livre-resumo')renderResumoLivre();if(id==='livre-anual')renderAnualLivre();window.scrollTo(0,0)};
+  window.setMode=function(mode){appMode=mode;document.getElementById('nav-geral').style.display=mode==='geral'?'flex':'none';document.getElementById('nav-mensal').style.display=mode==='mensal'?'flex':'none';document.getElementById('nav-livre').style.display=mode==='livre'?'flex':'none';document.getElementById('mode-geral-btn').classList.toggle('active',mode==='geral');document.getElementById('mode-mensal-btn').classList.toggle('active',mode==='mensal');document.getElementById('mode-livre-btn').classList.toggle('active',mode==='livre');_hideAll(SECS_G);_hideAll(SECS_M);_hideAll(SECS_L);if(mode==='geral')goTo('plano');else if(mode==='mensal')goToMensal('mes-lancamentos');else goToLivre('livre-lancamentos')};
+  const collectPrev=window.coletarDados;window.coletarDados=function(){const base=typeof collectPrev==='function'?collectPrev():{};return {...base,mensalLivreData,livreNextId}};
+  const applyPrev=window.applyData;window.applyData=function(d){if(typeof applyPrev==='function')applyPrev(d);mensalLivreData=d?.mensalLivreData&&typeof d.mensalLivreData==='object'?d.mensalLivreData:{};livreNextId=Number(d?.livreNextId)||1;if(appMode==='livre')renderLivre()};
+})();
+</script>
 
 </body></html>
