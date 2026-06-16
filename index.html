@@ -877,6 +877,31 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
 }
 </style>
 
+
+<style id="sidebar-icons-only-fix">
+/* Sidebar compacta: somente ícones */
+.sidebar{width:78px!important}
+.main{margin-left:78px!important}
+.sidebar-logo{padding:16px 8px 12px!important;text-align:center!important;font-size:0!important}
+.sidebar-logo::before{content:"pf";display:inline-flex;width:38px;height:38px;align-items:center;justify-content:center;border-radius:12px;background:rgba(45,212,191,.14);border:1px solid rgba(45,212,191,.28);color:var(--teal);font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:800}
+.sidebar-logo span,.sidebar-logo small{display:none!important}
+.sidebar-mode-wrap{padding:10px 9px!important}
+.mode-switcher{display:grid!important;grid-template-columns:1fr!important;gap:7px!important}
+.mode-btn{width:100%!important;height:46px!important;padding:0!important;justify-content:center!important;border-radius:13px!important}
+.mode-label{display:none!important}
+.mode-ico{width:30px!important;height:30px!important;font-size:16px!important;background:transparent!important}
+.nav{padding:10px 9px!important;gap:7px!important}
+.nav-item{height:46px!important;padding:0!important;justify-content:center!important;gap:0!important;border-radius:13px!important}
+.nav-item>span:not(.nav-icon),.nav-status{display:none!important}
+.nav-item .nav-icon{width:30px!important;height:30px!important;font-size:16px!important;background:transparent!important}
+.nav-item.active .nav-icon,.mode-btn.active .mode-ico{background:rgba(45,212,191,.16)!important}
+.user-card{margin:10px 9px!important;padding:8px!important;justify-content:center!important}
+.user-info,.logout-btn{display:none!important}
+.user-avatar{width:36px!important;height:36px!important}
+.sidebar-footer{display:none!important}
+@media(max-width:900px){.sidebar{width:68px!important}.main{margin-left:68px!important}}
+</style>
+
 </head>
 <body>
 
@@ -6045,7 +6070,17 @@ window.addEventListener('DOMContentLoaded',()=>{
   function newMonthLivre(){return {receitas:[],despesas:[],doacoes:[]}}
   function getLivre(){const k=keyLivre();if(!mensalLivreData[k])mensalLivreData[k]=newMonthLivre();const d=mensalLivreData[k];['receitas','despesas','doacoes'].forEach(t=>{if(!Array.isArray(d[t]))d[t]=[]});return d}
   function totalsLivre(d=getLivre()){const sum=t=>(d[t]||[]).reduce((s,x)=>s+(Number(x.valor)||0),0);const receitas=sum('receitas'),despesas=sum('despesas'),doacoes=sum('doacoes');return {receitas,despesas,doacoes,saldo:receitas-despesas-doacoes}}
-  function autoSaveLivre(){clearTimeout(livreSaveTimer);livreSaveTimer=setTimeout(()=>{if(typeof window.salvarFirestore==='function')window.salvarFirestore();},700)}
+  function autoSaveLivre(){clearTimeout(livreSaveTimer);livreSaveTimer=setTimeout(()=>{if(typeof window.salvarFirestore==='function')window.salvarFirestore();},900)}
+  function refreshLivreTotals(){
+    const t=totalsLivre();
+    const ids={receitas:'livre-total-receitas',despesas:'livre-total-despesas',doacoes:'livre-total-doacoes'};
+    Object.entries(ids).forEach(([k,id])=>{const el=document.getElementById(id);if(el)el.textContent=moneyLivre(t[k])});
+    const vals=document.querySelectorAll('#livre-summary .stat-value');
+    if(vals[0])vals[0].textContent=moneyLivre(t.receitas);
+    if(vals[1])vals[1].textContent=moneyLivre(t.despesas);
+    if(vals[2])vals[2].textContent=moneyLivre(t.doacoes);
+    if(vals[3]){vals[3].textContent=moneyLivre(t.saldo);vals[3].style.color=t.saldo>=0?'var(--green)':'var(--red)'}
+  }
   function iconLivre(tipo){return tipo==='receitas'?'💰':tipo==='despesas'?'📌':'🙏'}
   function renderListLivre(tipo){const d=getLivre(),box=document.getElementById(`livre-${tipo}-list`);if(!box)return;const arr=d[tipo];if(!arr.length){box.innerHTML=`<div class="livre-empty">Nenhum item ainda. Use o botão abaixo para começar do zero.</div>`;return}box.innerHTML=arr.map(x=>`<div class="livre-row ${tipo}"><div class="livre-icon">${iconLivre(tipo)}</div><input type="text" value="${escLivre(x.nome)}" placeholder="Nome do item" oninput="updateLivreItem('${tipo}','${x.id}','nome',this.value)"><div class="livre-money-wrap"><span>R$</span><input type="number" min="0" step="0.01" value="${Number(x.valor)||0}" oninput="updateLivreItem('${tipo}','${x.id}','valor',this.value)"></div><button class="livre-del" onclick="deleteLivreItem('${tipo}','${x.id}')" title="Excluir">×</button></div>`).join('')}
   function renderLivre(){const d=getLivre(),t=totalsLivre(d),nome=`${mesesLivreNomes[livreMesAtual]} ${livreAnoAtual}`;['livre-mes-label','livre-resumo-label'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=nome});const title=document.getElementById('livre-title');if(title)title.textContent=`Mensal livre — ${nome}`;document.getElementById('livre-total-receitas').textContent=moneyLivre(t.receitas);document.getElementById('livre-total-despesas').textContent=moneyLivre(t.despesas);document.getElementById('livre-total-doacoes').textContent=moneyLivre(t.doacoes);const s=document.getElementById('livre-summary');if(s)s.innerHTML=`<div class="stat-card"><div class="stat-label">Receitas</div><div class="stat-value" style="color:var(--green)">${moneyLivre(t.receitas)}</div><div class="stat-sub">criadas nesta área</div></div><div class="stat-card"><div class="stat-label">Despesas</div><div class="stat-value" style="color:var(--red)">${moneyLivre(t.despesas)}</div><div class="stat-sub">sem vínculo com o Geral</div></div><div class="stat-card"><div class="stat-label">Doações/outros</div><div class="stat-value" style="color:var(--purple)">${moneyLivre(t.doacoes)}</div><div class="stat-sub">opcional</div></div><div class="stat-card"><div class="stat-label">Saldo livre</div><div class="stat-value" style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldo)}</div><div class="stat-sub">resultado do mês</div></div>`;['receitas','despesas','doacoes'].forEach(renderListLivre)}
@@ -6053,7 +6088,13 @@ window.addEventListener('DOMContentLoaded',()=>{
   function renderResumoLivre(){const d=getLivre(),t=totalsLivre(d),nome=`${mesesLivreNomes[livreMesAtual]} ${livreAnoAtual}`;const tt=document.getElementById('livre-resumo-title');if(tt)tt.textContent=`Resumo livre — ${nome}`;const box=document.getElementById('livre-resumo-content');if(!box)return;box.innerHTML=`<div class="livre-summary"><div class="stat-card"><div class="stat-label">Receitas</div><div class="stat-value" style="color:var(--green)">${moneyLivre(t.receitas)}</div></div><div class="stat-card"><div class="stat-label">Despesas</div><div class="stat-value" style="color:var(--red)">${moneyLivre(t.despesas)}</div></div><div class="stat-card"><div class="stat-label">Doações/outros</div><div class="stat-value" style="color:var(--purple)">${moneyLivre(t.doacoes)}</div></div><div class="stat-card"><div class="stat-label">Saldo</div><div class="stat-value" style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldo)}</div></div></div><div class="livre-resumo-grid"><div class="livre-resumo-list"><h3>💰 Receitas</h3>${rowsResumo('receitas',d)}</div><div class="livre-resumo-list"><h3>📌 Despesas</h3>${rowsResumo('despesas',d)}</div><div class="livre-resumo-list"><h3>🙏 Doações / outros</h3>${rowsResumo('doacoes',d)}</div><div class="livre-resumo-list"><h3>📊 Leitura do mês</h3><div class="livre-resumo-item"><span>Percentual comprometido</span><strong>${t.receitas>0?(((t.despesas+t.doacoes)/t.receitas)*100).toFixed(1):'0.0'}%</strong></div><div class="livre-resumo-item"><span>Sobra da receita</span><strong style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldo)}</strong></div></div></div>`}
   function renderAnualLivre(){const box=document.getElementById('livre-anual-content');if(!box)return;const label=document.getElementById('livre-ano-label');if(label)label.textContent=livreAnoVisual;let tr='',tot={receitas:0,despesas:0,doacoes:0,saldo:0};for(let m=0;m<12;m++){const d=mensalLivreData[keyLivre(livreAnoVisual,m)]||newMonthLivre(),t=totalsLivre(d);Object.keys(tot).forEach(k=>tot[k]+=t[k]);tr+=`<tr class="clickable" onclick="abrirLivreMes(${livreAnoVisual},${m})"><td>${mesesLivreNomes[m]}</td><td style="color:var(--green)">${moneyLivre(t.receitas)}</td><td style="color:var(--red)">${moneyLivre(t.despesas)}</td><td style="color:var(--purple)">${moneyLivre(t.doacoes)}</td><td style="color:${t.saldo>=0?'var(--green)':'var(--red)'};font-weight:800">${moneyLivre(t.saldo)}</td></tr>`}box.innerHTML=`<div class="livre-summary"><div class="stat-card"><div class="stat-label">Receitas no ano</div><div class="stat-value" style="color:var(--green)">${moneyLivre(tot.receitas)}</div></div><div class="stat-card"><div class="stat-label">Despesas no ano</div><div class="stat-value" style="color:var(--red)">${moneyLivre(tot.despesas)}</div></div><div class="stat-card"><div class="stat-label">Doações/outros</div><div class="stat-value" style="color:var(--purple)">${moneyLivre(tot.doacoes)}</div></div><div class="stat-card"><div class="stat-label">Saldo anual</div><div class="stat-value" style="color:${tot.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(tot.saldo)}</div></div></div><table class="livre-anual-table"><thead><tr><th>Mês</th><th>Receitas</th><th>Despesas</th><th>Doações/outros</th><th>Saldo</th></tr></thead><tbody>${tr}</tbody></table>`}
   window.addLivreItem=function(tipo){const d=getLivre();d[tipo].push({id:`ml${livreNextId++}`,nome:tipo==='receitas'?'Nova receita':tipo==='despesas'?'Nova despesa':'Novo item',valor:0});renderLivre();autoSaveLivre();setTimeout(()=>{const box=document.getElementById(`livre-${tipo}-list`);const ins=box?.querySelectorAll('input[type=text]');ins?.[ins.length-1]?.select()},30)};
-  window.updateLivreItem=function(tipo,id,campo,valor){const x=getLivre()[tipo].find(i=>String(i.id)===String(id));if(!x)return;x[campo]=campo==='valor'?Math.max(0,Number(valor)||0):valor;renderLivre();autoSaveLivre()};
+  window.updateLivreItem=function(tipo,id,campo,valor){
+    const x=getLivre()[tipo].find(i=>String(i.id)===String(id));
+    if(!x)return;
+    x[campo]=campo==='valor'?Math.max(0,Number(valor)||0):valor;
+    refreshLivreTotals();
+    autoSaveLivre();
+  };
   window.deleteLivreItem=function(tipo,id){const d=getLivre();d[tipo]=d[tipo].filter(i=>String(i.id)!==String(id));renderLivre();autoSaveLivre()};
   window.limparLivreMes=function(){if(!confirm('Limpar todos os lançamentos deste mês livre?'))return;mensalLivreData[keyLivre()]=newMonthLivre();renderLivre();autoSaveLivre()};
   window.navLivre=function(dir){livreMesAtual+=dir;if(livreMesAtual<0){livreMesAtual=11;livreAnoAtual--}if(livreMesAtual>11){livreMesAtual=0;livreAnoAtual++}const vis=SECS_L.find(id=>document.getElementById(id)?.style.display==='block');if(vis==='sec-livre-resumo')renderResumoLivre();else renderLivre()};
@@ -6335,6 +6376,18 @@ window.addEventListener('DOMContentLoaded',()=>{
   const applyPrev=window.applyData;window.applyData=function(d){applyPrev?.(d);healthData=d?.healthData&&typeof d.healthData==='object'?d.healthData:clone(DEFAULT_HEALTH);healthData.weekPlan=Array.isArray(healthData.weekPlan)?healthData.weekPlan:clone(WEEK_TEMPLATE);healthData.gymPlans=Array.isArray(healthData.gymPlans)?healthData.gymPlans:clone(GYM_TEMPLATE);healthData.runPlans=Array.isArray(healthData.runPlans)?healthData.runPlans:clone(RUN_TEMPLATE);healthData.records=Array.isArray(healthData.records)?healthData.records:[];healthData.settings=healthData.settings||clone(DEFAULT_HEALTH.settings);healthData.nextId=num(healthData.nextId)||100;renderAllHealth()};
   injectHealthUI();
 })();
+</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+  document.querySelectorAll('.mode-btn,.nav-item').forEach(function(btn){
+    if(!btn.getAttribute('title')){
+      const label=btn.querySelector('.mode-label')?.textContent?.trim() || [...btn.querySelectorAll('span')].map(s=>s.textContent.trim()).filter(Boolean).pop() || '';
+      if(label)btn.setAttribute('title',label);
+    }
+  });
+});
 </script>
 
 </body></html>
