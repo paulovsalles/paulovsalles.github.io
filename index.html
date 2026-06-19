@@ -6417,4 +6417,120 @@ window.addEventListener('DOMContentLoaded',()=>{
 })();
 </script>
 
+
+
+<!-- PATCH: visão mensal agrupada das dívidas + filtro por categoria -->
+<style>
+.pf-debt-filterline{display:flex;align-items:end;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:10px}
+.pf-debt-filterline label{display:flex;flex-direction:column;gap:4px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--di)}
+.pf-debt-filterline select{height:34px;min-width:170px;border:1px solid var(--bd);background:var(--s2);color:var(--tx);border-radius:9px;padding:0 10px;outline:none}
+.pf-debt-group{background:var(--s2);border:1px solid var(--bd);border-radius:13px;overflow:hidden;margin-bottom:10px}
+.pf-debt-group-head{display:grid;grid-template-columns:minmax(170px,1fr) 120px 120px;gap:12px;align-items:center;padding:13px 15px}
+.pf-debt-group-name strong{display:block;font-size:14px;color:var(--tx)}
+.pf-debt-group-name small{display:block;font-size:11px;color:var(--mu);margin-top:2px}
+.pf-debt-group-total{text-align:right;font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:800;color:var(--red)}
+.pf-debt-group-count{text-align:right;font-size:11px;color:var(--mu)}
+.pf-debt-group-items{border-top:1px solid var(--bd);background:var(--s1)}
+.pf-debt-group-item{display:grid;grid-template-columns:minmax(180px,1fr) 130px 130px;gap:12px;padding:10px 15px;border-bottom:1px solid var(--bd);align-items:center}
+.pf-debt-group-item:last-child{border-bottom:none}
+.pf-debt-group-item strong{font-size:12px;color:var(--tx)}
+.pf-debt-group-item small{display:block;font-size:10px;color:var(--mu);margin-top:2px}
+.pf-debt-group-item .value{text-align:right;font-family:'Space Grotesk',sans-serif;font-weight:800;color:var(--amber)}
+.pf-debt-group-item .rest{text-align:right;font-family:'Space Grotesk',sans-serif;font-weight:700;color:var(--red);font-size:12px}
+@media(max-width:700px){.pf-debt-group-head,.pf-debt-group-item{grid-template-columns:1fr}.pf-debt-group-total,.pf-debt-group-count,.pf-debt-group-item .value,.pf-debt-group-item .rest{text-align:left}}
+</style>
+<script>
+(function(){
+  let pfDebtDate = new Date();
+  const $ = id => document.getElementById(id);
+  const num = v => Number(String(v ?? '').replace(',','.')) || 0;
+  const moneyBR = v => (typeof fmt==='function' ? fmt(num(v)) : num(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}));
+  const esc2 = v => String(v ?? '').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+  const keyOf = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  const monthName = key => {
+    const [y,m]=key.split('-').map(Number);
+    const nomes=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    return `${nomes[m-1]} ${y}`;
+  };
+  const addKey = (key,qtd) => {
+    const [y,m]=key.split('-').map(Number); const d=new Date(y,m-1+qtd,1);
+    return keyOf(d);
+  };
+  function info(base,parent){
+    const total=Math.max(1,parseInt(base.totalParcelas||1,10));
+    const atual=Math.min(Math.max(1,parseInt(base.parcelaAtual||1,10)),total+1);
+    const valor=num(base.valorParcela);
+    const inicio=base.inicio||parent?.inicio||keyOf(new Date());
+    const pagas=Math.min(total,Math.max(0,atual-1));
+    const restantes=Math.max(0,total-pagas);
+    return {total,atual,valor,inicio,restantes,falta:restantes*valor};
+  }
+  function due(info,key){
+    if(info.restantes<=0||info.valor<=0) return false;
+    for(let p=info.atual;p<=info.total;p++) if(addKey(info.inicio,p-1)===key) return true;
+    return false;
+  }
+  function installment(info,key){
+    for(let p=info.atual;p<=info.total;p++) if(addKey(info.inicio,p-1)===key) return p;
+    return info.atual;
+  }
+  function collect(){
+    const out=[];
+    (window.state?.dividasParceladas||[]).forEach(d=>{
+      const comps=Array.isArray(d.componentes)?d.componentes:[];
+      if(comps.length){
+        comps.forEach(c=>out.push({parentId:d.id,parent:d.nome||'Dívida',tipo:d.tipo||'Outros',credor:d.credor||'',item:c.nome||'Item',info:info(c,d)}));
+      }else if(String(d.tipo||'').toLowerCase()!=='cartão' && String(d.tipo||'').toLowerCase()!=='cartao'){
+        out.push({parentId:d.id,parent:d.nome||'Dívida',tipo:d.tipo||'Outros',credor:d.credor||'',item:d.nome||'Dívida',info:info(d,d)});
+      }
+    });
+    return out;
+  }
+  function ensureFilter(){
+    const card=$('pf-debt-monthly'); if(!card) return;
+    let line=$('pf-debt-month-filterline');
+    if(!line){
+      const head=card.querySelector('.pf-month-head');
+      head?.insertAdjacentHTML('afterend',`<div class="pf-debt-filterline" id="pf-debt-month-filterline"><label>Categoria<select id="pf-debt-month-category" onchange="renderVisaoMensalDividas()"><option value="">Todas</option></select></label></div>`);
+    }
+    const sel=$('pf-debt-month-category'); if(!sel) return;
+    const current=sel.value;
+    const types=[...new Set((window.state?.dividasParceladas||[]).map(d=>d.tipo||'Outros'))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+    sel.innerHTML='<option value="">Todas</option>'+types.map(t=>`<option value="${esc2(t)}">${esc2(t)}</option>`).join('');
+    if(types.includes(current)) sel.value=current;
+  }
+  function render(){
+    ensureFilter();
+    const label=$('pf-debt-month-label'),kpis=$('pf-debt-month-kpis'),box=$('pf-debt-month-list');
+    if(!label||!kpis||!box) return;
+    const key=keyOf(pfDebtDate), category=$('pf-debt-month-category')?.value||'';
+    label.textContent=monthName(key);
+    const dueItems=collect().filter(i=>due(i.info,key) && (!category||i.tipo===category));
+    const groups={};
+    dueItems.forEach(i=>{
+      if(!groups[i.parentId]) groups[i.parentId]={name:i.parent,tipo:i.tipo,credor:i.credor,total:0,items:[]};
+      groups[i.parentId].total+=i.info.valor;
+      groups[i.parentId].items.push(i);
+    });
+    const arr=Object.values(groups).sort((a,b)=>b.total-a.total);
+    const total=arr.reduce((s,g)=>s+g.total,0), biggest=arr[0];
+    kpis.innerHTML=`<div class="stat-card"><div class="stat-label">Total no mês</div><div class="stat-value" style="color:var(--red)">${moneyBR(total)}</div><div class="stat-sub">soma de todas as dívidas</div></div>
+      <div class="stat-card"><div class="stat-label">Dívidas cobradas</div><div class="stat-value" style="color:var(--amber)">${arr.length}</div><div class="stat-sub">cartões/contratos</div></div>
+      <div class="stat-card"><div class="stat-label">Parcelas no mês</div><div class="stat-value">${dueItems.length}</div><div class="stat-sub">itens individuais</div></div>
+      <div class="stat-card"><div class="stat-label">Maior compromisso</div><div class="stat-value" style="font-size:15px;color:var(--teal)">${biggest?esc2(biggest.name):'—'}</div><div class="stat-sub">${biggest?moneyBR(biggest.total):'sem parcelas'}</div></div>`;
+    if(!arr.length){box.innerHTML='<div class="pf-debt-empty">Nenhuma parcela prevista para este mês nesta categoria.</div>';return;}
+    box.innerHTML=arr.map(g=>`<div class="pf-debt-group">
+      <div class="pf-debt-group-head"><div class="pf-debt-group-name"><strong>${esc2(g.name)}</strong><small>${esc2(g.tipo)}${g.credor?' · '+esc2(g.credor):''}</small></div><div class="pf-debt-group-count">${g.items.length} ${g.items.length===1?'item':'itens'} no mês</div><div class="pf-debt-group-total">${moneyBR(g.total)}</div></div>
+      <div class="pf-debt-group-items">${g.items.sort((a,b)=>b.info.valor-a.info.valor).map(i=>`<div class="pf-debt-group-item"><div><strong>${esc2(i.item)}</strong><small>parcela ${installment(i.info,key)}/${i.info.total}</small></div><div class="value">${moneyBR(i.info.valor)}</div><div class="rest">resta ${moneyBR(i.info.falta)}</div></div>`).join('')}</div>
+    </div>`).join('');
+  }
+  window.navegarMesDividas=function(dir){pfDebtDate=new Date(pfDebtDate.getFullYear(),pfDebtDate.getMonth()+dir,1);render()};
+  window.irMesAtualDividas=function(){pfDebtDate=new Date();render()};
+  window.renderVisaoMensalDividas=render;
+  const previous=window.renderDividas;
+  window.renderDividas=function(){previous?.();setTimeout(render,0)};
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(render,50));
+})();
+</script>
+
 </body></html>
