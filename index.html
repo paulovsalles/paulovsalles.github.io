@@ -959,9 +959,9 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
   <!-- MODE SWITCHER -->
   <div style="padding:10px 10px 4px">
     <div class="mode-switcher">
-      <button class="mode-btn active" id="mode-geral-btn" onclick="setMode(&#39;geral&#39;)">📊 Geral</button>
-      <button class="mode-btn" id="mode-mensal-btn" onclick="setMode(&#39;mensal&#39;)">📅 Mensal</button>
-      <button class="mode-btn" id="mode-livre-btn" onclick="setMode(&#39;livre&#39;)">🧾 Mensal livre</button>
+      <button class="mode-btn active" id="mode-geral-btn" onclick="setMode(&#39;geral&#39;)" title="Geral"><span class="mode-ico">📊</span><span class="mode-label">Geral</span></button>
+      <button class="mode-btn" id="mode-mensal-btn" onclick="setMode(&#39;mensal&#39;)" title="Mensal"><span class="mode-ico">📅</span><span class="mode-label">Mensal</span></button>
+      <button class="mode-btn" id="mode-livre-btn" onclick="setMode(&#39;livre&#39;)" title="Mensal livre"><span class="mode-ico">🧾</span><span class="mode-label">Mensal livre</span></button>
     </div>
   </div>
 
@@ -6592,6 +6592,73 @@ window.addEventListener('DOMContentLoaded',()=>{
   const previous=window.renderDividas;
   window.renderDividas=function(){previous?.();setTimeout(render,0)};
   document.addEventListener('DOMContentLoaded',()=>{setSidebarTooltips();setTimeout(render,50)});
+})();
+</script>
+
+
+<style id="pf-final-mode-icons-fix">
+/* CORREÇÃO FINAL: seletor superior da barra lateral somente com ícones */
+@media (min-width:769px){
+  .sidebar .mode-switcher{
+    display:grid!important;
+    grid-template-columns:repeat(2,32px)!important;
+    justify-content:center!important;
+    gap:7px!important;
+    padding:7px 4px!important;
+    background:var(--s2)!important;
+    border-radius:13px!important;
+  }
+  .sidebar .mode-btn{
+    width:32px!important;
+    min-width:32px!important;
+    height:32px!important;
+    padding:0!important;
+    margin:0!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    overflow:hidden!important;
+    font-size:0!important;
+    line-height:1!important;
+    border-radius:9px!important;
+  }
+  .sidebar .mode-btn::after{content:none!important;}
+  .sidebar .mode-btn .mode-label{display:none!important;}
+  .sidebar .mode-btn .mode-ico{
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    width:100%!important;
+    height:100%!important;
+    margin:0!important;
+    padding:0!important;
+    font-size:17px!important;
+    line-height:1!important;
+    background:transparent!important;
+  }
+  .sidebar .mode-btn.active .mode-ico{background:transparent!important;}
+}
+</style>
+<script>
+(function(){
+  function normalizeModeButtons(){
+    const items=[
+      ['mode-geral-btn','📊','Geral'],
+      ['mode-mensal-btn','📅','Mensal'],
+      ['mode-livre-btn','🧾','Mensal livre'],
+      ['mode-saude-btn','💪','Saúde']
+    ];
+    items.forEach(([id,icon,label])=>{
+      const b=document.getElementById(id);
+      if(!b) return;
+      b.innerHTML=`<span class="mode-ico" aria-hidden="true">${icon}</span><span class="mode-label">${label}</span>`;
+      b.title=label;
+      b.setAttribute('aria-label',label);
+    });
+  }
+  document.addEventListener('DOMContentLoaded',()=>{normalizeModeButtons();setTimeout(normalizeModeButtons,150)});
+  const observer=new MutationObserver(()=>normalizeModeButtons());
+  document.addEventListener('DOMContentLoaded',()=>{const sw=document.querySelector('.mode-switcher');if(sw)observer.observe(sw,{childList:true});});
 })();
 </script>
 
