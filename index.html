@@ -6437,11 +6437,55 @@ window.addEventListener('DOMContentLoaded',()=>{
 .pf-debt-group-item small{display:block;font-size:10px;color:var(--mu);margin-top:2px}
 .pf-debt-group-item .value{text-align:right;font-family:'Space Grotesk',sans-serif;font-weight:800;color:var(--amber)}
 .pf-debt-group-item .rest{text-align:right;font-family:'Space Grotesk',sans-serif;font-weight:700;color:var(--red);font-size:12px}
+.pf-debt-group-head{cursor:pointer;transition:background .18s}
+.pf-debt-group-head:hover{background:var(--s3)}
+.pf-debt-group-main{display:flex;align-items:center;gap:10px;min-width:0}
+.pf-debt-collapse-btn{width:30px;height:30px;border:1px solid var(--bd);background:var(--s1);color:var(--mu);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;flex:0 0 auto;transition:all .18s}
+.pf-debt-collapse-btn:hover{border-color:var(--tbd);color:var(--teal);background:var(--tbg)}
+.pf-debt-collapse-btn span{display:block;transition:transform .2s}
+.pf-debt-group.collapsed .pf-debt-collapse-btn span{transform:rotate(-90deg)}
+.pf-debt-group.collapsed .pf-debt-group-items{display:none}
+.pf-debt-group.collapsed .pf-debt-group-head{border-bottom:0}
+
+/* Barra lateral compacta: somente ícones */
+@media(min-width:769px){
+  .sidebar{width:76px;align-items:stretch}
+  .main{margin-left:76px}
+  .sidebar-logo{padding:16px 6px 13px;text-align:center;font-size:0}
+  .sidebar-logo::before{content:'pf';font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:800;color:var(--tx)}
+  .sidebar-logo::after{content:'.';font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:800;color:var(--teal)}
+  .sidebar-logo span,.sidebar-logo small{display:none}
+  .sidebar > div[style*='padding:10px 10px 4px']{padding:9px 7px 5px!important}
+  .mode-switcher{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:5px;border-radius:12px}
+  .mode-btn{height:32px;padding:0;font-size:0;border-radius:8px;display:flex;align-items:center;justify-content:center}
+  .mode-btn::first-letter{font-size:15px}
+  #mode-geral-btn::after{content:'📊';font-size:15px}
+  #mode-mensal-btn::after{content:'📅';font-size:15px}
+  #mode-livre-btn::after{content:'🧾';font-size:15px}
+  #mode-saude-btn::after{content:'💪';font-size:15px}
+  .nav{padding:10px 8px;align-items:center;gap:5px}
+  .nav-item{width:44px;height:42px;padding:0;justify-content:center;border-radius:11px;position:relative}
+  .nav-item .nav-icon{font-size:19px;width:auto}
+  .nav-item > span:not(.nav-icon):not(.nav-status){display:none}
+  .nav-status{position:absolute;right:5px;top:5px;width:6px;height:6px;margin:0;border:1px solid var(--s1)}
+  .nav-item::after{content:attr(data-tip);position:fixed;left:68px;transform:translateY(0);background:var(--tx);color:var(--s1);font-size:11px;font-weight:700;padding:6px 9px;border-radius:7px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s;z-index:500}
+  .nav-item:hover::after{opacity:1}
+  .user-card{margin:8px;padding:8px;justify-content:center;border-radius:12px}
+  .user-info,.logout-btn{display:none}
+  .user-avatar{width:38px;height:38px}
+  .sidebar-footer{padding:8px}
+  .saldo-sidebar{padding:7px 4px;text-align:center}
+  .saldo-label{display:none}
+  .saldo-value{font-size:10px;line-height:1.2;word-break:break-word}
+  .cloud-status{justify-content:center}
+  .cloud-status span{display:none}
+}
 @media(max-width:700px){.pf-debt-group-head,.pf-debt-group-item{grid-template-columns:1fr}.pf-debt-group-total,.pf-debt-group-count,.pf-debt-group-item .value,.pf-debt-group-item .rest{text-align:left}}
 </style>
 <script>
 (function(){
   let pfDebtDate = new Date();
+  const pfCollapsedDebtGroups = new Set();
   const $ = id => document.getElementById(id);
   const num = v => Number(String(v ?? '').replace(',','.')) || 0;
   const moneyBR = v => (typeof fmt==='function' ? fmt(num(v)) : num(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}));
@@ -6519,17 +6563,35 @@ window.addEventListener('DOMContentLoaded',()=>{
       <div class="stat-card"><div class="stat-label">Parcelas no mês</div><div class="stat-value">${dueItems.length}</div><div class="stat-sub">itens individuais</div></div>
       <div class="stat-card"><div class="stat-label">Maior compromisso</div><div class="stat-value" style="font-size:15px;color:var(--teal)">${biggest?esc2(biggest.name):'—'}</div><div class="stat-sub">${biggest?moneyBR(biggest.total):'sem parcelas'}</div></div>`;
     if(!arr.length){box.innerHTML='<div class="pf-debt-empty">Nenhuma parcela prevista para este mês nesta categoria.</div>';return;}
-    box.innerHTML=arr.map(g=>`<div class="pf-debt-group">
-      <div class="pf-debt-group-head"><div class="pf-debt-group-name"><strong>${esc2(g.name)}</strong><small>${esc2(g.tipo)}${g.credor?' · '+esc2(g.credor):''}</small></div><div class="pf-debt-group-count">${g.items.length} ${g.items.length===1?'item':'itens'} no mês</div><div class="pf-debt-group-total">${moneyBR(g.total)}</div></div>
+    box.innerHTML=arr.map(g=>{
+      const gid=String(g.items[0]?.parentId||g.name);
+      const collapsed=pfCollapsedDebtGroups.has(gid);
+      return `<div class="pf-debt-group ${collapsed?'collapsed':''}" data-group-id="${esc2(gid)}">
+      <div class="pf-debt-group-head" onclick="toggleDebtMonthGroup('${esc2(gid)}')" title="Clique para mostrar ou ocultar os detalhes">
+        <div class="pf-debt-group-main"><button type="button" class="pf-debt-collapse-btn" aria-label="Mostrar ou ocultar detalhes" onclick="event.stopPropagation();toggleDebtMonthGroup('${esc2(gid)}')"><span>▾</span></button><div class="pf-debt-group-name"><strong>${esc2(g.name)}</strong><small>${esc2(g.tipo)}${g.credor?' · '+esc2(g.credor):''}</small></div></div>
+        <div class="pf-debt-group-count">${g.items.length} ${g.items.length===1?'item':'itens'} no mês</div><div class="pf-debt-group-total">${moneyBR(g.total)}</div></div>
       <div class="pf-debt-group-items">${g.items.sort((a,b)=>b.info.valor-a.info.valor).map(i=>`<div class="pf-debt-group-item"><div><strong>${esc2(i.item)}</strong><small>parcela ${installment(i.info,key)}/${i.info.total}</small></div><div class="value">${moneyBR(i.info.valor)}</div><div class="rest">resta ${moneyBR(i.info.falta)}</div></div>`).join('')}</div>
-    </div>`).join('');
+    </div>`}).join('');
+  }
+  window.toggleDebtMonthGroup=function(groupId){
+    const id=String(groupId);
+    if(pfCollapsedDebtGroups.has(id)) pfCollapsedDebtGroups.delete(id); else pfCollapsedDebtGroups.add(id);
+    const card=document.querySelector(`.pf-debt-group[data-group-id="${CSS.escape(id)}"]`);
+    if(card) card.classList.toggle('collapsed',pfCollapsedDebtGroups.has(id));
+  };
+  function setSidebarTooltips(){
+    document.querySelectorAll('.nav-item').forEach(btn=>{
+      const label=[...btn.querySelectorAll('span')].find(s=>!s.classList.contains('nav-icon')&&!s.classList.contains('nav-status'))?.textContent?.trim();
+      if(label){btn.dataset.tip=label;btn.title=label;}
+    });
+    [['mode-geral-btn','Geral'],['mode-mensal-btn','Mensal'],['mode-livre-btn','Mensal livre'],['mode-saude-btn','Saúde']].forEach(([id,t])=>{const b=$(id);if(b)b.title=t});
   }
   window.navegarMesDividas=function(dir){pfDebtDate=new Date(pfDebtDate.getFullYear(),pfDebtDate.getMonth()+dir,1);render()};
   window.irMesAtualDividas=function(){pfDebtDate=new Date();render()};
   window.renderVisaoMensalDividas=render;
   const previous=window.renderDividas;
   window.renderDividas=function(){previous?.();setTimeout(render,0)};
-  document.addEventListener('DOMContentLoaded',()=>setTimeout(render,50));
+  document.addEventListener('DOMContentLoaded',()=>{setSidebarTooltips();setTimeout(render,50)});
 })();
 </script>
 
