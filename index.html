@@ -45,6 +45,7 @@ provider.setCustomParameters({ prompt: "select_account" });
 
 let currentUser = null;
 let unsubscribe = null;
+let ignorarProximoSnapshotLocal = false;
 
 window.loginGoogle = async () => {
   setLoginLoading(true);
@@ -205,6 +206,11 @@ function listenData(uid) {
     userRef,
     snapshot => {
       if (snapshot.exists()) {
+        if (ignorarProximoSnapshotLocal) {
+          ignorarProximoSnapshotLocal = false;
+          setCloudStatus?.("saved");
+          return;
+        }
         applyData(snapshot.val());
         showToast("☁️ Dados sincronizados");
       }
@@ -227,10 +233,13 @@ window.salvarFirestore = async () => {
   const userRef = ref(db, `usuarios/${currentUser.uid}`);
 
   try {
+    ignorarProximoSnapshotLocal = true;
+    setCloudStatus?.("saving");
     await set(userRef, {
       ...data,
       updatedAt: new Date().toISOString()
     });
+    setCloudStatus?.("saved");
     showToast("✅ Salvo na nuvem!");
   } catch (e) {
     showToast("❌ Erro ao salvar: " + e.message, true);
@@ -6006,7 +6015,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   function newMonthLivre(){return {receitas:[],despesas:[],doacoes:[]}}
   function getLivre(){const k=keyLivre();if(!mensalLivreData[k])mensalLivreData[k]=newMonthLivre();const d=mensalLivreData[k];['receitas','despesas','doacoes'].forEach(t=>{if(!Array.isArray(d[t]))d[t]=[]});return d}
   function totalsLivre(d=getLivre()){const sum=t=>(d[t]||[]).reduce((s,x)=>s+(Number(x.valor)||0),0);const receitas=sum('receitas'),despesas=sum('despesas'),doacoes=sum('doacoes');return {receitas,despesas,doacoes,saldo:receitas-despesas-doacoes}}
-  function autoSaveLivre(){clearTimeout(livreSaveTimer);livreSaveTimer=setTimeout(()=>{if(typeof window.salvarFirestore==='function')window.salvarFirestore();},700)}
+  function autoSaveLivre(){clearTimeout(livreSaveTimer);livreSaveTimer=setTimeout(()=>{if(typeof window.salvarFirestore==='function')window.salvarFirestore();},60000)}
   function iconLivre(tipo){return tipo==='receitas'?'💰':tipo==='despesas'?'📌':'🙏'}
   function renderListLivre(tipo){const d=getLivre(),box=document.getElementById(`livre-${tipo}-list`);if(!box)return;const arr=d[tipo];if(!arr.length){box.innerHTML=`<div class="livre-empty">Nenhum item ainda. Use o botão abaixo para começar do zero.</div>`;return}box.innerHTML=arr.map(x=>`<div class="livre-row ${tipo}"><div class="livre-icon">${iconLivre(tipo)}</div><input type="text" value="${escLivre(x.nome)}" placeholder="Nome do item" oninput="updateLivreItem('${tipo}','${x.id}','nome',this.value)"><div class="livre-money-wrap"><span>R$</span><input type="number" min="0" step="0.01" value="${Number(x.valor)||0}" oninput="updateLivreItem('${tipo}','${x.id}','valor',this.value)"></div><button class="livre-del" onclick="deleteLivreItem('${tipo}','${x.id}')" title="Excluir">×</button></div>`).join('')}
   function renderLivre(){const d=getLivre(),t=totalsLivre(d),nome=`${mesesLivreNomes[livreMesAtual]} ${livreAnoAtual}`;['livre-mes-label','livre-resumo-label'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=nome});const title=document.getElementById('livre-title');if(title)title.textContent=`Mensal livre — ${nome}`;document.getElementById('livre-total-receitas').textContent=moneyLivre(t.receitas);document.getElementById('livre-total-despesas').textContent=moneyLivre(t.despesas);document.getElementById('livre-total-doacoes').textContent=moneyLivre(t.doacoes);const s=document.getElementById('livre-summary');if(s)s.innerHTML=`<div class="stat-card"><div class="stat-label">Receitas</div><div class="stat-value" style="color:var(--green)">${moneyLivre(t.receitas)}</div><div class="stat-sub">criadas nesta área</div></div><div class="stat-card"><div class="stat-label">Despesas</div><div class="stat-value" style="color:var(--red)">${moneyLivre(t.despesas)}</div><div class="stat-sub">sem vínculo com o Geral</div></div><div class="stat-card"><div class="stat-label">Doações/outros</div><div class="stat-value" style="color:var(--purple)">${moneyLivre(t.doacoes)}</div><div class="stat-sub">opcional</div></div><div class="stat-card"><div class="stat-label">Saldo livre</div><div class="stat-value" style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldo)}</div><div class="stat-sub">resultado do mês</div></div>`;['receitas','despesas','doacoes'].forEach(renderListLivre)}
@@ -6014,7 +6023,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   function renderResumoLivre(){const d=getLivre(),t=totalsLivre(d),nome=`${mesesLivreNomes[livreMesAtual]} ${livreAnoAtual}`;const tt=document.getElementById('livre-resumo-title');if(tt)tt.textContent=`Resumo livre — ${nome}`;const box=document.getElementById('livre-resumo-content');if(!box)return;box.innerHTML=`<div class="livre-summary"><div class="stat-card"><div class="stat-label">Receitas</div><div class="stat-value" style="color:var(--green)">${moneyLivre(t.receitas)}</div></div><div class="stat-card"><div class="stat-label">Despesas</div><div class="stat-value" style="color:var(--red)">${moneyLivre(t.despesas)}</div></div><div class="stat-card"><div class="stat-label">Doações/outros</div><div class="stat-value" style="color:var(--purple)">${moneyLivre(t.doacoes)}</div></div><div class="stat-card"><div class="stat-label">Saldo</div><div class="stat-value" style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldo)}</div></div></div><div class="livre-resumo-grid"><div class="livre-resumo-list"><h3>💰 Receitas</h3>${rowsResumo('receitas',d)}</div><div class="livre-resumo-list"><h3>📌 Despesas</h3>${rowsResumo('despesas',d)}</div><div class="livre-resumo-list"><h3>🙏 Doações / outros</h3>${rowsResumo('doacoes',d)}</div><div class="livre-resumo-list"><h3>📊 Leitura do mês</h3><div class="livre-resumo-item"><span>Percentual comprometido</span><strong>${t.receitas>0?(((t.despesas+t.doacoes)/t.receitas)*100).toFixed(1):'0.0'}%</strong></div><div class="livre-resumo-item"><span>Sobra da receita</span><strong style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldo)}</strong></div></div></div>`}
   function renderAnualLivre(){const box=document.getElementById('livre-anual-content');if(!box)return;const label=document.getElementById('livre-ano-label');if(label)label.textContent=livreAnoVisual;let tr='',tot={receitas:0,despesas:0,doacoes:0,saldo:0};for(let m=0;m<12;m++){const d=mensalLivreData[keyLivre(livreAnoVisual,m)]||newMonthLivre(),t=totalsLivre(d);Object.keys(tot).forEach(k=>tot[k]+=t[k]);tr+=`<tr class="clickable" onclick="abrirLivreMes(${livreAnoVisual},${m})"><td>${mesesLivreNomes[m]}</td><td style="color:var(--green)">${moneyLivre(t.receitas)}</td><td style="color:var(--red)">${moneyLivre(t.despesas)}</td><td style="color:var(--purple)">${moneyLivre(t.doacoes)}</td><td style="color:${t.saldo>=0?'var(--green)':'var(--red)'};font-weight:800">${moneyLivre(t.saldo)}</td></tr>`}box.innerHTML=`<div class="livre-summary"><div class="stat-card"><div class="stat-label">Receitas no ano</div><div class="stat-value" style="color:var(--green)">${moneyLivre(tot.receitas)}</div></div><div class="stat-card"><div class="stat-label">Despesas no ano</div><div class="stat-value" style="color:var(--red)">${moneyLivre(tot.despesas)}</div></div><div class="stat-card"><div class="stat-label">Doações/outros</div><div class="stat-value" style="color:var(--purple)">${moneyLivre(tot.doacoes)}</div></div><div class="stat-card"><div class="stat-label">Saldo anual</div><div class="stat-value" style="color:${tot.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(tot.saldo)}</div></div></div><table class="livre-anual-table"><thead><tr><th>Mês</th><th>Receitas</th><th>Despesas</th><th>Doações/outros</th><th>Saldo</th></tr></thead><tbody>${tr}</tbody></table>`}
   window.addLivreItem=function(tipo){const d=getLivre();d[tipo].push({id:`ml${livreNextId++}`,nome:tipo==='receitas'?'Nova receita':tipo==='despesas'?'Nova despesa':'Novo item',valor:0});renderLivre();autoSaveLivre();setTimeout(()=>{const box=document.getElementById(`livre-${tipo}-list`);const ins=box?.querySelectorAll('input[type=text]');ins?.[ins.length-1]?.select()},30)};
-  window.updateLivreItem=function(tipo,id,campo,valor){const x=getLivre()[tipo].find(i=>String(i.id)===String(id));if(!x)return;x[campo]=campo==='valor'?Math.max(0,Number(valor)||0):valor;renderLivre();autoSaveLivre()};
+  window.updateLivreItem=function(tipo,id,campo,valor){const x=getLivre()[tipo].find(i=>String(i.id)===String(id));if(!x)return;x[campo]=campo==='valor'?Math.max(0,Number(valor)||0):valor;refreshLivreTotals();autoSaveLivre()};
   window.deleteLivreItem=function(tipo,id){const d=getLivre();d[tipo]=d[tipo].filter(i=>String(i.id)!==String(id));renderLivre();autoSaveLivre()};
   window.limparLivreMes=function(){if(!confirm('Limpar todos os lançamentos deste mês livre?'))return;mensalLivreData[keyLivre()]=newMonthLivre();renderLivre();autoSaveLivre()};
   window.navLivre=function(dir){livreMesAtual+=dir;if(livreMesAtual<0){livreMesAtual=11;livreAnoAtual--}if(livreMesAtual>11){livreMesAtual=0;livreAnoAtual++}const vis=SECS_L.find(id=>document.getElementById(id)?.style.display==='block');if(vis==='sec-livre-resumo')renderResumoLivre();else renderLivre()};
@@ -6140,7 +6149,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const num=v=>Number(v)||0;
   const today=()=>new Date().toISOString().slice(0,10);
-  function autosaveHealth(){clearTimeout(healthSaveTimer);healthSaveTimer=setTimeout(()=>window.salvarFirestore?.(),700)}
+  function autosaveHealth(){clearTimeout(healthSaveTimer);healthSaveTimer=setTimeout(()=>window.salvarFirestore?.(),60000)}
   function injectHealthUI(){
     const switcher=document.querySelector('.mode-switcher');
     if(switcher&&!document.getElementById('mode-saude-btn'))switcher.insertAdjacentHTML('beforeend',`<button class="mode-btn" id="mode-saude-btn" onclick="setMode('saude')">💪 Saúde</button>`);
@@ -6727,11 +6736,12 @@ body[data-pf-mode="saude"] .page-section:not([id^="sec-saude-"]){display:none!im
   const nomeNovo={receita:'Nova receita',fixa:'Nova despesa fixa',variavel:'Nova despesa variável',doacao:'Nova doação',inesperada:'Novo gasto inesperado'};
   let monthlySaveTimer=null;
 
-  function scheduleMonthlySave(delay=900){
+  function scheduleMonthlySave(delay=60000){
     clearTimeout(monthlySaveTimer);
+    const espera=Math.max(60000,Number(delay)||60000);
     monthlySaveTimer=setTimeout(()=>{
       if(typeof window.salvarFirestore==='function') window.salvarFirestore();
-    },delay);
+    },espera);
   }
   window.agendarSalvarMensal=scheduleMonthlySave;
 
@@ -6891,4 +6901,93 @@ body[data-pf-mode="saude"] .page-section:not([id^="sec-saude-"]){display:none!im
 })();
 </script>
 
+
+<script id="patch-v6-adicionar-mensal">
+(function(){
+  function parseMoney(value){
+    if(typeof value==='number') return Number.isFinite(value)?value:0;
+    const raw=String(value??'').trim().replace(/\s/g,'');
+    if(!raw) return 0;
+    if(raw.includes(',') && raw.includes('.')) return Number(raw.replace(/\./g,'').replace(',','.'))||0;
+    return Number(raw.replace(',','.'))||0;
+  }
+  function monthKey(){ return `${anoAtual}-${String(mesAtual+1).padStart(2,'0')}`; }
+  function monthData(){
+    const k=monthKey();
+    if(typeof getMes==='function') getMes(anoAtual,mesAtual);
+    if(typeof mesesData==='undefined') return null;
+    if(!mesesData[k]) mesesData[k]={receitas:[],fixas:[],variaveis:[],doacoes:[],inesperadas:[],nextId:1};
+    const m=mesesData[k];
+    ['receitas','fixas','variaveis','doacoes','inesperadas'].forEach(x=>{if(!Array.isArray(m[x]))m[x]=[]});
+    m.nextId=Number(m.nextId)||1;
+    return m;
+  }
+  function saveSoon(){
+    if(typeof window.agendarSalvarMensal==='function') window.agendarSalvarMensal(60000);
+    else if(typeof window.agendarAutoSave==='function') window.agendarAutoSave(60000);
+    else setTimeout(()=>window.salvarFirestore?.(),60000);
+  }
+  function rerender(){
+    if(typeof window.renderLancamentos==='function') window.renderLancamentos();
+    else if(typeof renderLancamentos==='function') renderLancamentos();
+  }
+  window.adicionarLancamentoMensalCompleto=function(){
+    try{
+      const nameEl=document.getElementById('pf-month-item-name');
+      const typeEl=document.getElementById('pf-month-item-type');
+      const valueEl=document.getElementById('pf-month-item-value');
+      const nome=(nameEl?.value||'').trim();
+      const tipo=typeEl?.value||'receita';
+      const valor=parseMoney(valueEl?.value);
+      if(!nome){window.showToast?.('Digite a descrição do lançamento.',true);nameEl?.focus();return;}
+      const map={receita:'receitas',fixa:'fixas',variavel:'variaveis',doacao:'doacoes',inesperada:'inesperadas'};
+      const icons={receita:'💰',fixa:'📌',variavel:'🔄',doacao:'🙏',inesperada:'⚡'};
+      const m=monthData();
+      const destino=map[tipo];
+      if(!m||!destino){window.showToast?.('Não foi possível acessar o mês selecionado.',true);return;}
+      m[destino].push({id:'pm'+Date.now()+'_'+m.nextId++,nome,val:valor,planejado:null,icon:icons[tipo]||'📦'});
+      if(nameEl) nameEl.value='';
+      if(valueEl) valueEl.value='';
+      rerender();
+      saveSoon();
+      window.showToast?.('Lançamento adicionado ao mês!');
+      setTimeout(()=>nameEl?.focus(),50);
+    }catch(e){
+      console.error('Erro ao adicionar lançamento mensal',e);
+      window.showToast?.('Erro ao adicionar: '+(e.message||e),true);
+    }
+  };
+  function bind(){
+    const btn=document.querySelector('#pf-monthly-item-add button.btn-primary');
+    if(btn){
+      btn.type='button';
+      btn.onclick=function(ev){ev.preventDefault();ev.stopPropagation();window.adicionarLancamentoMensalCompleto();};
+    }
+    ['pf-month-item-name','pf-month-item-value'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el&&!el.dataset.enterBound){
+        el.dataset.enterBound='1';
+        el.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();window.adicionarLancamentoMensalCompleto();}});
+      }
+    });
+  }
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(bind,50));
+  const observer=new MutationObserver(()=>bind());
+  observer.observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
+
+<script id="patch-autosave-1min">
+(function(){
+  let timer=null;
+  const DELAY=60000;
+  window.agendarAutoSave=function(){
+    clearTimeout(timer);
+    timer=setTimeout(()=>{
+      if(typeof window.salvarFirestore==='function') window.salvarFirestore();
+    },DELAY);
+  };
+  window.cancelarAutoSave=function(){ clearTimeout(timer); timer=null; };
+})();
+</script>
 </body></html>
