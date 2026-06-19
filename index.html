@@ -2679,7 +2679,7 @@ function renderComponentesDivida(d){
         <div><label>Compra/item</label><input id="comp-${d.id}-nome" placeholder="ex: Celular"></div>
         <div><label>Valor parcela</label><input id="comp-${d.id}-valor" type="number" min="0" step="0.01" placeholder="200"></div>
         <div><label>Qtd parcelas</label><input id="comp-${d.id}-total" type="number" min="1" step="1" placeholder="10"></div>
-        <div><label>Próx parcela</label><input id="comp-${d.id}-atual" type="number" min="1" step="1" placeholder="1"></div>
+        <div><label>Parcela atual</label><input id="comp-${d.id}-atual" type="number" min="1" step="1" placeholder="1"></div>
         <div><label>Próximo vencimento</label><input id="comp-${d.id}-inicio" type="month" value="${d.inicio || mesInicioPadrao()}"></div>
         <button class="btn btn-sm btn-primary" onclick="addComponenteDivida('${d.id}')">+ Item</button>
       </div>
@@ -4088,7 +4088,7 @@ function renderComponentesDivida(d){
       <div><label>Compra/item</label><input id="comp-${d.id}-nome" placeholder="ex: Celular"></div>
       <div><label>Valor parcela</label><input id="comp-${d.id}-valor" type="number" min="0" step="0.01" placeholder="200"></div>
       <div><label>Qtd parcelas</label><input id="comp-${d.id}-total" type="number" min="1" step="1" placeholder="10"></div>
-      <div><label>Próx parcela</label><input id="comp-${d.id}-atual" type="number" min="1" step="1" placeholder="1"></div>
+      <div><label>Parcela atual</label><input id="comp-${d.id}-atual" type="number" min="1" step="1" placeholder="1"></div>
       <div><label>Próximo vencimento</label><input id="comp-${d.id}-inicio" type="month" value="${d.inicio||mesInicioPadrao()}"></div>
       <button class="btn btn-sm btn-primary" onclick="addComponenteDivida('${d.id}')">+ Item</button>
     </div>
@@ -4428,7 +4428,7 @@ window.addEventListener('DOMContentLoaded',()=>{
         <div><label>Compra/item</label><input id="comp-${d.id}-nome" placeholder="ex: Celular"></div>
         <div><label>Valor parcela</label><input id="comp-${d.id}-valor" type="number" min="0" step="0.01" placeholder="200"></div>
         <div><label>Qtd parcelas</label><input id="comp-${d.id}-total" type="number" min="1" step="1" placeholder="10"></div>
-        <div><label>Próx. parcela</label><input id="comp-${d.id}-atual" type="number" min="1" step="1" placeholder="1"></div>
+        <div><label>Parcela atual</label><input id="comp-${d.id}-atual" type="number" min="1" step="1" placeholder="1"></div>
         <div><label>Próximo vencimento</label><input id="comp-${d.id}-inicio" type="month" value="${d.inicio || defaultMonth()}"></div>
         <button class="btn btn-primary" onclick="addComponenteDivida('${d.id}')">+ Adicionar item</button>
       </div>
@@ -6584,7 +6584,7 @@ window.addEventListener('DOMContentLoaded',()=>{
       <div class="pf-debt-group-head" onclick="toggleDebtMonthGroup('${esc2(gid)}')" title="Clique para mostrar ou ocultar os detalhes">
         <div class="pf-debt-group-main"><button type="button" class="pf-debt-collapse-btn" aria-label="Mostrar ou ocultar detalhes" onclick="event.stopPropagation();toggleDebtMonthGroup('${esc2(gid)}')"><span>▾</span></button><div class="pf-debt-group-name"><strong>${esc2(g.name)}</strong><small>${esc2(g.tipo)}${g.credor?' · '+esc2(g.credor):''}</small></div></div>
         <div class="pf-debt-group-count">${g.items.length} ${g.items.length===1?'item':'itens'} no mês</div><div class="pf-debt-group-total">${moneyBR(g.total)}</div></div>
-      <div class="pf-debt-group-items">${g.items.sort((a,b)=>b.info.valor-a.info.valor).map(i=>`<div class="pf-debt-group-item"><div><strong>${esc2(i.item)}</strong><small>parcela ${installment(i.info,key)}/${i.info.total}</small></div><div class="value">${moneyBR(i.info.valor)}</div><div class="rest">resta ${moneyBR(i.info.falta)}</div></div>`).join('')}</div>
+      <div class="pf-debt-group-items">${g.items.sort((a,b)=>b.info.valor-a.info.valor).map(i=>{const prevista=installment(i.info,key);const projetada=prevista!==i.info.atual?` · prevista neste mês: ${prevista}/${i.info.total}`:'';return `<div class="pf-debt-group-item"><div><strong>${esc2(i.item)}</strong><small>parcela cadastrada: ${i.info.atual}/${i.info.total}${projetada}</small></div><div class="value">${moneyBR(i.info.valor)}</div><div class="rest">saldo atual: ${moneyBR(i.info.falta)}</div></div>`}).join('')}</div>
     </div>`}).join('');
   }
   window.toggleDebtMonthGroup=function(groupId){
@@ -6988,6 +6988,81 @@ body[data-pf-mode="saude"] .page-section:not([id^="sec-saude-"]){display:none!im
     },DELAY);
   };
   window.cancelarAutoSave=function(){ clearTimeout(timer); timer=null; };
+})();
+</script>
+
+<style id="pf-parcelas-seguras-style">
+  .pf-installment-note{margin-top:8px;padding:9px 11px;border:1px solid var(--tbd);background:var(--tbg);border-radius:9px;color:var(--di);font-size:11px;line-height:1.45}
+</style>
+<script id="pf-parcelas-seguras-js">
+(function(){
+  const toInt=v=>Math.max(1,parseInt(v||'1',10)||1);
+  const toast=(m,e=false)=>typeof showToast==='function'&&showToast(m,e);
+  function clampCurrent(obj,value){
+    const total=toInt(obj.totalParcelas);
+    const current=Math.min(toInt(value),total);
+    if(toInt(value)>total) toast(`A parcela atual não pode ser maior que o total (${total}).`,true);
+    return current;
+  }
+  function addHelpNotes(){
+    document.querySelectorAll('.debt-add-component-final,.debt-component-add').forEach(box=>{
+      if(box.querySelector('.pf-installment-note')) return;
+      box.insertAdjacentHTML('beforeend','<div class="pf-installment-note" style="grid-column:1/-1"><strong>Como preencher:</strong> em “Parcela atual”, informe a parcela que vencerá no mês escolhido em “Próximo vencimento”. Exemplo: 6 de 11 com vencimento em julho aparecerá como <strong>6/11 em julho</strong>. Nos meses futuros, o painel mostra a projeção sem alterar o cadastro.</div>');
+    });
+  }
+  const oldRender=window.renderDividas;
+  if(typeof oldRender==='function') window.renderDividas=function(){oldRender.apply(this,arguments);setTimeout(addHelpNotes,0)};
+
+  const oldUpdateComp=window.updateComponenteDivida;
+  window.updateComponenteDivida=function(dividaId,compId,campo,valor){
+    const d=(window.state?.dividasParceladas||[]).find(x=>x.id===dividaId);
+    const c=d?.componentes?.find(x=>x.id===compId);
+    if(c && campo==='parcelaAtual') valor=clampCurrent(c,valor);
+    if(c && campo==='totalParcelas'){
+      const novoTotal=toInt(valor);
+      c.totalParcelas=novoTotal;
+      if(toInt(c.parcelaAtual)>novoTotal){c.parcelaAtual=novoTotal;toast(`Parcela atual ajustada para ${novoTotal}/${novoTotal}.`)}
+      if(typeof window.renderDividas==='function') window.renderDividas();
+      if(typeof calcular==='function') calcular();
+      if(window.agendarAutoSave) window.agendarAutoSave(60000);
+      return;
+    }
+    return oldUpdateComp?.call(this,dividaId,compId,campo,valor);
+  };
+
+  const oldUpdateDebt=window.updateDivida;
+  window.updateDivida=function(id,campo,valor){
+    const d=(window.state?.dividasParceladas||[]).find(x=>x.id===id);
+    if(d && campo==='parcelaAtual') valor=clampCurrent(d,valor);
+    if(d && campo==='totalParcelas'){
+      const novoTotal=toInt(valor);
+      d.totalParcelas=novoTotal;
+      if(toInt(d.parcelaAtual)>novoTotal){d.parcelaAtual=novoTotal;toast(`Parcela atual ajustada para ${novoTotal}/${novoTotal}.`)}
+      if(typeof window.renderDividas==='function') window.renderDividas();
+      if(typeof calcular==='function') calcular();
+      if(window.agendarAutoSave) window.agendarAutoSave(60000);
+      return;
+    }
+    return oldUpdateDebt?.call(this,id,campo,valor);
+  };
+
+  // Garante consistência antes de cada salvamento sem alterar projeções mensais.
+  const oldCollect=window.coletarDados;
+  if(typeof oldCollect==='function') window.coletarDados=function(){
+    (window.state?.dividasParceladas||[]).forEach(d=>{
+      if(!Array.isArray(d.componentes)) d.componentes=[];
+      if(String(d.tipo||'').toLowerCase()!=='cartão' && String(d.tipo||'').toLowerCase()!=='cartao'){
+        d.totalParcelas=toInt(d.totalParcelas);
+        d.parcelaAtual=Math.min(toInt(d.parcelaAtual),d.totalParcelas+1);
+      }
+      d.componentes.forEach(c=>{
+        c.totalParcelas=toInt(c.totalParcelas);
+        c.parcelaAtual=Math.min(toInt(c.parcelaAtual),c.totalParcelas+1);
+      });
+    });
+    return oldCollect.apply(this,arguments);
+  };
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(addHelpNotes,150));
 })();
 </script>
 </body></html>
