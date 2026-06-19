@@ -838,70 +838,6 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
 @media(max-width:1100px){.debt-filter-grid{grid-template-columns:1fr 1fr 1fr}}
 @media(max-width:720px){.debt-filter-grid{grid-template-columns:1fr}}
 </style>
-
-<style id="page-visibility-fix">
-.page-section{display:none!important}
-.page-section.active{display:block!important}
-</style>
-
-
-<style id="sidebar-clean-overrides">
-.sidebar{width:236px!important}
-.sidebar-logo{padding:18px 20px 12px!important}
-.sidebar-mode-wrap{padding:12px 12px 8px;border-bottom:1px solid var(--bd)}
-.mode-switcher{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px!important;background:transparent!important;padding:0!important}
-.mode-btn{display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:8px!important;padding:10px 12px!important;border-radius:12px!important;border:1px solid var(--bd)!important;background:var(--s2)!important;color:var(--mu)!important;font-size:12px!important;font-weight:700!important;box-shadow:none!important;min-width:0}
-.mode-btn:hover{border-color:var(--tbd)!important;color:var(--tx)!important;transform:translateY(-1px)}
-.mode-btn.active{background:rgba(45,212,191,.11)!important;border-color:rgba(45,212,191,.28)!important;color:var(--teal)!important;box-shadow:none!important}
-.mode-ico{width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;background:rgba(148,163,184,.08);font-size:13px;flex-shrink:0}
-.mode-btn.active .mode-ico{background:rgba(45,212,191,.18)}
-.mode-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.nav{padding:12px!important;gap:6px!important;flex:1 1 auto}
-.nav-item{padding:10px 12px!important;border-radius:12px!important;font-size:13px!important;font-weight:600!important;color:var(--mu)!important;border:1px solid transparent!important}
-.nav-item:hover{background:var(--s2)!important;border-color:var(--bd)!important;color:var(--tx)!important}
-.nav-item.active{background:rgba(45,212,191,.11)!important;border-color:rgba(45,212,191,.26)!important;color:var(--teal)!important}
-.nav-item .nav-icon{width:24px!important;height:24px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;border-radius:8px!important;background:rgba(148,163,184,.08);font-size:13px!important;flex-shrink:0}
-.nav-item.active .nav-icon{background:rgba(45,212,191,.18)!important}
-.nav-status{opacity:.8}
-.user-card{margin:12px!important;margin-top:auto!important}
-.sidebar-footer{padding:0 12px 12px!important;border-top:none!important}
-@media(max-width:900px){
-  .sidebar{width:74px!important}
-  .sidebar-mode-wrap{padding:10px 8px!important}
-  .mode-switcher{grid-template-columns:1fr!important}
-  .mode-btn{justify-content:center!important;padding:10px 8px!important}
-  .mode-label,.sidebar-logo small,.nav-item span:not(.nav-icon),.user-info,.sidebar-footer{display:none!important}
-  .nav-item{justify-content:center!important;padding:10px!important}
-  .nav-item .nav-icon,.mode-ico{margin:0!important}
-  .user-card{justify-content:center!important;padding:10px!important}
-}
-</style>
-
-
-<style id="sidebar-icons-only-fix">
-/* Sidebar compacta: somente ícones */
-.sidebar{width:78px!important}
-.main{margin-left:78px!important}
-.sidebar-logo{padding:16px 8px 12px!important;text-align:center!important;font-size:0!important}
-.sidebar-logo::before{content:"pf";display:inline-flex;width:38px;height:38px;align-items:center;justify-content:center;border-radius:12px;background:rgba(45,212,191,.14);border:1px solid rgba(45,212,191,.28);color:var(--teal);font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:800}
-.sidebar-logo span,.sidebar-logo small{display:none!important}
-.sidebar-mode-wrap{padding:10px 9px!important}
-.mode-switcher{display:grid!important;grid-template-columns:1fr!important;gap:7px!important}
-.mode-btn{width:100%!important;height:46px!important;padding:0!important;justify-content:center!important;border-radius:13px!important}
-.mode-label{display:none!important}
-.mode-ico{width:30px!important;height:30px!important;font-size:16px!important;background:transparent!important}
-.nav{padding:10px 9px!important;gap:7px!important}
-.nav-item{height:46px!important;padding:0!important;justify-content:center!important;gap:0!important;border-radius:13px!important}
-.nav-item>span:not(.nav-icon),.nav-status{display:none!important}
-.nav-item .nav-icon{width:30px!important;height:30px!important;font-size:16px!important;background:transparent!important}
-.nav-item.active .nav-icon,.mode-btn.active .mode-ico{background:rgba(45,212,191,.16)!important}
-.user-card{margin:10px 9px!important;padding:8px!important;justify-content:center!important}
-.user-info,.logout-btn{display:none!important}
-.user-avatar{width:36px!important;height:36px!important}
-.sidebar-footer{display:none!important}
-@media(max-width:900px){.sidebar{width:68px!important}.main{margin-left:68px!important}}
-</style>
-
 </head>
 <body>
 
@@ -1021,11 +957,11 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
     <small>Planejamento Financeiro</small>
   </div>
   <!-- MODE SWITCHER -->
-  <div class="sidebar-mode-wrap">
+  <div style="padding:10px 10px 4px">
     <div class="mode-switcher">
-      <button class="mode-btn active" id="mode-geral-btn" onclick="setMode(&#39;geral&#39;)" title="Módulo Geral"><span class="mode-ico">📊</span><span class="mode-label">Geral</span></button>
-      <button class="mode-btn" id="mode-mensal-btn" onclick="setMode(&#39;mensal&#39;)" title="Módulo Mensal"><span class="mode-ico">📅</span><span class="mode-label">Mensal</span></button>
-      <button class="mode-btn" id="mode-livre-btn" onclick="setMode(&#39;livre&#39;)" title="Módulo Mensal livre"><span class="mode-ico">🧾</span><span class="mode-label">Livre</span></button>
+      <button class="mode-btn active" id="mode-geral-btn" onclick="setMode(&#39;geral&#39;)">📊 Geral</button>
+      <button class="mode-btn" id="mode-mensal-btn" onclick="setMode(&#39;mensal&#39;)">📅 Mensal</button>
+      <button class="mode-btn" id="mode-livre-btn" onclick="setMode(&#39;livre&#39;)">🧾 Mensal livre</button>
     </div>
   </div>
 
@@ -1053,9 +989,9 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
 
   <!-- NAV MENSAL LIVRE -->
   <div class="nav" id="nav-livre" style="display:none">
-    <button class="nav-item active" onclick="goToLivre('livre-lancamentos')" id="nav-livre-lancamentos"><span class="nav-icon">🧾</span><span>Lançamentos</span></button>
-    <button class="nav-item" onclick="goToLivre('livre-resumo')" id="nav-livre-resumo"><span class="nav-icon">📊</span><span>Resumo</span></button>
-    <button class="nav-item" onclick="goToLivre('livre-anual')" id="nav-livre-anual"><span class="nav-icon">📆</span><span>Anual</span></button>
+    <button class="nav-item active" onclick="goToLivre('livre-lancamentos')" id="nav-livre-lancamentos"><span class="nav-icon">🧾</span><span>Lançamentos livres</span></button>
+    <button class="nav-item" onclick="goToLivre('livre-resumo')" id="nav-livre-resumo"><span class="nav-icon">📊</span><span>Resumo livre</span></button>
+    <button class="nav-item" onclick="goToLivre('livre-anual')" id="nav-livre-anual"><span class="nav-icon">📆</span><span>Visão anual livre</span></button>
   </div>
 
   <!-- USER CARD -->
@@ -6070,17 +6006,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   function newMonthLivre(){return {receitas:[],despesas:[],doacoes:[]}}
   function getLivre(){const k=keyLivre();if(!mensalLivreData[k])mensalLivreData[k]=newMonthLivre();const d=mensalLivreData[k];['receitas','despesas','doacoes'].forEach(t=>{if(!Array.isArray(d[t]))d[t]=[]});return d}
   function totalsLivre(d=getLivre()){const sum=t=>(d[t]||[]).reduce((s,x)=>s+(Number(x.valor)||0),0);const receitas=sum('receitas'),despesas=sum('despesas'),doacoes=sum('doacoes');return {receitas,despesas,doacoes,saldo:receitas-despesas-doacoes}}
-  function autoSaveLivre(){clearTimeout(livreSaveTimer);livreSaveTimer=setTimeout(()=>{if(typeof window.salvarFirestore==='function')window.salvarFirestore();},900)}
-  function refreshLivreTotals(){
-    const t=totalsLivre();
-    const ids={receitas:'livre-total-receitas',despesas:'livre-total-despesas',doacoes:'livre-total-doacoes'};
-    Object.entries(ids).forEach(([k,id])=>{const el=document.getElementById(id);if(el)el.textContent=moneyLivre(t[k])});
-    const vals=document.querySelectorAll('#livre-summary .stat-value');
-    if(vals[0])vals[0].textContent=moneyLivre(t.receitas);
-    if(vals[1])vals[1].textContent=moneyLivre(t.despesas);
-    if(vals[2])vals[2].textContent=moneyLivre(t.doacoes);
-    if(vals[3]){vals[3].textContent=moneyLivre(t.saldo);vals[3].style.color=t.saldo>=0?'var(--green)':'var(--red)'}
-  }
+  function autoSaveLivre(){clearTimeout(livreSaveTimer);livreSaveTimer=setTimeout(()=>{if(typeof window.salvarFirestore==='function')window.salvarFirestore();},700)}
   function iconLivre(tipo){return tipo==='receitas'?'💰':tipo==='despesas'?'📌':'🙏'}
   function renderListLivre(tipo){const d=getLivre(),box=document.getElementById(`livre-${tipo}-list`);if(!box)return;const arr=d[tipo];if(!arr.length){box.innerHTML=`<div class="livre-empty">Nenhum item ainda. Use o botão abaixo para começar do zero.</div>`;return}box.innerHTML=arr.map(x=>`<div class="livre-row ${tipo}"><div class="livre-icon">${iconLivre(tipo)}</div><input type="text" value="${escLivre(x.nome)}" placeholder="Nome do item" oninput="updateLivreItem('${tipo}','${x.id}','nome',this.value)"><div class="livre-money-wrap"><span>R$</span><input type="number" min="0" step="0.01" value="${Number(x.valor)||0}" oninput="updateLivreItem('${tipo}','${x.id}','valor',this.value)"></div><button class="livre-del" onclick="deleteLivreItem('${tipo}','${x.id}')" title="Excluir">×</button></div>`).join('')}
   function renderLivre(){const d=getLivre(),t=totalsLivre(d),nome=`${mesesLivreNomes[livreMesAtual]} ${livreAnoAtual}`;['livre-mes-label','livre-resumo-label'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=nome});const title=document.getElementById('livre-title');if(title)title.textContent=`Mensal livre — ${nome}`;document.getElementById('livre-total-receitas').textContent=moneyLivre(t.receitas);document.getElementById('livre-total-despesas').textContent=moneyLivre(t.despesas);document.getElementById('livre-total-doacoes').textContent=moneyLivre(t.doacoes);const s=document.getElementById('livre-summary');if(s)s.innerHTML=`<div class="stat-card"><div class="stat-label">Receitas</div><div class="stat-value" style="color:var(--green)">${moneyLivre(t.receitas)}</div><div class="stat-sub">criadas nesta área</div></div><div class="stat-card"><div class="stat-label">Despesas</div><div class="stat-value" style="color:var(--red)">${moneyLivre(t.despesas)}</div><div class="stat-sub">sem vínculo com o Geral</div></div><div class="stat-card"><div class="stat-label">Doações/outros</div><div class="stat-value" style="color:var(--purple)">${moneyLivre(t.doacoes)}</div><div class="stat-sub">opcional</div></div><div class="stat-card"><div class="stat-label">Saldo livre</div><div class="stat-value" style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldo)}</div><div class="stat-sub">resultado do mês</div></div>`;['receitas','despesas','doacoes'].forEach(renderListLivre)}
@@ -6088,13 +6014,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   function renderResumoLivre(){const d=getLivre(),t=totalsLivre(d),nome=`${mesesLivreNomes[livreMesAtual]} ${livreAnoAtual}`;const tt=document.getElementById('livre-resumo-title');if(tt)tt.textContent=`Resumo livre — ${nome}`;const box=document.getElementById('livre-resumo-content');if(!box)return;box.innerHTML=`<div class="livre-summary"><div class="stat-card"><div class="stat-label">Receitas</div><div class="stat-value" style="color:var(--green)">${moneyLivre(t.receitas)}</div></div><div class="stat-card"><div class="stat-label">Despesas</div><div class="stat-value" style="color:var(--red)">${moneyLivre(t.despesas)}</div></div><div class="stat-card"><div class="stat-label">Doações/outros</div><div class="stat-value" style="color:var(--purple)">${moneyLivre(t.doacoes)}</div></div><div class="stat-card"><div class="stat-label">Saldo</div><div class="stat-value" style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldo)}</div></div></div><div class="livre-resumo-grid"><div class="livre-resumo-list"><h3>💰 Receitas</h3>${rowsResumo('receitas',d)}</div><div class="livre-resumo-list"><h3>📌 Despesas</h3>${rowsResumo('despesas',d)}</div><div class="livre-resumo-list"><h3>🙏 Doações / outros</h3>${rowsResumo('doacoes',d)}</div><div class="livre-resumo-list"><h3>📊 Leitura do mês</h3><div class="livre-resumo-item"><span>Percentual comprometido</span><strong>${t.receitas>0?(((t.despesas+t.doacoes)/t.receitas)*100).toFixed(1):'0.0'}%</strong></div><div class="livre-resumo-item"><span>Sobra da receita</span><strong style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldo)}</strong></div></div></div>`}
   function renderAnualLivre(){const box=document.getElementById('livre-anual-content');if(!box)return;const label=document.getElementById('livre-ano-label');if(label)label.textContent=livreAnoVisual;let tr='',tot={receitas:0,despesas:0,doacoes:0,saldo:0};for(let m=0;m<12;m++){const d=mensalLivreData[keyLivre(livreAnoVisual,m)]||newMonthLivre(),t=totalsLivre(d);Object.keys(tot).forEach(k=>tot[k]+=t[k]);tr+=`<tr class="clickable" onclick="abrirLivreMes(${livreAnoVisual},${m})"><td>${mesesLivreNomes[m]}</td><td style="color:var(--green)">${moneyLivre(t.receitas)}</td><td style="color:var(--red)">${moneyLivre(t.despesas)}</td><td style="color:var(--purple)">${moneyLivre(t.doacoes)}</td><td style="color:${t.saldo>=0?'var(--green)':'var(--red)'};font-weight:800">${moneyLivre(t.saldo)}</td></tr>`}box.innerHTML=`<div class="livre-summary"><div class="stat-card"><div class="stat-label">Receitas no ano</div><div class="stat-value" style="color:var(--green)">${moneyLivre(tot.receitas)}</div></div><div class="stat-card"><div class="stat-label">Despesas no ano</div><div class="stat-value" style="color:var(--red)">${moneyLivre(tot.despesas)}</div></div><div class="stat-card"><div class="stat-label">Doações/outros</div><div class="stat-value" style="color:var(--purple)">${moneyLivre(tot.doacoes)}</div></div><div class="stat-card"><div class="stat-label">Saldo anual</div><div class="stat-value" style="color:${tot.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(tot.saldo)}</div></div></div><table class="livre-anual-table"><thead><tr><th>Mês</th><th>Receitas</th><th>Despesas</th><th>Doações/outros</th><th>Saldo</th></tr></thead><tbody>${tr}</tbody></table>`}
   window.addLivreItem=function(tipo){const d=getLivre();d[tipo].push({id:`ml${livreNextId++}`,nome:tipo==='receitas'?'Nova receita':tipo==='despesas'?'Nova despesa':'Novo item',valor:0});renderLivre();autoSaveLivre();setTimeout(()=>{const box=document.getElementById(`livre-${tipo}-list`);const ins=box?.querySelectorAll('input[type=text]');ins?.[ins.length-1]?.select()},30)};
-  window.updateLivreItem=function(tipo,id,campo,valor){
-    const x=getLivre()[tipo].find(i=>String(i.id)===String(id));
-    if(!x)return;
-    x[campo]=campo==='valor'?Math.max(0,Number(valor)||0):valor;
-    refreshLivreTotals();
-    autoSaveLivre();
-  };
+  window.updateLivreItem=function(tipo,id,campo,valor){const x=getLivre()[tipo].find(i=>String(i.id)===String(id));if(!x)return;x[campo]=campo==='valor'?Math.max(0,Number(valor)||0):valor;renderLivre();autoSaveLivre()};
   window.deleteLivreItem=function(tipo,id){const d=getLivre();d[tipo]=d[tipo].filter(i=>String(i.id)!==String(id));renderLivre();autoSaveLivre()};
   window.limparLivreMes=function(){if(!confirm('Limpar todos os lançamentos deste mês livre?'))return;mensalLivreData[keyLivre()]=newMonthLivre();renderLivre();autoSaveLivre()};
   window.navLivre=function(dir){livreMesAtual+=dir;if(livreMesAtual<0){livreMesAtual=11;livreAnoAtual--}if(livreMesAtual>11){livreMesAtual=0;livreAnoAtual++}const vis=SECS_L.find(id=>document.getElementById(id)?.style.display==='block');if(vis==='sec-livre-resumo')renderResumoLivre();else renderLivre()};
@@ -6127,47 +6047,12 @@ window.addEventListener('DOMContentLoaded',()=>{
 .health-section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
 .health-section-title{font-weight:800;font-size:16px;color:var(--tx)}
 .health-section-sub{font-size:12px;color:var(--di);line-height:1.45;margin-top:3px}
-.health-week{
-  display:grid;
-  grid-template-columns:repeat(3,minmax(250px,1fr));
-  gap:14px;
-  align-items:stretch;
-}
-.health-day{
-  background:var(--s2);
-  border:1px solid var(--bd);
-  border-radius:14px;
-  padding:15px;
-  min-height:330px;
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-}
-.health-day:hover{border-color:var(--tbd)}
-.health-day strong{
-  display:block;
-  font-family:'Space Grotesk',sans-serif;
-  font-size:15px;
-  color:var(--tx);
-  padding-bottom:9px;
-  border-bottom:1px solid var(--bd);
-}
-.health-day .health-field{margin-top:0!important}
-.health-day .health-field label{font-size:10px;letter-spacing:.08em}
-.health-day .health-input{
-  min-height:44px;
-  line-height:1.35;
-  font-size:13px;
-}
-.health-day .health-textarea{
-  min-height:105px;
-  line-height:1.5;
-  resize:vertical;
-  font-size:13px;
-}
-.health-day .field-run .health-input{border-left:3px solid var(--blue)}
-.health-day .field-gym .health-input{border-left:3px solid var(--teal)}
-.health-day .field-note .health-textarea{border-left:3px solid var(--amber)}
+.health-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.health-day{background:var(--s2);border:1px solid var(--bd);border-radius:11px;padding:11px;min-height:124px}
+.health-day strong{font-size:12px;color:var(--tx)}
+.health-day .run{font-size:11px;color:var(--blue);margin-top:8px;line-height:1.4}
+.health-day .gym{font-size:11px;color:var(--teal);margin-top:6px;line-height:1.4}
+.health-day .note{font-size:10px;color:var(--di);margin-top:7px;line-height:1.35}
 .health-table-wrap{overflow:auto;border:1px solid var(--bd);border-radius:11px}
 .health-table{width:100%;border-collapse:collapse;min-width:780px}
 .health-table th{background:var(--s2);padding:9px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--di);white-space:nowrap}
@@ -6184,7 +6069,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 .health-progress{height:8px;background:var(--s3);border-radius:999px;overflow:hidden;margin-top:8px}
 .health-progress span{display:block;height:100%;background:linear-gradient(90deg,var(--teal),var(--blue));border-radius:inherit}
 .health-note{padding:11px 13px;background:rgba(20,184,166,.08);border:1px solid rgba(20,184,166,.22);border-radius:10px;color:var(--tx);font-size:12px;line-height:1.5}
-@media(max-width:1100px){.health-grid{grid-template-columns:repeat(2,1fr)}.health-form-grid,.health-form-grid.cols-5{grid-template-columns:repeat(2,1fr)}.health-week{grid-template-columns:repeat(2,minmax(240px,1fr))}.health-record{grid-template-columns:90px 100px 1fr 80px 34px}.health-record .hr-extra{display:none}}
+@media(max-width:1100px){.health-grid{grid-template-columns:repeat(2,1fr)}.health-form-grid,.health-form-grid.cols-5{grid-template-columns:repeat(2,1fr)}.health-week{grid-template-columns:repeat(2,1fr)}.health-record{grid-template-columns:90px 100px 1fr 80px 34px}.health-record .hr-extra{display:none}}
 @media(max-width:700px){.health-grid{grid-template-columns:1fr}.health-form-grid,.health-form-grid.cols-5{grid-template-columns:1fr}.health-week{grid-template-columns:1fr}.health-record{grid-template-columns:1fr 34px}.health-record>*:not(.health-actions):not(.main-wrap){grid-column:1}.health-record .health-actions{grid-column:2;grid-row:1/5}.mode-switcher{flex-wrap:wrap}.mode-btn{flex:1 1 45%}}
 </style>
 <script>
@@ -6258,14 +6143,14 @@ window.addEventListener('DOMContentLoaded',()=>{
   function autosaveHealth(){clearTimeout(healthSaveTimer);healthSaveTimer=setTimeout(()=>window.salvarFirestore?.(),700)}
   function injectHealthUI(){
     const switcher=document.querySelector('.mode-switcher');
-    if(switcher&&!document.getElementById('mode-saude-btn'))switcher.insertAdjacentHTML('beforeend',`<button class="mode-btn" id="mode-saude-btn" onclick="setMode('saude')" title="Módulo Saúde"><span class="mode-ico">💪</span><span class="mode-label">Saúde</span></button>`);
+    if(switcher&&!document.getElementById('mode-saude-btn'))switcher.insertAdjacentHTML('beforeend',`<button class="mode-btn" id="mode-saude-btn" onclick="setMode('saude')">💪 Saúde</button>`);
     const navLivre=document.getElementById('nav-livre');
     if(navLivre&&!document.getElementById('nav-saude'))navLivre.insertAdjacentHTML('afterend',`<div class="nav" id="nav-saude" style="display:none">
       <button class="nav-item active" onclick="goToSaude('saude-painel')" id="nav-saude-painel"><span class="nav-icon">❤️</span><span>Painel</span></button>
-      <button class="nav-item" onclick="goToSaude('saude-semana')" id="nav-saude-semana"><span class="nav-icon">📅</span><span>Semana</span></button>
+      <button class="nav-item" onclick="goToSaude('saude-semana')" id="nav-saude-semana"><span class="nav-icon">📅</span><span>Plano semanal</span></button>
       <button class="nav-item" onclick="goToSaude('saude-musculacao')" id="nav-saude-musculacao"><span class="nav-icon">🏋️</span><span>Musculação</span></button>
       <button class="nav-item" onclick="goToSaude('saude-corrida')" id="nav-saude-corrida"><span class="nav-icon">🏃</span><span>Corrida</span></button>
-      <button class="nav-item" onclick="goToSaude('saude-registros')" id="nav-saude-registros"><span class="nav-icon">📝</span><span>Registros</span></button>
+      <button class="nav-item" onclick="goToSaude('saude-registros')" id="nav-saude-registros"><span class="nav-icon">📝</span><span>Registros diários</span></button>
     </div>`);
     const content=document.querySelector('.content');
     if(content&&!document.getElementById('sec-saude-painel'))content.insertAdjacentHTML('beforeend',healthSectionsHtml());
@@ -6281,83 +6166,17 @@ window.addEventListener('DOMContentLoaded',()=>{
   function setFinanceActionsVisible(show){document.querySelectorAll('.topbar-actions button').forEach(b=>{const t=b.textContent||'';if(/Excel|PDF|Limpar|Ver plano/.test(t))b.style.display=show?'':'none'})}
   const oldSetMode=window.setMode;
   window.setMode=function(mode){
-    document.querySelectorAll('.page-section').forEach(section=>{
-      section.classList.remove('active');
-      section.style.display='none';
-    });
-
-    if(mode!=='saude'){
-      setFinanceActionsVisible(true);
-
-      const navSaude=document.getElementById('nav-saude');
-      if(navSaude) navSaude.style.display='none';
-
-      document.getElementById('mode-saude-btn')?.classList.remove('active');
-
-      if(typeof oldSetMode==='function'){
-        oldSetMode(mode);
-      }
-      return;
-    }
-
+    if(mode!=='saude'){setFinanceActionsVisible(true);oldSetMode?.(mode);document.getElementById('nav-saude').style.display='none';document.getElementById('mode-saude-btn')?.classList.remove('active');return}
     window.appMode='saude';
-
-    ['nav-geral','nav-mensal','nav-livre'].forEach(id=>{
-      const element=document.getElementById(id);
-      if(element) element.style.display='none';
-    });
-
-    const navSaude=document.getElementById('nav-saude');
-    if(navSaude) navSaude.style.display='flex';
-
-    ['mode-geral-btn','mode-mensal-btn','mode-livre-btn'].forEach(id=>{
-      document.getElementById(id)?.classList.remove('active');
-    });
-
-    document.getElementById('mode-saude-btn')?.classList.add('active');
-    setFinanceActionsVisible(false);
-    goToSaude('saude-painel');
+    ['nav-geral','nav-mensal','nav-livre'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none'});document.getElementById('nav-saude').style.display='flex';
+    ['mode-geral-btn','mode-mensal-btn','mode-livre-btn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));document.getElementById('mode-saude-btn')?.classList.add('active');
+    document.querySelectorAll('.page-section').forEach(s=>{s.classList.remove('active');s.style.display='none'});setFinanceActionsVisible(false);goToSaude('saude-painel');
   };
   window.goToSaude=function(id){document.querySelectorAll('[id^="sec-saude-"]').forEach(s=>{s.classList.remove('active');s.style.display='none'});const sec=document.getElementById('sec-'+id);if(sec){sec.classList.add('active');sec.style.display='block'}document.querySelectorAll('#nav-saude .nav-item').forEach(n=>n.classList.remove('active'));document.getElementById('nav-'+id)?.classList.add('active');document.getElementById('topbar-title').textContent=({"saude-painel":"Saúde física","saude-semana":"Plano semanal","saude-musculacao":"Musculação","saude-corrida":"Corrida","saude-registros":"Registros diários"})[id]||'Saúde física';if(id==='saude-painel')renderHealthDashboard();if(id==='saude-semana')renderWeekPlan();if(id==='saude-musculacao')renderGymPlans();if(id==='saude-corrida')renderRunPlans();if(id==='saude-registros')renderHealthRecords();window.scrollTo(0,0)};
   function currentWeekRecords(){const now=new Date(),day=(now.getDay()+6)%7,start=new Date(now);start.setDate(now.getDate()-day);start.setHours(0,0,0,0);return healthData.records.filter(r=>new Date(r.date+'T12:00:00')>=start)}
   function renderHealthDashboard(){const box=document.getElementById('health-dashboard');if(!box)return;const wr=currentWeekRecords(),gym=wr.filter(r=>r.type==='musculacao').length,run=wr.filter(r=>r.type==='corrida'),km=run.reduce((s,r)=>s+num(r.distance),0),mins=wr.reduce((s,r)=>s+num(r.duration),0),goals=healthData.settings||{};const consistency=Math.min(100,Math.round(((gym+run.length)/Math.max(1,num(goals.weeklyGymGoal)+num(goals.weeklyRunGoal)))*100));const last=[...healthData.records].sort((a,b)=>String(b.date).localeCompare(String(a.date))).slice(0,5);box.innerHTML=`<div class="health-grid"><div class="health-card"><p>Treinos na semana</p><div class="health-kpi">${wr.length}</div><p>musculação + corrida + outros</p></div><div class="health-card"><p>Musculação</p><div class="health-kpi">${gym}/${goals.weeklyGymGoal||5}</div><p>sessões realizadas</p></div><div class="health-card"><p>Corrida</p><div class="health-kpi">${km.toFixed(1)} km</div><p>${run.length} sessão(ões)</p></div><div class="health-card"><p>Tempo ativo</p><div class="health-kpi">${mins} min</div><p>registrados nesta semana</p></div></div><div class="health-section"><div class="health-section-head"><div><div class="health-section-title">Consistência semanal</div><div class="health-section-sub">Meta combinada de musculação e corrida.</div></div><span class="health-chip">${consistency}%</span></div><div class="health-progress"><span style="width:${consistency}%"></span></div><div class="health-form-grid" style="margin-top:14px"><div class="health-field"><label>Meta musculação / semana</label><input class="health-input" type="number" min="0" value="${goals.weeklyGymGoal||5}" onchange="updateHealthSetting('weeklyGymGoal',this.value)"></div><div class="health-field"><label>Meta corrida / semana</label><input class="health-input" type="number" min="0" value="${goals.weeklyRunGoal||4}" onchange="updateHealthSetting('weeklyRunGoal',this.value)"></div><div class="health-field"><label>Meta km / semana</label><input class="health-input" type="number" min="0" step="0.1" value="${goals.weeklyKmGoal||30}" onchange="updateHealthSetting('weeklyKmGoal',this.value)"></div><div class="health-field"><label>&nbsp;</label><button class="btn btn-primary" onclick="goToSaude('saude-registros')">+ Registrar treino</button></div></div></div><div class="health-section"><div class="health-section-head"><div><div class="health-section-title">Últimos registros</div><div class="health-section-sub">Acompanhamento recente da rotina.</div></div></div>${last.length?last.map(r=>`<div class="health-record"><div><div class="main">${esc(r.date)}</div><div class="sub">${esc(r.type)}</div></div><div><span class="health-chip">${esc(r.plan||'Treino')}</span></div><div class="main-wrap"><div class="main">${esc(r.plan||'Treino')}</div><div class="sub">${esc(r.notes||'Sem observações')}</div></div><div>${num(r.duration)} min</div><div class="hr-extra">${num(r.distance)?num(r.distance).toFixed(1)+' km':'—'}</div><div class="hr-extra">Esforço ${num(r.effort)}/10</div><div></div></div>`).join(''):'<div class="health-empty">Nenhum treino registrado ainda.</div>'}</div><div class="health-note">Acompanhe evolução de forma sustentável: registre o que foi feito, respeite recuperação e ajuste cargas ou volume gradualmente.</div>`}
   window.updateHealthSetting=function(k,v){healthData.settings[k]=num(v);renderHealthDashboard();autosaveHealth()};
-  function renderWeekPlan(){
-    const box=document.getElementById('health-week-grid');
-    if(!box) return;
-
-    box.innerHTML=healthData.weekPlan.map((d,i)=>`
-      <div class="health-day">
-        <strong>${esc(d.day)}</strong>
-
-        <div class="health-field field-run">
-          <label>🏃 Corrida</label>
-          <input
-            class="health-input"
-            value="${esc(d.run)}"
-            placeholder="Ex.: leve, intervalado ou descanso"
-            onchange="updateWeekDay(${i},'run',this.value)">
-        </div>
-
-        <div class="health-field field-gym">
-          <label>🏋️ Musculação</label>
-          <input
-            class="health-input"
-            value="${esc(d.gym)}"
-            placeholder="Ex.: pernas, push, pull..."
-            onchange="updateWeekDay(${i},'gym',this.value)">
-        </div>
-
-        <div class="health-field field-note">
-          <label>📝 Detalhes e observações</label>
-          <textarea
-            class="health-textarea"
-            placeholder="Horário, intensidade, recuperação e outros detalhes"
-            onchange="updateWeekDay(${i},'note',this.value)">${esc(d.note)}</textarea>
-        </div>
-      </div>
-    `).join('');
-  }
+  function renderWeekPlan(){const box=document.getElementById('health-week-grid');if(!box)return;box.innerHTML=healthData.weekPlan.map((d,i)=>`<div class="health-day"><strong>${esc(d.day)}</strong><div class="health-field" style="margin-top:8px"><label>Corrida</label><input class="health-input" value="${esc(d.run)}" onchange="updateWeekDay(${i},'run',this.value)"></div><div class="health-field" style="margin-top:7px"><label>Musculação</label><input class="health-input" value="${esc(d.gym)}" onchange="updateWeekDay(${i},'gym',this.value)"></div><div class="health-field" style="margin-top:7px"><label>Observação</label><textarea class="health-textarea" onchange="updateWeekDay(${i},'note',this.value)">${esc(d.note)}</textarea></div></div>`).join('')}
   window.updateWeekDay=function(i,k,v){healthData.weekPlan[i][k]=v;autosaveHealth()};window.resetHealthWeek=function(){if(confirm('Restaurar o modelo semanal da planilha?')){healthData.weekPlan=clone(WEEK_TEMPLATE);renderWeekPlan();autosaveHealth()}};
   function renderGymPlans(){const box=document.getElementById('health-gym-list');if(!box)return;if(!healthData.gymPlans.length){box.innerHTML='<div class="health-empty">Nenhum treino criado.</div>';return}box.innerHTML=healthData.gymPlans.map(p=>`<div class="health-section"><div class="health-section-head"><div><div class="health-section-title">${esc(p.name)} <span class="health-chip">${esc(p.day)}</span></div><div class="health-section-sub">${esc(p.focus||'Sem foco definido')}</div></div><div class="health-actions"><button class="btn btn-sm" onclick="addGymExercise('${p.id}')">+ Exercício</button><button class="btn btn-sm" onclick="deleteGymPlan('${p.id}')">Excluir treino</button></div></div><div class="health-table-wrap"><table class="health-table"><thead><tr><th>Exercício</th><th>Séries</th><th>Reps</th><th>Carga (kg)</th><th>Descanso</th><th>Observações</th><th></th></tr></thead><tbody>${p.exercises.map(e=>`<tr><td><input value="${esc(e.name)}" onchange="updateGymExercise('${p.id}','${e.id}','name',this.value)"></td><td><input type="number" min="0" value="${num(e.sets)}" onchange="updateGymExercise('${p.id}','${e.id}','sets',this.value)"></td><td><input value="${esc(e.reps)}" onchange="updateGymExercise('${p.id}','${e.id}','reps',this.value)"></td><td><input type="number" min="0" step="0.5" value="${esc(e.load)}" onchange="updateGymExercise('${p.id}','${e.id}','load',this.value)"></td><td><input value="${esc(e.rest)}" onchange="updateGymExercise('${p.id}','${e.id}','rest',this.value)"></td><td><input value="${esc(e.notes)}" onchange="updateGymExercise('${p.id}','${e.id}','notes',this.value)"></td><td><button class="livre-del" onclick="deleteGymExercise('${p.id}','${e.id}')">×</button></td></tr>`).join('')}</tbody></table></div></div>`).join('')}
   window.addGymPlan=function(){const name=document.getElementById('gym-new-name').value.trim();if(!name)return alert('Digite o nome do treino.');healthData.gymPlans.push({id:'g'+healthData.nextId++,name,day:document.getElementById('gym-new-day').value,focus:document.getElementById('gym-new-focus').value.trim(),exercises:[]});document.getElementById('gym-new-name').value='';document.getElementById('gym-new-focus').value='';renderGymPlans();autosaveHealth()};
@@ -6379,15 +6198,223 @@ window.addEventListener('DOMContentLoaded',()=>{
 </script>
 
 
-<script>
-document.addEventListener('DOMContentLoaded',function(){
-  document.querySelectorAll('.mode-btn,.nav-item').forEach(function(btn){
-    if(!btn.getAttribute('title')){
-      const label=btn.querySelector('.mode-label')?.textContent?.trim() || [...btn.querySelectorAll('span')].map(s=>s.textContent.trim()).filter(Boolean).pop() || '';
-      if(label)btn.setAttribute('title',label);
-    }
+<!-- ═══════════════════════════════════════════════════════════════
+     PATCH 2026-06 — DÍVIDAS MENSAIS + EXCEL COMPLETO + ADIÇÕES
+════════════════════════════════════════════════════════════════ -->
+<style id="patch-financeiro-2026">
+  .pf-add-card,.pf-debt-monthly{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:15px 16px;margin-bottom:14px}
+  .pf-add-head,.pf-month-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+  .pf-add-title,.pf-month-title{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:800;color:var(--tx)}
+  .pf-add-sub,.pf-month-sub{font-size:11px;color:var(--mu);margin-top:2px}
+  .pf-add-grid{display:grid;grid-template-columns:minmax(180px,1.5fr) minmax(145px,.9fr) minmax(130px,.8fr) auto;gap:10px;align-items:end}
+  .pf-add-grid.monthly{grid-template-columns:minmax(170px,1.3fr) minmax(140px,.8fr) minmax(145px,.8fr) auto}
+  .pf-field{display:flex;flex-direction:column;gap:5px;min-width:0}
+  .pf-field label{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--di)}
+  .pf-field input,.pf-field select{height:40px;border:1px solid var(--bd);background:var(--s2);color:var(--tx);border-radius:9px;padding:0 11px;font-family:'Inter',sans-serif;font-size:13px;outline:none;min-width:0}
+  .pf-field input:focus,.pf-field select:focus{border-color:var(--tbd)}
+  .pf-month-nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .pf-month-label{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:800;min-width:150px;text-align:center}
+  .pf-debt-kpis{display:grid;grid-template-columns:repeat(4,minmax(130px,1fr));gap:9px;margin-bottom:12px}
+  .pf-debt-month-list{display:flex;flex-direction:column;gap:8px}
+  .pf-debt-month-row{display:grid;grid-template-columns:minmax(160px,1.2fr) minmax(170px,1fr) 100px 115px;gap:10px;align-items:center;background:var(--s2);border:1px solid var(--bd);border-radius:11px;padding:10px 12px}
+  .pf-debt-month-row strong{display:block;font-size:13px;color:var(--tx)}
+  .pf-debt-month-row small{display:block;font-size:10px;color:var(--mu);margin-top:1px}
+  .pf-money{font-family:'Space Grotesk',sans-serif;font-weight:800;text-align:right;white-space:nowrap}
+  .pf-debt-empty{padding:20px;text-align:center;color:var(--mu);background:var(--s2);border:1px dashed var(--bd2);border-radius:11px}
+  .mes-item-name-input{flex:1;min-width:0;background:transparent;border:1px solid transparent;border-radius:7px;outline:none;color:var(--tx);font:13px 'Inter',sans-serif;padding:5px 7px}
+  .mes-item-name-input:hover,.mes-item-name-input:focus{background:var(--s2);border-color:var(--tbd)}
+  @media(max-width:900px){.pf-add-grid,.pf-add-grid.monthly{grid-template-columns:1fr 1fr}.pf-add-grid button{grid-column:1/-1}.pf-debt-kpis{grid-template-columns:1fr 1fr}.pf-debt-month-row{grid-template-columns:1fr 1fr}}
+  @media(max-width:620px){.pf-add-grid,.pf-add-grid.monthly,.pf-debt-kpis,.pf-debt-month-row{grid-template-columns:1fr}.pf-money{text-align:left}}
+</style>
+<script id="patch-financeiro-2026-js">
+(function(){
+  const byId=id=>document.getElementById(id);
+  const n=v=>Number(String(v??'').replace(',','.'))||0;
+  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const money=v=>typeof fmt==='function'?fmt(n(v)):('R$ '+n(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}));
+  const monthNames=window.MESES_NOMES||['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  let debtViewDate=new Date();
+
+  function monthKeyFromDate(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`}
+  function monthTitle(key){const [y,m]=String(key).split('-').map(Number);return `${monthNames[(m||1)-1]} ${y}`}
+  function addMonthsKey(key,q){const [y,m]=String(key).split('-').map(Number);const d=new Date(y,(m||1)-1+q,1);return monthKeyFromDate(d)}
+  function defaultMonth(){return monthKeyFromDate(new Date())}
+  function parcelInfo(obj){
+    if(typeof infoParcelamento==='function') return infoParcelamento(obj);
+    const value=n(obj?.valorParcela), total=Math.max(1,parseInt(obj?.totalParcelas||1,10)), current=Math.min(Math.max(1,parseInt(obj?.parcelaAtual||1,10)),total+1);
+    const paid=Math.min(total,Math.max(0,current-1)), remaining=Math.max(0,total-paid), start=obj?.inicio||defaultMonth();
+    return {valorParcela:value,totalParcelas:total,parcelaAtual:current,parcelasPagas:paid,parcelasRestantes:remaining,total:value*total,pago:value*paid,falta:value*remaining,inicio:start,proximoMes:remaining?addMonthsKey(start,current-1):'',fimMes:addMonthsKey(start,total-1)};
+  }
+  function debtItems(){
+    const list=Array.isArray(window.state?.dividasParceladas)?window.state.dividasParceladas:[];
+    const out=[];
+    list.forEach(d=>{
+      const comps=Array.isArray(d.componentes)?d.componentes:[];
+      if(comps.length){
+        comps.forEach(c=>out.push({parentId:d.id,parent:d.nome||'Dívida',tipo:d.tipo||'Outros',credor:d.credor||'',itemId:c.id,item:c.nome||'Item',component:true,info:parcelInfo({...c,inicio:c.inicio||d.inicio||defaultMonth()})}));
+      }else if(String(d.tipo||'').toLowerCase()!=='cartão' && String(d.tipo||'').toLowerCase()!=='cartao'){
+        out.push({parentId:d.id,parent:d.nome||'Dívida',tipo:d.tipo||'Outros',credor:d.credor||'',itemId:d.id,item:d.nome||'Dívida',component:false,info:parcelInfo(d)});
+      }
+    });
+    return out;
+  }
+  function dueInMonth(item,key){
+    const i=item.info;
+    if(i.parcelasRestantes<=0||!i.valorParcela) return false;
+    for(let p=i.parcelaAtual;p<=i.totalParcelas;p++) if(addMonthsKey(i.inicio,p-1)===key) return true;
+    return false;
+  }
+  function activeInstallmentNumber(item,key){
+    const i=item.info;
+    for(let p=i.parcelaAtual;p<=i.totalParcelas;p++) if(addMonthsKey(i.inicio,p-1)===key) return p;
+    return i.parcelaAtual;
+  }
+
+  function injectGeneralExpenseForm(){
+    const section=byId('sec-despesas'); const list=byId('expense-categories');
+    if(!section||!list||byId('pf-general-expense-add')) return;
+    list.insertAdjacentHTML('beforebegin',`<div class="pf-add-card" id="pf-general-expense-add">
+      <div class="pf-add-head"><div><div class="pf-add-title">➕ Adicionar despesa no Geral</div><div class="pf-add-sub">Crie uma despesa com nome, categoria e valor. Ela entra imediatamente no panorama geral.</div></div></div>
+      <div class="pf-add-grid">
+        <div class="pf-field"><label>Nome da despesa</label><input id="pf-exp-name" placeholder="Ex.: Escola, seguro, academia"></div>
+        <div class="pf-field"><label>Categoria</label><select id="pf-exp-cat">${Object.entries(window.CATS||{}).map(([k,v])=>`<option value="${esc(k)}">${esc(v.label||k)}</option>`).join('')}</select></div>
+        <div class="pf-field"><label>Valor mensal</label><input id="pf-exp-value" type="number" min="0" step="0.01" placeholder="0,00"></div>
+        <button class="btn btn-primary" style="height:40px" onclick="adicionarDespesaGeralCompleta()">Adicionar</button>
+      </div></div>`);
+  }
+  window.adicionarDespesaGeralCompleta=function(){
+    const name=(byId('pf-exp-name')?.value||'').trim(), cat=byId('pf-exp-cat')?.value||'outros', val=n(byId('pf-exp-value')?.value);
+    if(!name){window.showToast?.('Digite o nome da despesa.',true);byId('pf-exp-name')?.focus();return;}
+    if(!window.state.expenses) window.state.expenses=[];
+    const id=Number(window.state.nextId)||Math.max(0,...window.state.expenses.map(e=>Number(e.id)||0))+1;
+    window.state.expenses.push({id,name,cat,val,icon:(window.ICONS&&ICONS[cat])||'📦'}); window.state.nextId=id+1;
+    byId('pf-exp-name').value='';byId('pf-exp-value').value='';
+    window.renderExpenses?.();window.calcular?.();window.showToast?.('Despesa adicionada ao Geral.');window.agendarAutoSave?.(500);
+  };
+
+  function injectMonthlyAddForm(){
+    const section=byId('sec-mes-lancamentos'); const selector=section?.querySelector('.mes-selector');
+    if(!section||!selector||byId('pf-monthly-item-add')) return;
+    selector.insertAdjacentHTML('afterend',`<div class="pf-add-card" id="pf-monthly-item-add">
+      <div class="pf-add-head"><div><div class="pf-add-title">➕ Adicionar lançamento neste mês</div><div class="pf-add-sub">Adicione receitas ou despesas diretamente no mês selecionado. Também é possível renomear todos os itens.</div></div></div>
+      <div class="pf-add-grid monthly">
+        <div class="pf-field"><label>Descrição</label><input id="pf-month-item-name" placeholder="Ex.: renda extra, academia, consulta"></div>
+        <div class="pf-field"><label>Tipo</label><select id="pf-month-item-type"><option value="receita">Receita</option><option value="fixa">Despesa fixa</option><option value="variavel">Despesa variável</option><option value="doacao">Doação</option><option value="inesperada">Inesperada / extra</option></select></div>
+        <div class="pf-field"><label>Valor</label><input id="pf-month-item-value" type="number" min="0" step="0.01" placeholder="0,00"></div>
+        <button class="btn btn-primary" style="height:40px" onclick="adicionarLancamentoMensalCompleto()">Adicionar</button>
+      </div></div>`);
+  }
+  window.adicionarLancamentoMensalCompleto=function(){
+    const name=(byId('pf-month-item-name')?.value||'').trim(), type=byId('pf-month-item-type')?.value||'variavel', val=n(byId('pf-month-item-value')?.value);
+    if(!name){window.showToast?.('Digite a descrição do lançamento.',true);byId('pf-month-item-name')?.focus();return;}
+    const mes=typeof getMes==='function'?getMes(anoAtual,mesAtual):null;if(!mes)return;
+    const map={receita:'receitas',fixa:'fixas',variavel:'variaveis',doacao:'doacoes',inesperada:'inesperadas'}, icons={receita:'💰',fixa:'📌',variavel:'🔄',doacao:'🙏',inesperada:'⚡'};
+    const target=map[type]; if(!Array.isArray(mes[target])) mes[target]=[];
+    mes[target].push({id:'pm'+Date.now(),nome:name,val,planejado:val,icon:icons[type]});
+    byId('pf-month-item-name').value='';byId('pf-month-item-value').value='';
+    window.renderLancamentos?.();window.showToast?.('Lançamento adicionado ao mês.');window.agendarAutoSave?.(500);
+  };
+
+  function overrideMonthlyList(){
+    window.renderMesList=function(elId,items,tipo,cor){
+      const el=byId(elId);if(!el)return; const key=mesKey(anoAtual,mesAtual);
+      el.innerHTML=(items||[]).map((item,idx)=>{
+        const diff=item.planejado!=null?n(item.val)-n(item.planejado):null;
+        const diffHTML=diff!=null?`<span class="mes-diff ${diff>0&&tipo!=='receita'?'neg':diff<0&&tipo!=='receita'?'pos':'zero'}">${diff>0?'+':''}${money(Math.abs(diff))}</span>`:'';
+        return `<div class="mes-item"><div class="mes-item-icon" style="background:rgba(127,127,127,.1)">${esc(item.icon||'📦')}</div>
+          <input class="mes-item-name-input" value="${esc(item.nome||'')}" placeholder="Nome do item" oninput="renomearLancamentoMensal('${key}','${tipo}',${idx},this.value)">
+          ${diffHTML}<div class="mes-item-val-wrap"><span class="mes-item-prefix">R$</span><input class="mes-item-input" type="number" value="${n(item.val)||''}" placeholder="0" style="color:${cor}" oninput="updateMesItem('${key}','${tipo}',${idx},this.value)"></div>
+          <button class="del-btn" onclick="excluirLancamentoMensal('${key}','${tipo}',${idx})" title="Excluir">×</button></div>`;
+      }).join('')||'<div style="padding:12px;color:var(--mu);font-size:12px">Nenhum lançamento neste bloco.</div>';
+    };
+    window.renomearLancamentoMensal=function(key,tipo,idx,value){const map={receita:'receitas',fixa:'fixas',variavel:'variaveis',doacao:'doacoes',inesperada:'inesperadas'};const item=window.mesesData?.[key]?.[map[tipo]]?.[idx]||((typeof mesesData!=='undefined')?mesesData[key]?.[map[tipo]]?.[idx]:null);if(item)item.nome=value;window.agendarAutoSave?.(900)};
+    window.excluirLancamentoMensal=function(key,tipo,idx){const map={receita:'receitas',fixa:'fixas',variavel:'variaveis',doacao:'doacoes',inesperada:'inesperadas'};const root=(typeof mesesData!=='undefined')?mesesData:window.mesesData;const arr=root?.[key]?.[map[tipo]];if(arr){arr.splice(idx,1);window.renderLancamentos?.();window.agendarAutoSave?.(400)}};
+  }
+
+  function injectDebtMonthly(){
+    const summary=byId('dividas-summary');if(!summary||byId('pf-debt-monthly'))return;
+    summary.insertAdjacentHTML('afterend',`<div class="pf-debt-monthly" id="pf-debt-monthly">
+      <div class="pf-month-head"><div><div class="pf-month-title">📅 Visão mensal das dívidas</div><div class="pf-month-sub">Veja o total geral do mês e quanto cada cartão ou dívida representa.</div></div>
+        <div class="pf-month-nav"><button class="mes-nav" onclick="navegarMesDividas(-1)">‹</button><div class="pf-month-label" id="pf-debt-month-label">—</div><button class="mes-nav" onclick="navegarMesDividas(1)">›</button><button class="btn btn-sm" onclick="irMesAtualDividas()">Mês atual</button></div></div>
+      <div class="pf-debt-kpis" id="pf-debt-month-kpis"></div><div class="pf-debt-month-list" id="pf-debt-month-list"></div></div>`);
+  }
+  window.navegarMesDividas=function(dir){debtViewDate=new Date(debtViewDate.getFullYear(),debtViewDate.getMonth()+dir,1);renderDebtMonthly()};
+  window.irMesAtualDividas=function(){debtViewDate=new Date();renderDebtMonthly()};
+  function renderDebtMonthly(){
+    const label=byId('pf-debt-month-label'),kpis=byId('pf-debt-month-kpis'),box=byId('pf-debt-month-list');if(!label||!kpis||!box)return;
+    const key=monthKeyFromDate(debtViewDate), due=debtItems().filter(i=>dueInMonth(i,key)); label.textContent=monthTitle(key);
+    const total=due.reduce((s,i)=>s+i.info.valorParcela,0), groups={};
+    due.forEach(i=>{if(!groups[i.parentId])groups[i.parentId]={name:i.parent,tipo:i.tipo,total:0,count:0};groups[i.parentId].total+=i.info.valorParcela;groups[i.parentId].count++});
+    const groupArr=Object.values(groups).sort((a,b)=>b.total-a.total), biggest=groupArr[0];
+    kpis.innerHTML=`<div class="stat-card"><div class="stat-label">Total no mês</div><div class="stat-value" style="color:var(--red)">${money(total)}</div><div class="stat-sub">todas as dívidas</div></div>
+      <div class="stat-card"><div class="stat-label">Dívidas cobradas</div><div class="stat-value" style="color:var(--amber)">${groupArr.length}</div><div class="stat-sub">cartões/contratos</div></div>
+      <div class="stat-card"><div class="stat-label">Parcelas no mês</div><div class="stat-value">${due.length}</div><div class="stat-sub">itens individuais</div></div>
+      <div class="stat-card"><div class="stat-label">Maior compromisso</div><div class="stat-value" style="font-size:15px;color:var(--teal)">${biggest?esc(biggest.name):'—'}</div><div class="stat-sub">${biggest?money(biggest.total):'sem parcelas'}</div></div>`;
+    if(!due.length){box.innerHTML='<div class="pf-debt-empty">Nenhuma parcela prevista para este mês.</div>';return;}
+    box.innerHTML=due.sort((a,b)=>a.parent.localeCompare(b.parent)||b.info.valorParcela-a.info.valorParcela).map(i=>`<div class="pf-debt-month-row">
+      <div><strong>${esc(i.parent)}</strong><small>${esc(i.tipo)}${i.credor?' · '+esc(i.credor):''}</small></div>
+      <div><strong>${esc(i.item)}</strong><small>parcela ${activeInstallmentNumber(i,key)}/${i.info.totalParcelas}</small></div>
+      <div class="pf-money" style="color:var(--amber)">${money(i.info.valorParcela)}</div>
+      <div class="pf-money" style="color:var(--red)">resta ${money(i.info.falta)}</div></div>`).join('');
+  }
+
+  function safeSheetName(name,used){let base=String(name||'Planilha').replace(/[\\/?*\[\]:]/g,' ').trim().slice(0,31)||'Planilha',candidate=base,i=2;while(used.has(candidate)){const suffix=' '+i++;candidate=base.slice(0,31-suffix.length)+suffix}used.add(candidate);return candidate}
+  function appendSheet(wb,used,name,rows,widths){if(!rows?.length)return;const ws=XLSX.utils.aoa_to_sheet(rows);if(widths)ws['!cols']=widths.map(w=>({wch:w}));XLSX.utils.book_append_sheet(wb,ws,safeSheetName(name,used))}
+  window.exportExcel=function(){
+    const run=()=>{
+      try{
+        const data=typeof window.coletarDados==='function'?window.coletarDados():{}, wb=XLSX.utils.book_new(), used=new Set();
+        const rendas=data.rendas||window.state?.rendas||[], despesas=data.expenses||window.state?.expenses||[], mis=data.missionarios||window.state?.missionarios||[];
+        const totalRenda=rendas.reduce((s,r)=>s+n(r.val),0)+n(data.outras), totalDesp=despesas.reduce((s,e)=>s+n(e.val),0);
+        appendSheet(wb,used,'Resumo Geral',[["PAINELFIN — RESUMO GERAL"],[],['Indicador','Valor'],['Renda total',totalRenda],['Ticket',n(data.ticket)],['Despesas gerais',totalDesp],['Saldo geral',totalRenda-totalDesp],['Dízimo atual',n(data.dizimoAtual)],['Outras doações',n(data.outrasDoacoes)]],[28,18]);
+        appendSheet(wb,used,'Rendas',[["Fonte","Valor"],...rendas.map(r=>[r.nome,n(r.val)]),['Outras rendas/benefícios',n(data.outras)],['Ticket',n(data.ticket)]],[32,16]);
+        appendSheet(wb,used,'Despesas Geral',[["Categoria","Despesa","Valor"],...despesas.map(e=>[(window.CATS?.[e.cat]?.label)||e.cat,e.name,n(e.val)])],[22,34,16]);
+        appendSheet(wb,used,'Doações',[["Tipo","Nome","Valor"],['Dízimo','Dízimo',n(data.dizimoAtual)],...mis.map(m=>['Missionário',m.nome,n(m.val)]),['Outras',data.outrasDoacoesDesc||'Outras doações',n(data.outrasDoacoes)]],[20,34,16]);
+
+        const debts=debtItems();
+        appendSheet(wb,used,'Dívidas Detalhadas',[["Dívida/Cartão","Tipo","Credor","Item","Parcela","Parcela atual","Total parcelas","Pago","Falta","Início","Término"],...debts.map(i=>[i.parent,i.tipo,i.credor,i.item,i.info.valorParcela,i.info.parcelaAtual,i.info.totalParcelas,i.info.pago,i.info.falta,i.info.inicio,i.info.fimMes])],[24,16,22,30,14,14,15,14,14,12,12]);
+        const grouped={};debts.forEach(i=>{if(!grouped[i.parentId])grouped[i.parentId]={name:i.parent,tipo:i.tipo,mensal:0,pago:0,falta:0,total:0};if(i.info.parcelasRestantes>0)grouped[i.parentId].mensal+=i.info.valorParcela;grouped[i.parentId].pago+=i.info.pago;grouped[i.parentId].falta+=i.info.falta;grouped[i.parentId].total+=i.info.total});
+        appendSheet(wb,used,'Dívidas Resumo',[["Dívida/Cartão","Tipo","Parcela mensal","Total","Pago","Falta"],...Object.values(grouped).map(g=>[g.name,g.tipo,g.mensal,g.total,g.pago,g.falta])],[28,18,16,16,16,16]);
+        const monthRows=[["Mês","Dívida/Cartão","Item","Parcela","Nº parcela","Total parcelas"]];
+        debts.forEach(i=>{for(let p=i.info.parcelaAtual;p<=i.info.totalParcelas;p++)monthRows.push([addMonthsKey(i.info.inicio,p-1),i.parent,i.item,i.info.valorParcela,p,i.info.totalParcelas])});
+        appendSheet(wb,used,'Dívidas Mensal',monthRows,[12,28,30,14,13,14]);
+
+        const linked=data.mesesData||{};
+        const linkedRows=[["Mês","Grupo","Item","Previsto","Real","Diferença"]];
+        Object.entries(linked).sort().forEach(([key,m])=>{[['Receita','receitas'],['Fixa','fixas'],['Variável','variaveis'],['Doação','doacoes'],['Inesperada','inesperadas']].forEach(([label,field])=>(m?.[field]||[]).forEach(i=>linkedRows.push([key,label,i.nome,n(i.planejado),n(i.val),n(i.val)-n(i.planejado)]))) });
+        appendSheet(wb,used,'Mensal Vinculado',linkedRows,[12,16,32,14,14,14]);
+
+        const free=data.mensalLivreData||{};const freeRows=[["Mês","Grupo","Item","Valor"]];
+        Object.entries(free).sort().forEach(([key,m])=>[['Receita','receitas'],['Despesa','despesas'],['Doação/Outro','doacoes']].forEach(([label,field])=>(m?.[field]||[]).forEach(i=>freeRows.push([key,label,i.nome,n(i.valor)]))));
+        appendSheet(wb,used,'Mensal Livre',freeRows,[12,18,34,16]);
+
+        const sim=data.simulacao||{};
+        appendSheet(wb,used,'Simulação',[["SIMULAÇÃO"],[],['Percentuais'],['Essencial',n(sim.essencial)],['Lazer/Luxo',n(sim.lazer)],['Investimento',n(sim.investimento)],[],['Tipo','Grupo','Item','Valor'],...(sim.receitas||[]).map(i=>['Receita','',i.nome,n(i.val)]),...(sim.despesas||[]).map(i=>['Despesa',i.grupo,i.nome,n(i.val)])],[20,20,34,16]);
+
+        const health=data.healthData||{};
+        appendSheet(wb,used,'Saúde Semana',[["Dia","Corrida","Musculação","Observações"],...(health.weekPlan||[]).map(i=>[i.day,i.run,i.gym,i.note])],[14,30,30,42]);
+        const gymRows=[["Treino","Dia","Foco","Exercício","Séries","Repetições","Carga","Descanso","Observações"]];(health.gymPlans||[]).forEach(p=>(p.exercises||[]).forEach(e=>gymRows.push([p.name,p.day,p.focus,e.name,e.sets,e.reps,e.load,e.rest,e.notes])));
+        appendSheet(wb,used,'Saúde Musculação',gymRows,[18,12,24,34,10,12,10,12,30]);
+        appendSheet(wb,used,'Saúde Corrida',[["Semana","Início","Fase","Intervalado","Km intervalado","Tempo/Ritmo","Km ritmo","Km leve","Km longão","Total km","Notas"],...(health.runPlans||[]).map(r=>[r.week,r.start,r.phase,r.interval,r.intervalKm,r.tempo,r.tempoKm,r.easyKm,r.longKm,r.totalKm,r.notes])],[10,12,18,30,14,26,12,10,12,12,28]);
+        appendSheet(wb,used,'Saúde Registros',[["Data","Tipo","Treino","Duração min","Esforço","Distância km","Pace","Observações"],...(health.records||[]).map(r=>[r.date,r.type,r.plan,r.duration,r.effort,r.distance,r.pace,r.notes])],[12,14,24,14,10,14,14,34]);
+
+        XLSX.writeFile(wb,'painelfin_completo_'+new Date().toISOString().slice(0,10)+'.xlsx');window.showToast?.('Excel completo gerado com todas as áreas!');
+      }catch(e){console.error(e);window.showToast?.('Erro ao gerar Excel: '+(e.message||e),true)}
+    };
+    if(typeof loadSheetJS==='function')loadSheetJS(run);else if(window.XLSX)run();else{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';s.onload=run;s.onerror=()=>window.showToast?.('Não foi possível carregar o gerador de Excel.',true);document.head.appendChild(s)}
+  };
+
+  const oldRenderDividas=window.renderDividas;
+  window.renderDividas=function(){oldRenderDividas?.();injectDebtMonthly();renderDebtMonthly()};
+  window.renderVisaoMensalDividas=renderDebtMonthly;
+
+  document.addEventListener('DOMContentLoaded',()=>{
+    try{window.state=window.state||state}catch(e){}
+    try{window.CATS=window.CATS||CATS;window.ICONS=window.ICONS||ICONS;window.MESES_NOMES=window.MESES_NOMES||MESES_NOMES;window.mesesData=window.mesesData||mesesData}catch(e){}
+    injectGeneralExpenseForm();injectMonthlyAddForm();overrideMonthlyList();injectDebtMonthly();renderDebtMonthly();
+    document.querySelectorAll('button').forEach(btn=>{if((btn.textContent||'').includes('Excel'))btn.onclick=window.exportExcel});
   });
-});
+})();
 </script>
 
 </body></html>
