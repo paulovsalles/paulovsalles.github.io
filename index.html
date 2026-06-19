@@ -1358,7 +1358,7 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
       </div>
 
       <div class="debt-field debt-parcel-only">
-        <label>Próxima parcela</label>
+        <label>Última parcela paga</label>
         <input id="debt-atual" type="number" min="1" step="1" placeholder="ex: 1">
       </div>
 
@@ -2679,8 +2679,8 @@ function renderComponentesDivida(d){
         <div><label>Compra/item</label><input id="comp-${d.id}-nome" placeholder="ex: Celular"></div>
         <div><label>Valor parcela</label><input id="comp-${d.id}-valor" type="number" min="0" step="0.01" placeholder="200"></div>
         <div><label>Qtd parcelas</label><input id="comp-${d.id}-total" type="number" min="1" step="1" placeholder="10"></div>
-        <div><label>Parcela atual</label><input id="comp-${d.id}-atual" type="number" min="1" step="1" placeholder="1"></div>
-        <div><label>Próximo vencimento</label><input id="comp-${d.id}-inicio" type="month" value="${d.inicio || mesInicioPadrao()}"></div>
+        <div><label>Última parcela paga</label><input id="comp-${d.id}-atual" type="number" min="1" step="1" placeholder="1"></div>
+        <div><label>Mês já pago</label><input id="comp-${d.id}-inicio" type="month" value="${d.inicio || mesInicioPadrao()}"></div>
         <button class="btn btn-sm btn-primary" onclick="addComponenteDivida('${d.id}')">+ Item</button>
       </div>
       <div class="debt-component-summary">Use isso para detalhar um cartão: por exemplo, Nubank = celular + geladeira + compras parceladas. O valor mensal da dívida passa a ser a soma dos itens ativos.</div>
@@ -4088,8 +4088,8 @@ function renderComponentesDivida(d){
       <div><label>Compra/item</label><input id="comp-${d.id}-nome" placeholder="ex: Celular"></div>
       <div><label>Valor parcela</label><input id="comp-${d.id}-valor" type="number" min="0" step="0.01" placeholder="200"></div>
       <div><label>Qtd parcelas</label><input id="comp-${d.id}-total" type="number" min="1" step="1" placeholder="10"></div>
-      <div><label>Parcela atual</label><input id="comp-${d.id}-atual" type="number" min="1" step="1" placeholder="1"></div>
-      <div><label>Próximo vencimento</label><input id="comp-${d.id}-inicio" type="month" value="${d.inicio||mesInicioPadrao()}"></div>
+      <div><label>Última parcela paga</label><input id="comp-${d.id}-atual" type="number" min="1" step="1" placeholder="1"></div>
+      <div><label>Mês já pago</label><input id="comp-${d.id}-inicio" type="month" value="${d.inicio||mesInicioPadrao()}"></div>
       <button class="btn btn-sm btn-primary" onclick="addComponenteDivida('${d.id}')">+ Item</button>
     </div>
   </div>`;
@@ -4189,7 +4189,9 @@ window.addEventListener('DOMContentLoaded',()=>{
     const valor = num(obj && obj.valorParcela);
     const total = Math.max(1, parseInt((obj && obj.totalParcelas) || 1, 10));
     const atual = Math.min(Math.max(1, parseInt((obj && obj.parcelaAtual) || 1, 10)), total + 1);
-    const pagas = Math.min(total, Math.max(0, atual - 1));
+    // REGRA SEGURA: parcelaAtual é a parcela JÁ PAGA no mês informado em inicio.
+    // Ex.: 1/48 paga em junho => julho será 2/48.
+    const pagas = Math.min(total, Math.max(0, atual));
     const restantes = Math.max(0, total - pagas);
     const totalValor = valor * total;
     const pago = valor * pagas;
@@ -4205,8 +4207,8 @@ window.addEventListener('DOMContentLoaded',()=>{
       pago,
       falta,
       inicio,
-      proximoMes: restantes > 0 ? inicio : '',
-      fimMes: restantes > 0 ? addMonths(inicio, restantes - 1) : inicio,
+      proximoMes: restantes > 0 ? addMonths(inicio, 1) : '',
+      fimMes: restantes > 0 ? addMonths(inicio, restantes) : inicio,
       progresso: totalValor > 0 ? Math.min(100, (pago / totalValor) * 100) : 0
     };
   }
@@ -4247,7 +4249,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     if (btn) btn.textContent = cartao ? 'Criar cartão' : 'Adicionar dívida';
     if (help) help.innerHTML = cartao
       ? 'Primeiro crie o cartão, por exemplo <strong>Nubank</strong>. Assim que criar, o card aparece logo abaixo para você adicionar as compras parceladas.'
-      : 'Para financiamento, empréstimo ou compra parcelada direta, preencha valor, parcela atual e o mês do próximo vencimento. O mês informado será a primeira cobrança ainda em aberto.';
+      : 'Para financiamento, empréstimo ou compra parcelada direta, informe a última parcela já paga e o mês em que ela foi paga. Ex.: 1/48 paga em junho significa que julho será 2/48.';
   };
 
   window.addDivida = function(){
@@ -4374,7 +4376,8 @@ window.addEventListener('DOMContentLoaded',()=>{
     const c = d && (d.componentes || []).find(x => x.id === compId);
     if (!c) return;
     const i = parcelaInfo(c);
-    c.parcelaAtual = Math.min(i.totalParcelas + 1, i.parcelaAtual + 1);
+    c.parcelaAtual = Math.min(i.totalParcelas, i.parcelaAtual + 1);
+    c.inicio = addMonths(c.inicio || d.inicio || defaultMonth(), 1);
     renderDividas();
     if (typeof calcular === 'function') calcular();
     if (window.agendarAutoSave) window.agendarAutoSave(300);
@@ -4384,6 +4387,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     const c = d && (d.componentes || []).find(x => x.id === compId);
     if (!c) return;
     c.parcelaAtual = Math.max(1, (parseInt(c.parcelaAtual || 1, 10) - 1));
+    c.inicio = addMonths(c.inicio || d.inicio || defaultMonth(), -1);
     renderDividas();
     if (typeof calcular === 'function') calcular();
     if (window.agendarAutoSave) window.agendarAutoSave(300);
@@ -4392,7 +4396,8 @@ window.addEventListener('DOMContentLoaded',()=>{
     const d = (state.dividasParceladas || []).find(x => x.id === id);
     if (!d) return;
     const i = parcelaInfo(d);
-    d.parcelaAtual = Math.min(i.totalParcelas + 1, i.parcelaAtual + 1);
+    d.parcelaAtual = Math.min(i.totalParcelas, i.parcelaAtual + 1);
+    d.inicio = addMonths(d.inicio || defaultMonth(), 1);
     renderDividas();
     if (typeof calcular === 'function') calcular();
     if (window.agendarAutoSave) window.agendarAutoSave(300);
@@ -4401,6 +4406,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     const d = (state.dividasParceladas || []).find(x => x.id === id);
     if (!d) return;
     d.parcelaAtual = Math.max(1, (parseInt(d.parcelaAtual || 1, 10) - 1));
+    d.inicio = addMonths(d.inicio || defaultMonth(), -1);
     renderDividas();
     if (typeof calcular === 'function') calcular();
     if (window.agendarAutoSave) window.agendarAutoSave(300);
@@ -4414,7 +4420,7 @@ window.addEventListener('DOMContentLoaded',()=>{
         <input value="${attr(c.nome || '')}" onchange="updateComponenteDivida('${d.id}','${c.id}','nome',this.value)" placeholder="Compra/item">
         <input type="number" min="0" step="0.01" value="${i.valorParcela || ''}" onchange="updateComponenteDivida('${d.id}','${c.id}','valorParcela',this.value)" placeholder="Valor parcela">
         <input type="number" min="1" step="1" value="${i.totalParcelas}" onchange="updateComponenteDivida('${d.id}','${c.id}','totalParcelas',this.value)" placeholder="Qtd">
-        <input type="number" min="1" step="1" value="${i.parcelaAtual}" onchange="updateComponenteDivida('${d.id}','${c.id}','parcelaAtual',this.value)" placeholder="Próx">
+        <input type="number" min="1" step="1" value="${i.parcelaAtual}" onchange="updateComponenteDivida('${d.id}','${c.id}','parcelaAtual',this.value)" placeholder="Paga">
         <input type="month" value="${i.inicio}" onchange="updateComponenteDivida('${d.id}','${c.id}','inicio',this.value)">
         <button class="debt-mini-btn danger" onclick="delComponenteDivida('${d.id}','${c.id}')">×</button>
         <div class="debt-comp-info">Parcela ${i.parcelaAtual}/${i.totalParcelas} · falta <strong style="color:var(--red)">${money(i.falta)}</strong> · termina em ${monthName(i.fimMes)} ${i.parcelasRestantes > 0 ? `<button class="debt-mini-btn" onclick="pagarParcelaComponente('${d.id}','${c.id}')">pagar</button><button class="debt-mini-btn" onclick="voltarParcelaComponente('${d.id}','${c.id}')">voltar</button>` : '<strong style="color:var(--green)">quitado</strong>'}</div>
@@ -4428,8 +4434,8 @@ window.addEventListener('DOMContentLoaded',()=>{
         <div><label>Compra/item</label><input id="comp-${d.id}-nome" placeholder="ex: Celular"></div>
         <div><label>Valor parcela</label><input id="comp-${d.id}-valor" type="number" min="0" step="0.01" placeholder="200"></div>
         <div><label>Qtd parcelas</label><input id="comp-${d.id}-total" type="number" min="1" step="1" placeholder="10"></div>
-        <div><label>Parcela atual</label><input id="comp-${d.id}-atual" type="number" min="1" step="1" placeholder="1"></div>
-        <div><label>Próximo vencimento</label><input id="comp-${d.id}-inicio" type="month" value="${d.inicio || defaultMonth()}"></div>
+        <div><label>Última parcela paga</label><input id="comp-${d.id}-atual" type="number" min="1" step="1" placeholder="1"></div>
+        <div><label>Mês já pago</label><input id="comp-${d.id}-inicio" type="month" value="${d.inicio || defaultMonth()}"></div>
         <button class="btn btn-primary" onclick="addComponenteDivida('${d.id}')">+ Adicionar item</button>
       </div>
     </div>`;
@@ -6343,7 +6349,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   function injectDebtMonthly(){
     const summary=byId('dividas-summary');if(!summary||byId('pf-debt-monthly'))return;
     summary.insertAdjacentHTML('afterend',`<div class="pf-debt-monthly" id="pf-debt-monthly">
-      <div class="pf-month-head"><div><div class="pf-month-title">📅 Visão mensal das dívidas</div><div class="pf-month-sub">Veja o total geral do mês e quanto cada cartão ou dívida representa. O campo <strong>Próximo vencimento</strong> é o primeiro mês ainda não pago.</div></div>
+      <div class="pf-month-head"><div><div class="pf-month-title">📅 Visão mensal das dívidas</div><div class="pf-month-sub">Veja o total geral do mês e quanto cada cartão ou dívida representa. Ex.: 1/48 paga em junho aparece como 2/48 em julho. O mês informado no cadastro é o mês da parcela já paga; a projeção começa no mês seguinte.</div></div>
         <div class="pf-month-nav"><button class="mes-nav" onclick="navegarMesDividas(-1)">‹</button><div class="pf-month-label" id="pf-debt-month-label">—</div><button class="mes-nav" onclick="navegarMesDividas(1)">›</button><button class="btn btn-sm" onclick="irMesAtualDividas()">Mês atual</button></div></div>
       <div class="pf-debt-kpis" id="pf-debt-month-kpis"></div><div class="pf-debt-month-list" id="pf-debt-month-list"></div></div>`);
   }
@@ -6514,9 +6520,10 @@ window.addEventListener('DOMContentLoaded',()=>{
     const atual=Math.min(Math.max(1,parseInt(base.parcelaAtual||1,10)),total+1);
     const valor=num(base.valorParcela);
     const inicio=base.inicio||parent?.inicio||keyOf(new Date());
-    const pagas=Math.min(total,Math.max(0,atual-1));
+    // atual = parcela já paga no mês-base informado em inicio
+    const pagas=Math.min(total,Math.max(0,atual));
     const restantes=Math.max(0,total-pagas);
-    return {total,atual,valor,inicio,restantes,falta:restantes*valor};
+    return {total,atual,valor,inicio,pagas,restantes,falta:restantes*valor};
   }
   function monthDiff(fromKey,toKey){
     const [fy,fm]=String(fromKey).split('-').map(Number);
@@ -6526,11 +6533,12 @@ window.addEventListener('DOMContentLoaded',()=>{
   function due(info,key){
     if(info.restantes<=0||info.valor<=0) return false;
     const diff=monthDiff(info.inicio,key);
-    return diff>=0 && diff<info.restantes;
+    // O mês-base já foi pago; a próxima cobrança começa no mês seguinte.
+    return diff>=1 && diff<=info.restantes;
   }
   function installment(info,key){
     const diff=monthDiff(info.inicio,key);
-    return Math.min(info.total,Math.max(info.atual,info.atual+Math.max(0,diff)));
+    return Math.min(info.total, Math.max(info.atual, info.atual + Math.max(0,diff)));
   }
   function collect(){
     const out=[];
@@ -6584,7 +6592,7 @@ window.addEventListener('DOMContentLoaded',()=>{
       <div class="pf-debt-group-head" onclick="toggleDebtMonthGroup('${esc2(gid)}')" title="Clique para mostrar ou ocultar os detalhes">
         <div class="pf-debt-group-main"><button type="button" class="pf-debt-collapse-btn" aria-label="Mostrar ou ocultar detalhes" onclick="event.stopPropagation();toggleDebtMonthGroup('${esc2(gid)}')"><span>▾</span></button><div class="pf-debt-group-name"><strong>${esc2(g.name)}</strong><small>${esc2(g.tipo)}${g.credor?' · '+esc2(g.credor):''}</small></div></div>
         <div class="pf-debt-group-count">${g.items.length} ${g.items.length===1?'item':'itens'} no mês</div><div class="pf-debt-group-total">${moneyBR(g.total)}</div></div>
-      <div class="pf-debt-group-items">${g.items.sort((a,b)=>b.info.valor-a.info.valor).map(i=>{const prevista=installment(i.info,key);const projetada=prevista!==i.info.atual?` · prevista neste mês: ${prevista}/${i.info.total}`:'';return `<div class="pf-debt-group-item"><div><strong>${esc2(i.item)}</strong><small>parcela cadastrada: ${i.info.atual}/${i.info.total}${projetada}</small></div><div class="value">${moneyBR(i.info.valor)}</div><div class="rest">saldo atual: ${moneyBR(i.info.falta)}</div></div>`}).join('')}</div>
+      <div class="pf-debt-group-items">${g.items.sort((a,b)=>b.info.valor-a.info.valor).map(i=>{const prevista=installment(i.info,key);const projetada=prevista!==i.info.atual?` · prevista neste mês: ${prevista}/${i.info.total}`:'';return `<div class="pf-debt-group-item"><div><strong>${esc2(i.item)}</strong><small>parcela paga no mês-base: ${i.info.atual}/${i.info.total}${projetada}</small></div><div class="value">${moneyBR(i.info.valor)}</div><div class="rest">saldo atual: ${moneyBR(i.info.falta)}</div></div>`}).join('')}</div>
     </div>`}).join('');
   }
   window.toggleDebtMonthGroup=function(groupId){
