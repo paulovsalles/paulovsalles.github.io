@@ -2394,8 +2394,8 @@ function infoParcelamento(base){
   const pago = parcelasPagas * valorParcela;
   const falta = parcelasRestantes * valorParcela;
   const inicio = base.inicio || mesInicioPadrao();
-  const proximoMes = parcelasRestantes > 0 ? addMeses(inicio, parcelaAtual - 1) : '';
-  const fimMes = totalParcelas > 0 ? addMeses(inicio, totalParcelas - 1) : inicio;
+  const proximoMes = parcelasRestantes > 0 ? inicio : '';
+  const fimMes = parcelasRestantes > 0 ? addMeses(inicio, parcelasRestantes - 1) : inicio;
   const progresso = total > 0 ? Math.min(100, pago / total * 100) : 0;
   return { totalParcelas, parcelaAtual, valorParcela, parcelasPagas, parcelasRestantes, total, pago, falta, inicio, proximoMes, fimMes, progresso };
 }
@@ -2447,7 +2447,7 @@ function onDebtTipoChange(){
     if(nomeInput) nomeInput.placeholder = 'ex: Financiamento carro';
     if(credorInput) credorInput.placeholder = 'ex: Banco/loja';
     if(btn) btn.textContent = 'Adicionar dívida';
-    if(help) help.innerHTML = 'Para financiamento, empréstimo ou loja, informe o valor da parcela, total de parcelas e a próxima parcela. O painel calcula o que falta pagar e quando termina.';
+    if(help) help.innerHTML = 'Para financiamento, empréstimo ou loja, informe o valor, a parcela atual e o mês do próximo vencimento. Esse mês será considerado como a próxima cobrança; meses anteriores ficarão como pagos.';
   }
 }
 
@@ -2671,7 +2671,7 @@ function renderComponentesDivida(d){
         <div><label>Valor parcela</label><input id="comp-${d.id}-valor" type="number" min="0" step="0.01" placeholder="200"></div>
         <div><label>Qtd parcelas</label><input id="comp-${d.id}-total" type="number" min="1" step="1" placeholder="10"></div>
         <div><label>Próx parcela</label><input id="comp-${d.id}-atual" type="number" min="1" step="1" placeholder="1"></div>
-        <div><label>Início</label><input id="comp-${d.id}-inicio" type="month" value="${d.inicio || mesInicioPadrao()}"></div>
+        <div><label>Próximo vencimento</label><input id="comp-${d.id}-inicio" type="month" value="${d.inicio || mesInicioPadrao()}"></div>
         <button class="btn btn-sm btn-primary" onclick="addComponenteDivida('${d.id}')">+ Item</button>
       </div>
       <div class="debt-component-summary">Use isso para detalhar um cartão: por exemplo, Nubank = celular + geladeira + compras parceladas. O valor mensal da dívida passa a ser a soma dos itens ativos.</div>
@@ -4080,7 +4080,7 @@ function renderComponentesDivida(d){
       <div><label>Valor parcela</label><input id="comp-${d.id}-valor" type="number" min="0" step="0.01" placeholder="200"></div>
       <div><label>Qtd parcelas</label><input id="comp-${d.id}-total" type="number" min="1" step="1" placeholder="10"></div>
       <div><label>Próx parcela</label><input id="comp-${d.id}-atual" type="number" min="1" step="1" placeholder="1"></div>
-      <div><label>Início</label><input id="comp-${d.id}-inicio" type="month" value="${d.inicio||mesInicioPadrao()}"></div>
+      <div><label>Próximo vencimento</label><input id="comp-${d.id}-inicio" type="month" value="${d.inicio||mesInicioPadrao()}"></div>
       <button class="btn btn-sm btn-primary" onclick="addComponenteDivida('${d.id}')">+ Item</button>
     </div>
   </div>`;
@@ -4196,8 +4196,8 @@ window.addEventListener('DOMContentLoaded',()=>{
       pago,
       falta,
       inicio,
-      proximoMes: restantes > 0 ? addMonths(inicio, pagas) : '',
-      fimMes: total > 0 ? addMonths(inicio, total - 1) : inicio,
+      proximoMes: restantes > 0 ? inicio : '',
+      fimMes: restantes > 0 ? addMonths(inicio, restantes - 1) : inicio,
       progresso: totalValor > 0 ? Math.min(100, (pago / totalValor) * 100) : 0
     };
   }
@@ -4238,7 +4238,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     if (btn) btn.textContent = cartao ? 'Criar cartão' : 'Adicionar dívida';
     if (help) help.innerHTML = cartao
       ? 'Primeiro crie o cartão, por exemplo <strong>Nubank</strong>. Assim que criar, o card aparece logo abaixo para você adicionar as compras parceladas.'
-      : 'Para financiamento, empréstimo ou compra parcelada direta, preencha valor da parcela, total de parcelas e próxima parcela.';
+      : 'Para financiamento, empréstimo ou compra parcelada direta, preencha valor, parcela atual e o mês do próximo vencimento. O mês informado será a primeira cobrança ainda em aberto.';
   };
 
   window.addDivida = function(){
@@ -4420,7 +4420,7 @@ window.addEventListener('DOMContentLoaded',()=>{
         <div><label>Valor parcela</label><input id="comp-${d.id}-valor" type="number" min="0" step="0.01" placeholder="200"></div>
         <div><label>Qtd parcelas</label><input id="comp-${d.id}-total" type="number" min="1" step="1" placeholder="10"></div>
         <div><label>Próx. parcela</label><input id="comp-${d.id}-atual" type="number" min="1" step="1" placeholder="1"></div>
-        <div><label>Início</label><input id="comp-${d.id}-inicio" type="month" value="${d.inicio || defaultMonth()}"></div>
+        <div><label>Próximo vencimento</label><input id="comp-${d.id}-inicio" type="month" value="${d.inicio || defaultMonth()}"></div>
         <button class="btn btn-primary" onclick="addComponenteDivida('${d.id}')">+ Adicionar item</button>
       </div>
     </div>`;
@@ -4610,7 +4610,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     return {
       valorParcela:valor, totalParcelas:total, parcelaAtual:atual, parcelasPagas:pagas,
       parcelasRestantes:restantes, total:valor*total, pago:valor*pagas, falta:valor*restantes,
-      inicio, proximoMes:restantes>0?addMonths(inicio,pagas):'', fimMes:addMonths(inicio,total-1),
+      inicio, proximoMes:restantes>0?inicio:'', fimMes:restantes>0?addMonths(inicio,restantes-1):inicio,
       progresso: valor*total>0 ? Math.min(100,(valor*pagas)/(valor*total)*100) : 0
     };
   }
@@ -6334,7 +6334,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   function injectDebtMonthly(){
     const summary=byId('dividas-summary');if(!summary||byId('pf-debt-monthly'))return;
     summary.insertAdjacentHTML('afterend',`<div class="pf-debt-monthly" id="pf-debt-monthly">
-      <div class="pf-month-head"><div><div class="pf-month-title">📅 Visão mensal das dívidas</div><div class="pf-month-sub">Veja o total geral do mês e quanto cada cartão ou dívida representa.</div></div>
+      <div class="pf-month-head"><div><div class="pf-month-title">📅 Visão mensal das dívidas</div><div class="pf-month-sub">Veja o total geral do mês e quanto cada cartão ou dívida representa. O campo <strong>Próximo vencimento</strong> é o primeiro mês ainda não pago.</div></div>
         <div class="pf-month-nav"><button class="mes-nav" onclick="navegarMesDividas(-1)">‹</button><div class="pf-month-label" id="pf-debt-month-label">—</div><button class="mes-nav" onclick="navegarMesDividas(1)">›</button><button class="btn btn-sm" onclick="irMesAtualDividas()">Mês atual</button></div></div>
       <div class="pf-debt-kpis" id="pf-debt-month-kpis"></div><div class="pf-debt-month-list" id="pf-debt-month-list"></div></div>`);
   }
@@ -6509,14 +6509,19 @@ window.addEventListener('DOMContentLoaded',()=>{
     const restantes=Math.max(0,total-pagas);
     return {total,atual,valor,inicio,restantes,falta:restantes*valor};
   }
+  function monthDiff(fromKey,toKey){
+    const [fy,fm]=String(fromKey).split('-').map(Number);
+    const [ty,tm]=String(toKey).split('-').map(Number);
+    return (ty-fy)*12 + (tm-fm);
+  }
   function due(info,key){
     if(info.restantes<=0||info.valor<=0) return false;
-    for(let p=info.atual;p<=info.total;p++) if(addKey(info.inicio,p-1)===key) return true;
-    return false;
+    const diff=monthDiff(info.inicio,key);
+    return diff>=0 && diff<info.restantes;
   }
   function installment(info,key){
-    for(let p=info.atual;p<=info.total;p++) if(addKey(info.inicio,p-1)===key) return p;
-    return info.atual;
+    const diff=monthDiff(info.inicio,key);
+    return Math.min(info.total,Math.max(info.atual,info.atual+Math.max(0,diff)));
   }
   function collect(){
     const out=[];
@@ -6659,6 +6664,230 @@ window.addEventListener('DOMContentLoaded',()=>{
   document.addEventListener('DOMContentLoaded',()=>{normalizeModeButtons();setTimeout(normalizeModeButtons,150)});
   const observer=new MutationObserver(()=>normalizeModeButtons());
   document.addEventListener('DOMContentLoaded',()=>{const sw=document.querySelector('.mode-switcher');if(sw)observer.observe(sw,{childList:true});});
+})();
+</script>
+
+
+
+<style id="patch-mensal-v5">
+/* CORREÇÃO V5 — mensal editável e isolamento absoluto das guias */
+.mes-item-name-input{
+  flex:1;min-width:0;height:36px;border:1px solid transparent;border-radius:8px;
+  background:transparent;color:var(--tx);font:500 13px 'Inter',sans-serif;padding:0 8px;outline:none;
+}
+.mes-item-name-input:hover,.mes-item-name-input:focus{background:var(--s2);border-color:var(--tbd)}
+.mes-item-actions{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.mes-del-btn{width:30px;height:30px;border:0;border-radius:8px;background:transparent;color:var(--di);cursor:pointer;font-size:17px}
+.mes-del-btn:hover{background:rgba(220,38,38,.1);color:var(--red)}
+.mes-item{min-height:48px}
+@media(max-width:700px){
+  .mes-item{display:grid;grid-template-columns:30px minmax(0,1fr) 32px;gap:7px}
+  .mes-item-val-wrap{grid-column:2/3;width:100%}
+  .mes-item-input{width:100%}
+  .mes-diff{grid-column:2/3;width:max-content}
+  .mes-item-actions{grid-column:3;grid-row:1/4;align-self:center}
+}
+/* Nunca permitir que seções de outros módulos vazem para a guia atual */
+body[data-pf-mode="geral"] #sec-mes-lancamentos,
+body[data-pf-mode="geral"] #sec-mes-resumo,
+body[data-pf-mode="geral"] #sec-mes-anual,
+body[data-pf-mode="geral"] #sec-dash-mensal,
+body[data-pf-mode="geral"] [id^="sec-livre-"],
+body[data-pf-mode="geral"] [id^="sec-saude-"]{display:none!important}
+body[data-pf-mode="mensal"] #sec-renda,
+body[data-pf-mode="mensal"] #sec-despesas,
+body[data-pf-mode="mensal"] #sec-dividas,
+body[data-pf-mode="mensal"] #sec-dizimo,
+body[data-pf-mode="mensal"] #sec-plano,
+body[data-pf-mode="mensal"] #sec-metas,
+body[data-pf-mode="mensal"] #sec-investir,
+body[data-pf-mode="mensal"] #sec-dashboard,
+body[data-pf-mode="mensal"] #sec-simulacao,
+body[data-pf-mode="mensal"] [id^="sec-livre-"],
+body[data-pf-mode="mensal"] [id^="sec-saude-"]{display:none!important}
+body[data-pf-mode="livre"] #sec-renda,
+body[data-pf-mode="livre"] #sec-despesas,
+body[data-pf-mode="livre"] #sec-dividas,
+body[data-pf-mode="livre"] #sec-dizimo,
+body[data-pf-mode="livre"] #sec-plano,
+body[data-pf-mode="livre"] #sec-metas,
+body[data-pf-mode="livre"] #sec-investir,
+body[data-pf-mode="livre"] #sec-dashboard,
+body[data-pf-mode="livre"] #sec-simulacao,
+body[data-pf-mode="livre"] [id^="sec-mes-"],
+body[data-pf-mode="livre"] #sec-dash-mensal,
+body[data-pf-mode="livre"] [id^="sec-saude-"]{display:none!important}
+body[data-pf-mode="saude"] .page-section:not([id^="sec-saude-"]){display:none!important}
+</style>
+
+<script id="patch-mensal-v5-script">
+(function(){
+  const mapTipo={receita:'receitas',fixa:'fixas',variavel:'variaveis',doacao:'doacoes',inesperada:'inesperadas'};
+  const iconTipo={receita:'💰',fixa:'📌',variavel:'🔄',doacao:'🙏',inesperada:'⚡'};
+  const nomeNovo={receita:'Nova receita',fixa:'Nova despesa fixa',variavel:'Nova despesa variável',doacao:'Nova doação',inesperada:'Novo gasto inesperado'};
+  let monthlySaveTimer=null;
+
+  function scheduleMonthlySave(delay=900){
+    clearTimeout(monthlySaveTimer);
+    monthlySaveTimer=setTimeout(()=>{
+      if(typeof window.salvarFirestore==='function') window.salvarFirestore();
+    },delay);
+  }
+  window.agendarSalvarMensal=scheduleMonthlySave;
+
+  function currentKey(){ return mesKey(anoAtual,mesAtual); }
+  function currentMonth(){ return getMes(anoAtual,mesAtual); }
+
+  window.renderMesList=function(elId,items,tipo,cor){
+    const el=document.getElementById(elId); if(!el) return;
+    const key=currentKey();
+    if(!Array.isArray(items)||!items.length){
+      el.innerHTML='<div style="padding:12px 4px;color:var(--di);font-size:12px">Nenhum lançamento neste grupo.</div>';
+      return;
+    }
+    el.innerHTML=items.map((item,idx)=>{
+      const diff=item.planejado!=null?(Number(item.val)||0)-(Number(item.planejado)||0):null;
+      const diffClass=diff==null?'zero':(tipo==='receita'?(diff>0?'pos':diff<0?'neg':'zero'):(diff>0?'neg':diff<0?'pos':'zero'));
+      const diffHTML=diff!=null?`<span class="mes-diff ${diffClass}">${diff>0?'+':''}${fmt(Math.abs(diff))}</span>`:'';
+      const planHTML=item.planejado!=null?`<span class="mes-item-plan">prev: ${fmt(item.planejado)}</span>`:'';
+      return `<div class="mes-item">
+        <div class="mes-item-icon" style="background:rgba(127,127,127,.1)">${item.icon||iconTipo[tipo]||'📦'}</div>
+        <div style="flex:1;min-width:0">
+          <input class="mes-item-name-input" type="text" value="${typeof escapeAttr==='function'?escapeAttr(item.nome||''):String(item.nome||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" placeholder="Nome do lançamento"
+            oninput="updateMesItemName('${key}','${tipo}',${idx},this.value)">
+          ${planHTML}
+        </div>
+        ${diffHTML}
+        <div class="mes-item-val-wrap">
+          <span class="mes-item-prefix">R$</span>
+          <input class="mes-item-input" type="number" step="0.01" value="${Number(item.val)||''}" placeholder="0" style="color:${cor}"
+            oninput="updateMesItem('${key}','${tipo}',${idx},this.value)">
+        </div>
+        <div class="mes-item-actions"><button class="mes-del-btn" onclick="delMesItem('${key}','${tipo}',${idx})" title="Excluir">×</button></div>
+      </div>`;
+    }).join('');
+  };
+
+  window.updateMesItemName=function(key,tipo,idx,value){
+    const list=mesesData[key]?.[mapTipo[tipo]];
+    if(!list||!list[idx]) return;
+    list[idx].nome=value;
+    scheduleMonthlySave();
+  };
+
+  const oldUpdate=window.updateMesItem;
+  window.updateMesItem=function(key,tipo,idx,val){
+    const list=mesesData[key]?.[mapTipo[tipo]];
+    if(!list||!list[idx]) return;
+    list[idx].val=parseFloat(val)||0;
+    // atualiza apenas totais, sem reconstruir os inputs e sem tirar o foco
+    const mes=mesesData[key];
+    const totals={
+      rec:(mes.receitas||[]).reduce((s,r)=>s+(Number(r.val)||0),0),
+      fix:(mes.fixas||[]).reduce((s,r)=>s+(Number(r.val)||0),0),
+      vari:(mes.variaveis||[]).reduce((s,r)=>s+(Number(r.val)||0),0),
+      doa:(mes.doacoes||[]).reduce((s,r)=>s+(Number(r.val)||0),0),
+      ine:(mes.inesperadas||[]).reduce((s,r)=>s+(Number(r.val)||0),0)
+    };
+    const desp=totals.fix+totals.vari+totals.doa+totals.ine, saldo=totals.rec-desp;
+    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=fmt(v)};
+    set('total-receitas-mes',totals.rec);set('total-fixas-mes',totals.fix);set('total-variaveis-mes',totals.vari);set('total-doacoes-mes',totals.doa);set('total-inesperadas-mes',totals.ine);
+    const b=document.getElementById('mes-saldo-badge');if(b){b.textContent=(saldo>=0?'+':'')+fmt(saldo);b.className='mes-status '+(saldo>0?'ok':saldo===0?'warn':'bad')}
+    const stats=document.getElementById('mes-stats-rapido');
+    if(stats) stats.innerHTML=`<div class="stat-card"><div class="stat-label">Receitas</div><div class="stat-value" style="color:var(--green)">${fmt(totals.rec)}</div></div><div class="stat-card"><div class="stat-label">Despesas</div><div class="stat-value" style="color:var(--red)">${fmt(desp)}</div></div><div class="stat-card"><div class="stat-label">Doações</div><div class="stat-value" style="color:var(--purple)">${fmt(totals.doa)}</div></div><div class="stat-card"><div class="stat-label">Saldo</div><div class="stat-value" style="color:${saldo>=0?'var(--green)':'var(--red)'}">${fmt(saldo)}</div></div>`;
+    scheduleMonthlySave();
+  };
+
+  window.addMesItem=function(tipo){
+    const mes=currentMonth(); const listKey=mapTipo[tipo];
+    if(!listKey||!Array.isArray(mes[listKey])) return;
+    mes.nextId=Number(mes.nextId)||1;
+    mes[listKey].push({id:'mx'+Date.now()+mes.nextId++,nome:nomeNovo[tipo]||'Novo lançamento',val:0,planejado:null,icon:iconTipo[tipo]||'📦'});
+    renderLancamentos();
+    scheduleMonthlySave();
+    setTimeout(()=>{
+      const containerId={receita:'mes-receitas-list',fixa:'mes-fixas-list',variavel:'mes-variaveis-list',doacao:'mes-doacoes-list',inesperada:'mes-inesperadas-list'}[tipo];
+      const inputs=document.querySelectorAll(`#${containerId} .mes-item-name-input`); const last=inputs[inputs.length-1]; if(last){last.focus();last.select()}
+    },30);
+  };
+
+  window.delMesItem=function(key,tipo,idx){
+    const list=mesesData[key]?.[mapTipo[tipo]]; if(!list) return;
+    list.splice(idx,1); renderLancamentos(); scheduleMonthlySave();
+  };
+
+  function ensureMonthlyButtons(){
+    const specs=[
+      ['body-fixas','fixa','Adicionar despesa fixa'],
+      ['body-variaveis','variavel','Adicionar despesa variável'],
+      ['body-doacoes-mes','doacao','Adicionar doação']
+    ];
+    specs.forEach(([bodyId,tipo,label])=>{
+      const body=document.getElementById(bodyId); if(!body||body.querySelector(`[data-add-monthly="${tipo}"]`)) return;
+      const btn=document.createElement('button');btn.className='add-mes-item';btn.dataset.addMonthly=tipo;btn.innerHTML=`<span>+</span> ${label}`;btn.onclick=()=>window.addMesItem(tipo);body.appendChild(btn);
+    });
+  }
+
+  const originalRenderLancamentos=window.renderLancamentos;
+  window.renderLancamentos=function(){
+    originalRenderLancamentos();
+    ensureMonthlyButtons();
+    // re-renderiza com os campos editáveis desta correção
+    const mes=currentMonth();
+    window.renderMesList('mes-receitas-list',mes.receitas,'receita','var(--green)');
+    window.renderMesList('mes-fixas-list',mes.fixas,'fixa','var(--red)');
+    window.renderMesList('mes-variaveis-list',mes.variaveis,'variavel','var(--amber)');
+    window.renderMesList('mes-doacoes-list',mes.doacoes,'doacao','var(--purple)');
+    window.renderMesList('mes-inesperadas-list',mes.inesperadas,'inesperada','var(--coral)');
+  };
+
+  function isolate(mode,sectionId){
+    document.body.dataset.pfMode=mode;
+    document.querySelectorAll('.page-section').forEach(s=>{s.classList.remove('active');s.style.display='none'});
+    const sec=document.getElementById(sectionId);if(sec){sec.classList.add('active');sec.style.display='block'}
+  }
+
+  const prevSetMode=window.setMode;
+  window.setMode=function(mode){
+    document.body.dataset.pfMode=mode;
+    if(typeof prevSetMode==='function') prevSetMode(mode);
+    // segunda passagem para impedir seção de treino ou outra guia junto da atual
+    setTimeout(()=>{
+      if(mode==='mensal'){
+        const active=[...document.querySelectorAll('#nav-mensal .nav-item.active')][0]?.id||'nav-lancamentos';
+        const target=active.includes('resumo')?'sec-mes-resumo':active.includes('anual')?'sec-mes-anual':active.includes('dash')?'sec-dash-mensal':'sec-mes-lancamentos';
+        isolate('mensal',target);
+      } else if(mode==='saude'){
+        const active=[...document.querySelectorAll('#nav-saude .nav-item.active')][0]?.id?.replace('nav-','')||'saude-painel';
+        isolate('saude','sec-'+active);
+      }
+    },0);
+  };
+
+  const prevGoToMensal=window.goToMensal;
+  window.goToMensal=function(id){
+    document.body.dataset.pfMode='mensal';
+    if(typeof prevGoToMensal==='function') prevGoToMensal(id);
+    isolate('mensal','sec-'+id);
+    document.querySelectorAll('#nav-mensal .nav-item').forEach(n=>n.classList.remove('active'));
+    const nav=document.getElementById('nav-'+id)||document.getElementById('nav-'+id.replace('mes-',''));
+    if(nav)nav.classList.add('active');
+    if(id==='mes-lancamentos')window.renderLancamentos();
+    if(id==='mes-resumo'&&typeof renderResumoMes==='function')renderResumoMes();
+    if(id==='mes-anual'&&typeof renderAnual==='function')renderAnual();
+  };
+
+  const prevGoToSaude=window.goToSaude;
+  window.goToSaude=function(id){
+    document.body.dataset.pfMode='saude';
+    if(typeof prevGoToSaude==='function')prevGoToSaude(id);
+    isolate('saude','sec-'+id);
+  };
+
+  document.addEventListener('DOMContentLoaded',()=>{
+    document.body.dataset.pfMode=window.appMode||'geral';
+    ensureMonthlyButtons();
+  });
 })();
 </script>
 
