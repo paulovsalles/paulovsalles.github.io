@@ -7074,3 +7074,135 @@ body[data-pf-mode="saude"] .page-section:not([id^="sec-saude-"]){display:none!im
 })();
 </script>
 </body></html>
+
+<!-- PATCH V11: mobile responsivo SEM alterar a versão web/desktop -->
+<style id="pf-v11-mobile-only">
+/* Tudo aqui só vale para celular/tablet pequeno. No desktop, o visual icon-only permanece igual. */
+@media (max-width:768px){
+  html,body{max-width:100%;overflow-x:hidden}
+  body{font-size:14px;-webkit-text-size-adjust:100%;padding-bottom:112px}
+
+  #app-shell,.app{min-height:100vh;width:100%}
+  .main{margin-left:0!important;width:100%;min-width:0;padding-bottom:112px}
+  .content{padding:16px!important;max-width:none!important;width:100%;overflow-x:hidden}
+
+  /* Topbar compacta e rolável */
+  .topbar{
+    left:0;right:0;width:100%;height:auto;min-height:52px;
+    padding:8px 12px!important;gap:8px;align-items:center;
+    overflow-x:auto;overflow-y:hidden;justify-content:flex-start;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none;
+  }
+  .topbar::-webkit-scrollbar{display:none}
+  .topbar-title{flex:0 0 auto;font-size:13px;white-space:nowrap;margin-right:4px}
+  .topbar-actions{display:flex;flex-wrap:nowrap;gap:6px;min-width:max-content}
+  .topbar .btn,.topbar .theme-toggle{flex:0 0 auto}
+  .theme-toggle{padding:4px 9px 4px 7px}
+  .theme-toggle span{font-size:11px}
+
+  /* Sidebar vira barra inferior: modo em cima, guias embaixo */
+  .sidebar{
+    position:fixed!important;left:0!important;right:0!important;bottom:0!important;top:auto!important;
+    width:100%!important;height:106px!important;z-index:300!important;
+    border-right:none!important;border-top:1px solid var(--bd)!important;
+    background:rgba(255,255,255,.96)!important;backdrop-filter:blur(14px)!important;
+    display:flex!important;flex-direction:column!important;padding:6px 8px 7px!important;
+  }
+  body.dark .sidebar{background:rgba(19,22,31,.96)!important}
+  .sidebar-logo,.user-card,.sidebar-footer{display:none!important}
+
+  .sidebar > div[style*='padding:10px 10px 4px']{display:block!important;padding:0!important;margin:0 0 5px!important;order:1!important}
+  .mode-switcher{
+    display:flex!important;gap:6px!important;padding:4px!important;border-radius:14px!important;
+    overflow-x:auto!important;background:var(--s2)!important;scrollbar-width:none!important;
+  }
+  .mode-switcher::-webkit-scrollbar{display:none}
+  .mode-btn{
+    min-width:54px!important;height:34px!important;padding:0 9px!important;
+    display:flex!important;align-items:center!important;justify-content:center!important;gap:4px!important;
+    border-radius:10px!important;font-size:0!important;flex:1 0 54px!important;
+  }
+  .mode-btn .mode-ico{font-size:17px!important;line-height:1!important}
+  .mode-btn .mode-label{display:none!important}
+
+  .nav{
+    order:2!important;display:flex!important;flex-direction:row!important;align-items:center!important;
+    gap:7px!important;padding:0!important;overflow-x:auto!important;overflow-y:hidden!important;
+    width:100%!important;scrollbar-width:none!important;min-height:50px!important;
+  }
+  .nav::-webkit-scrollbar{display:none}
+  .nav[style*="display:none"]{display:none!important}
+  .nav > div[style*='height:1px']{display:none!important}
+  .nav-item{
+    width:48px!important;height:48px!important;min-width:48px!important;padding:0!important;
+    border-radius:14px!important;display:flex!important;align-items:center!important;justify-content:center!important;
+    position:relative!important;gap:0!important;
+  }
+  .nav-item .nav-icon{font-size:21px!important;width:auto!important;line-height:1!important}
+  .nav-item > span:not(.nav-icon):not(.nav-status){display:none!important}
+  .nav-status{position:absolute!important;right:7px!important;top:6px!important;width:6px!important;height:6px!important;margin:0!important;border:1px solid var(--s1)!important}
+  .nav-item::after{display:none!important}
+
+  /* Tipografia e blocos */
+  .section-header{margin-bottom:16px}
+  .section-eyebrow{font-size:10px}
+  .section-title{font-size:22px;line-height:1.2}
+  .section-desc{font-size:13px;line-height:1.45}
+  .card,.stat-card,.mes-block,.debt-form-card,.debt-filter-card,.debt-items-list,.debt-card{border-radius:16px}
+  .stats-grid,.debt-summary-grid,.db-grid,.resumo-ano-grid{grid-template-columns:1fr 1fr!important;gap:9px!important}
+  .stat-card{padding:12px 13px}.stat-value{font-size:18px}
+
+  /* Formulários mais fáceis de tocar */
+  .form-grid,.form-grid-2,.debt-step-box,.debt-form-grid,.debt-form-grid-clean,.debt-filter-grid,
+  .debt-card-top,.debt-edit-grid,.debt-add-component,.debt-component-row,
+  .livre-grid,.db-2col,.db-3col,.goal-grid{grid-template-columns:1fr!important}
+  .input-wrap,.expense-val-wrap,.mes-item-val-wrap{min-height:44px}
+  .form-input,.debt-field input,.debt-field select,.debt-filter-field input,.debt-filter-field select,
+  .login-input,.expense-val-input,.mes-item-input{min-height:42px;font-size:16px!important}
+  .btn{min-height:38px}
+  .btn-sm{min-height:34px;padding:6px 10px}
+
+  /* Renda e despesas */
+  #rendas-list > div,.expense-item{
+    display:grid!important;grid-template-columns:30px minmax(0,1fr) auto!important;
+    gap:8px!important;align-items:center!important;padding:9px 10px!important;
+  }
+  #rendas-list input[type='text'],.expense-name-input{min-width:0;font-size:14px!important}
+  #rendas-list div[style*='background:var(--s3)']{grid-column:2 / span 1;width:100%;margin-top:2px}
+  #rendas-list div[style*='background:var(--s3)'] input{width:100%!important;font-size:16px!important;min-height:38px}
+  #rendas-list button[title='Remover']{grid-column:3;grid-row:1 / span 2}
+  .expense-item .cat-select{grid-column:2;min-height:36px;width:100%;font-size:12px}
+  .expense-val-wrap{grid-column:2;width:100%}.expense-val-input{width:100%!important}.del-btn{grid-column:3;grid-row:1 / span 3}
+
+  /* Mensal */
+  .mes-selector{gap:8px;margin-bottom:14px}.mes-label{font-size:15px}.mes-status{display:none}
+  .mes-block-header{padding:12px 14px}.mes-block-body{padding:10px 12px}
+  .mes-item{display:grid!important;grid-template-columns:28px minmax(0,1fr) auto!important;gap:8px!important;align-items:center!important}
+  .mes-item-val-wrap{grid-column:2 / -1;width:100%}.mes-item-input{width:100%!important}.mes-diff{grid-column:2 / -1;width:max-content}
+
+  /* Dívidas */
+  .pf-debt-filterline{justify-content:stretch!important}.pf-debt-filterline label,.pf-debt-filterline select{width:100%!important;min-width:0!important}
+  .pf-debt-group-head,.pf-debt-group-item,.debt-item-row{grid-template-columns:1fr!important}
+  .pf-debt-group-total,.pf-debt-group-count,.pf-debt-group-item .value,.pf-debt-group-item .rest,.debt-item-money{text-align:left!important}
+  .debt-items-head{align-items:flex-start;flex-direction:column}.debt-parent-badge{width:max-content;max-width:100%}
+
+  /* Tabelas e dashboards com rolagem horizontal controlada */
+  .card[style*='overflow:hidden'],.db-section,.debt-items-list{max-width:100%;overflow-x:auto}
+  .plan-table{min-width:560px}
+  .db-bar-label{width:88px}.db-bar-val{width:64px}
+
+  /* Login */
+  .login-card{max-width:100%;padding:30px 22px;border-radius:22px}
+}
+
+@media (max-width:430px){
+  .content{padding:13px!important}
+  .stats-grid,.debt-summary-grid,.db-grid,.resumo-ano-grid{grid-template-columns:1fr!important}
+  .section-title{font-size:21px}
+  .topbar .btn-sm{font-size:11px;padding:5px 9px}
+  .nav-item{width:45px!important;min-width:45px!important;height:46px!important}
+  .nav-item .nav-icon{font-size:20px!important}
+  .sidebar{height:104px!important}
+  body,.main{padding-bottom:110px!important}
+}
+</style>
