@@ -7084,6 +7084,256 @@ body[data-pf-mode="saude"] .page-section:not([id^="sec-saude-"]){display:none!im
   document.addEventListener('DOMContentLoaded',()=>setTimeout(addHelpNotes,150));
 })();
 </script>
+
+<!-- PATCH V12: filtro por aluno no painel financeiro -->
+<style id="pf-aluno-financeiro-style">
+  .pf-aluno-card{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:15px 16px;margin-bottom:14px}
+  .pf-aluno-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+  .pf-aluno-title{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:800;color:var(--tx)}
+  .pf-aluno-sub{font-size:12px;color:var(--mu);line-height:1.45;margin-top:2px;max-width:620px}
+  .pf-aluno-grid{display:grid;grid-template-columns:minmax(220px,1fr) minmax(220px,1fr);gap:10px;align-items:end}
+  .pf-aluno-field{display:flex;flex-direction:column;gap:5px;min-width:0}
+  .pf-aluno-field label{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--di)}
+  .pf-aluno-field input,.pf-aluno-field select,.pf-aluno-select{height:38px;border:1px solid var(--bd);background:var(--s2);color:var(--tx);border-radius:9px;padding:0 10px;font-family:'Inter',sans-serif;font-size:13px;outline:none;min-width:0;width:100%}
+  .pf-aluno-field input:focus,.pf-aluno-field select:focus,.pf-aluno-select:focus{border-color:var(--tbd)}
+  .pf-aluno-add{display:grid;grid-template-columns:1fr auto;gap:8px}
+  .pf-aluno-list{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+  .pf-aluno-chip{display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--bd);border-radius:999px;padding:5px 7px 5px 10px}
+  .pf-aluno-chip input{background:transparent;border:none;outline:none;color:var(--tx);font-size:12px;min-width:90px;max-width:150px;font-family:'Inter',sans-serif}
+  .pf-aluno-chip button{border:none;background:transparent;color:var(--di);cursor:pointer;font-size:14px;padding:0 3px}.pf-aluno-chip button:hover{color:var(--red)}
+  .pf-aluno-mini-filter{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:12px 14px;margin-bottom:12px;display:grid;grid-template-columns:minmax(220px,1fr) auto;gap:10px;align-items:end}
+  .pf-aluno-badge{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--tbd);background:var(--tbg);color:var(--teal);border-radius:999px;padding:3px 8px;font-size:10px;font-weight:800;max-width:max-content}
+  .pf-exp-empty{border:1px dashed var(--bd);border-radius:12px;padding:18px;text-align:center;color:var(--mu);font-size:13px;background:var(--s1)}
+  .expense-item .pf-aluno-exp-wrap{min-width:150px;flex:0 0 160px}.expense-item .pf-aluno-select{height:31px;font-size:11px;padding:0 7px;background:var(--s3)}
+  .debt-edit-grid.pf-debt-edit-grid{grid-template-columns:1.15fr 130px 1fr 120px 90px 130px 155px}
+  .debt-add-component-final.pf-debt-add-component-final{grid-template-columns:minmax(150px,1.3fr) 110px 90px 90px 125px 155px auto}
+  .debt-comp-line.pf-debt-comp-line{grid-template-columns:minmax(150px,1.3fr) 110px 80px 80px 125px 155px 32px}
+  @media(max-width:980px){.pf-aluno-grid,.pf-aluno-mini-filter{grid-template-columns:1fr}.debt-edit-grid.pf-debt-edit-grid,.debt-add-component-final.pf-debt-add-component-final,.debt-comp-line.pf-debt-comp-line{grid-template-columns:1fr 1fr}.debt-add-component-final.pf-debt-add-component-final button{grid-column:1/-1}.expense-item .pf-aluno-exp-wrap{grid-column:2;width:100%;flex:auto}}
+  @media(max-width:640px){.pf-aluno-add{grid-template-columns:1fr}.debt-edit-grid.pf-debt-edit-grid,.debt-add-component-final.pf-debt-add-component-final,.debt-comp-line.pf-debt-comp-line{grid-template-columns:1fr!important}.expense-item .pf-aluno-exp-wrap{grid-column:2 / -1}}
+</style>
+<script id="pf-aluno-financeiro-js">
+(function(){
+  const ALL='todos', GERAL='geral';
+  let debtMonthDate = new Date();
+  const meses=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+  function root(){
+    try{ if(window.state) return window.state; }catch(e){}
+    try{ if(typeof state !== 'undefined') return state; }catch(e){}
+    window.state = window.state || {};
+    return window.state;
+  }
+  function ensure(){
+    const s=root();
+    if(!Array.isArray(s.alunosFinanceiro)) s.alunosFinanceiro=[];
+    if(!s.nextAlunoFinanceiroId) s.nextAlunoFinanceiroId=s.alunosFinanceiro.length+1;
+    if(!Array.isArray(s.expenses)) s.expenses=[];
+    if(!Array.isArray(s.dividasParceladas)) s.dividasParceladas=[];
+    try{window.state=s}catch(e){}
+    return s;
+  }
+  function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
+  function attr(v){return esc(v).replace(/`/g,'&#096;');}
+  function money(v){return (typeof fmt==='function')?fmt(Number(v)||0):((Number(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}));}
+  function num(v){return (typeof valorNumero==='function')?valorNumero(v):(Number(String(v??'').replace(',','.'))||0);}
+  function tipoNormal(tipo){const t=String(tipo||'').toLowerCase();if(t.includes('cart'))return'Cartão';if(t.includes('financ'))return'Financiamento';if(t.includes('empr'))return'Empréstimo';if(t.includes('loja'))return'Loja';return tipo||'Outros';}
+  function isCartao(d){return tipoNormal(d?.tipo)==='Cartão';}
+  function defaultMonth(){if(typeof mesInicioPadrao==='function')return mesInicioPadrao();const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}
+  function addMonths(key,qtd){const [y,m]=String(key||defaultMonth()).split('-').map(Number);const d=new Date(y||new Date().getFullYear(),(m||1)-1+Number(qtd||0),1);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}
+  function monthName(key){if(!key)return'—';const [y,m]=String(key).split('-').map(Number);return `${meses[(m||1)-1]||m} ${y||''}`.trim();}
+  function monthDiff(a,b){const [ay,am]=String(a).split('-').map(Number),[by,bm]=String(b).split('-').map(Number);return ((by||0)-(ay||0))*12+((bm||1)-(am||1));}
+  function cleanAluno(v){v=String(v??'');return(!v||v===GERAL||v===ALL)?'':v;}
+  function filtro(){return window.__pfAlunoFinanceiroFiltro || ALL;}
+  function alunoNome(id){id=cleanAluno(id);if(!id)return'Financeiro geral';return ensure().alunosFinanceiro.find(a=>String(a.id)===String(id))?.nome||'Aluno';}
+  function alunoBadge(id){return `<span class="pf-aluno-badge">👤 ${esc(alunoNome(id))}</span>`;}
+  function componentAluno(c,d){return cleanAluno(c?.alunoId || d?.alunoId || '');}
+  function matchAluno(id,fil=filtro()){
+    id=cleanAluno(id);
+    if(fil===ALL)return true;
+    if(fil===GERAL)return !id;
+    return id===fil;
+  }
+  function options(selected='',withAll=false){
+    selected = withAll ? (selected||ALL) : (cleanAluno(selected)||GERAL);
+    const alunos=ensure().alunosFinanceiro;
+    let html=withAll?`<option value="${ALL}" ${selected===ALL?'selected':''}>Todos os alunos</option>`:'';
+    html+=`<option value="${GERAL}" ${selected===GERAL?'selected':''}>Financeiro geral</option>`;
+    html+=alunos.map(a=>`<option value="${attr(a.id)}" ${String(selected)===String(a.id)?'selected':''}>${esc(a.nome)}</option>`).join('');
+    return html;
+  }
+  function currentDefaultAluno(){const f=filtro();return (f&&f!==ALL&&f!==GERAL)?f:'';}
+  function saveSoon(){if(window.agendarAutoSave)window.agendarAutoSave();else if(window.salvarFirestore)setTimeout(()=>window.salvarFirestore(),60000);}
+
+  function injectAlunoUI(){
+    ensure();
+    const secD=document.getElementById('sec-dividas');
+    const summary=document.getElementById('dividas-summary');
+    if(secD&&summary&&!document.getElementById('pf-aluno-financeiro-card')){
+      summary.insertAdjacentHTML('beforebegin',`<div class="pf-aluno-card" id="pf-aluno-financeiro-card">
+        <div class="pf-aluno-head"><div><div class="pf-aluno-title">👥 Alunos no financeiro</div><div class="pf-aluno-sub">Cadastre os alunos uma vez e vincule despesas, cartões, dívidas e itens parcelados. Use o filtro para enxergar um aluno específico ou apenas o financeiro geral.</div></div></div>
+        <div class="pf-aluno-grid"><div class="pf-aluno-field"><label>Filtrar painel financeiro</label><select class="pf-aluno-filter-select" id="pf-aluno-filter-dividas" onchange="setFiltroAlunoFinanceiro(this.value)"></select></div><div class="pf-aluno-field"><label>Novo aluno</label><div class="pf-aluno-add"><input id="pf-aluno-novo" placeholder="Nome do aluno" onkeydown="if(event.key==='Enter'){event.preventDefault();addAlunoFinanceiro()}"><button class="btn btn-primary" onclick="addAlunoFinanceiro()">Adicionar</button></div></div></div><div class="pf-aluno-list" id="pf-aluno-list"></div>
+      </div>`);
+    }
+    const secExp=document.getElementById('sec-despesas');
+    const expContainer=document.getElementById('expense-categories');
+    if(secExp&&expContainer&&!document.getElementById('pf-aluno-despesas-filter')){
+      expContainer.insertAdjacentHTML('beforebegin',`<div class="pf-aluno-mini-filter" id="pf-aluno-despesas-filter"><div class="pf-aluno-field"><label>Filtrar despesas por aluno</label><select class="pf-aluno-filter-select" id="pf-aluno-filter-despesas" onchange="setFiltroAlunoFinanceiro(this.value)"></select></div><button class="btn" onclick="setFiltroAlunoFinanceiro('${ALL}')">Ver todos</button></div>`);
+    }
+    const step=document.querySelector('#sec-dividas .debt-step-box');
+    if(step&&!document.getElementById('pf-debt-aluno-field')){
+      step.insertAdjacentHTML('beforeend',`<div class="debt-field" id="pf-debt-aluno-field"><label>Vincular a aluno</label><select id="debt-aluno" class="pf-aluno-select"></select></div>`);
+    }
+    renderAlunoUIOnly();
+  }
+  function renderAlunoUIOnly(){
+    const s=ensure();
+    document.querySelectorAll('.pf-aluno-filter-select').forEach(sel=>{const cur=filtro();sel.innerHTML=options(cur,true);sel.value=cur;});
+    const debtAluno=document.getElementById('debt-aluno'); if(debtAluno) debtAluno.innerHTML=options(currentDefaultAluno(),false);
+    const list=document.getElementById('pf-aluno-list');
+    if(list){
+      list.innerHTML=s.alunosFinanceiro.length?s.alunosFinanceiro.map(a=>`<div class="pf-aluno-chip"><span>👤</span><input value="${attr(a.nome)}" onchange="renomearAlunoFinanceiro('${attr(a.id)}',this.value)"><button title="Excluir aluno" onclick="excluirAlunoFinanceiro('${attr(a.id)}')">×</button></div>`).join(''):'<div style="font-size:12px;color:var(--mu)">Nenhum aluno cadastrado ainda. Adicione o primeiro pelo campo acima.</div>';
+    }
+    document.querySelectorAll('[data-aluno-select]').forEach(sel=>{const cur=sel.getAttribute('data-current')||'';sel.innerHTML=options(cur,false);sel.value=cleanAluno(cur)||GERAL;});
+  }
+
+  window.setFiltroAlunoFinanceiro=function(val){window.__pfAlunoFinanceiroFiltro=val||ALL;renderAlunoUIOnly();window.renderExpenses?.();window.renderDividas?.();};
+  window.addAlunoFinanceiro=function(){
+    const s=ensure(), input=document.getElementById('pf-aluno-novo');
+    const nome=(input?.value||'').trim();
+    if(!nome){window.showToast?.('Digite o nome do aluno.',true);input?.focus();return;}
+    const aluno={id:'a'+Date.now()+Math.floor(Math.random()*1000),nome};
+    s.alunosFinanceiro.push(aluno);s.nextAlunoFinanceiroId++;
+    if(input)input.value='';window.__pfAlunoFinanceiroFiltro=aluno.id;
+    renderAlunoUIOnly();window.renderExpenses?.();window.renderDividas?.();saveSoon();window.showToast?.('Aluno adicionado ao financeiro.');
+  };
+  window.renomearAlunoFinanceiro=function(id,nome){const a=ensure().alunosFinanceiro.find(x=>String(x.id)===String(id));if(a){a.nome=(nome||'').trim()||'Aluno';renderAlunoUIOnly();window.renderExpenses?.();window.renderDividas?.();saveSoon();}};
+  window.excluirAlunoFinanceiro=function(id){
+    const s=ensure(), a=s.alunosFinanceiro.find(x=>String(x.id)===String(id));
+    if(!a)return;
+    if(!confirm(`Remover ${a.nome} do filtro? Os lançamentos dele voltarão para Financeiro geral.`))return;
+    s.alunosFinanceiro=s.alunosFinanceiro.filter(x=>String(x.id)!==String(id));
+    s.expenses.forEach(e=>{if(String(e.alunoId||'')===String(id))e.alunoId='';});
+    s.dividasParceladas.forEach(d=>{if(String(d.alunoId||'')===String(id))d.alunoId='';(d.componentes||[]).forEach(c=>{if(String(c.alunoId||'')===String(id))c.alunoId='';});});
+    if(filtro()===id)window.__pfAlunoFinanceiroFiltro=ALL;
+    renderAlunoUIOnly();window.renderExpenses?.();window.renderDividas?.();saveSoon();
+  };
+
+  /* Persistência */
+  const oldCollect=window.coletarDados;
+  if(typeof oldCollect==='function') window.coletarDados=function(){const s=ensure();const base=oldCollect.apply(this,arguments)||{};return{...base,alunosFinanceiro:s.alunosFinanceiro,nextAlunoFinanceiroId:s.nextAlunoFinanceiroId};};
+  const oldApply=window.applyData;
+  if(typeof oldApply==='function') window.applyData=function(d){oldApply.apply(this,arguments);const s=ensure();if(Array.isArray(d?.alunosFinanceiro))s.alunosFinanceiro=d.alunosFinanceiro;if(d?.nextAlunoFinanceiroId)s.nextAlunoFinanceiroId=d.nextAlunoFinanceiroId;injectAlunoUI();window.renderExpenses?.();window.renderDividas?.();};
+
+  /* Despesas com vínculo por aluno */
+  window.updateExpAluno=function(id,val){const e=ensure().expenses.find(x=>String(x.id)===String(id));if(!e)return;e.alunoId=cleanAluno(val);window.renderExpenses?.();if(typeof calcular==='function')calcular();saveSoon();};
+  const oldAddExpense=window.addExpense;
+  window.addExpense=function(){const s=ensure();const cats=(typeof ICONS!=='undefined')?ICONS:{};const id=s.nextId||Date.now();s.expenses.push({id,name:'Nova despesa',cat:'outros',val:0,icon:cats.outros||'📦',alunoId:currentDefaultAluno()});s.nextId=Number(id)+1;window.renderExpenses?.();const l=document.querySelector('.expense-item:last-child .expense-name-input');if(l){l.focus();l.select();}saveSoon();};
+  window.renderExpenses=function(){
+    injectAlunoUI();
+    const s=ensure();
+    const container=document.getElementById('expense-categories'); if(!container)return;
+    const cats=(typeof CATS!=='undefined')?CATS:{outros:{label:'Outros',color:'var(--teal)',bg:'var(--tbg)'}};
+    const icons=(typeof ICONS!=='undefined')?ICONS:{};
+    const fil=filtro();
+    const data=s.expenses.filter(e=>matchAluno(e.alunoId,fil));
+    const grouped={}; data.forEach(e=>{const cat=e.cat||'outros';if(!grouped[cat])grouped[cat]=[];grouped[cat].push(e);});
+    let html='';
+    Object.keys(cats).forEach(cat=>{
+      const items=grouped[cat]||[]; if(!items.length)return;
+      const total=items.reduce((acc,i)=>acc+(Number(i.val)||0),0);
+      html+=`<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--di)">${esc(cats[cat].label||cat)}</div><div style="font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;color:${cats[cat].color||'var(--teal)'}">${money(total)}</div></div><div class="expense-list">`;
+      items.forEach(exp=>{
+        html+=`<div class="expense-item" id="exp-${attr(exp.id)}"><div class="expense-icon" style="background:${cats[exp.cat]?.bg||'var(--tbg)'}">${esc(exp.icon||icons[exp.cat]||'📦')}</div><input class="expense-name-input" type="text" value="${attr(exp.name||'')}" placeholder="Nome" onchange="updateExpName(${JSON.stringify(exp.id)},this.value)"><select class="cat-select" onchange="updateExpCat(${JSON.stringify(exp.id)},this.value)">${Object.keys(cats).map(c=>`<option value="${attr(c)}" ${c===exp.cat?'selected':''}>${esc(cats[c].label||c)}</option>`).join('')}</select><div class="expense-val-wrap"><span class="expense-prefix">R$</span><input class="expense-val-input" type="number" value="${Number(exp.val)||''}" placeholder="0" oninput="updateExpVal(${JSON.stringify(exp.id)},this.value)"></div><div class="pf-aluno-exp-wrap"><select class="pf-aluno-select" onchange="updateExpAluno(${JSON.stringify(exp.id)},this.value)">${options(exp.alunoId,false)}</select></div><button class="del-btn" onclick="delExpense(${JSON.stringify(exp.id)})">×</button></div>`;
+      });
+      html+='</div></div>';
+    });
+    if(!html)html=`<div class="pf-exp-empty">Nenhuma despesa encontrada para <strong>${esc(fil===ALL?'todos os alunos':alunoNome(fil))}</strong>.</div>`;
+    container.innerHTML=html;
+    const totalEl=document.getElementById('total-desp'); if(totalEl)totalEl.textContent=money(data.reduce((acc,e)=>acc+(Number(e.val)||0),0));
+  };
+
+  function infoParcela(obj){
+    const valor=num(obj?.valorParcela), total=Math.max(1,parseInt(obj?.totalParcelas||1,10)), atual=Math.min(Math.max(1,parseInt(obj?.parcelaAtual||1,10)),total+1);
+    const pagas=Math.min(total,Math.max(0,atual)), restantes=Math.max(0,total-pagas), inicio=obj?.inicio||defaultMonth();
+    return{valorParcela:valor,totalParcelas:total,parcelaAtual:atual,parcelasPagas:pagas,parcelasRestantes:restantes,total:valor*total,pago:valor*pagas,falta:valor*restantes,inicio,proximoMes:restantes>0?addMonths(inicio,1):'',fimMes:restantes>0?addMonths(inicio,restantes):inicio,progresso:valor*total>0?Math.min(100,(valor*pagas)/(valor*total)*100):0};
+  }
+  function filteredComps(d,fil=filtro()){const comps=Array.isArray(d.componentes)?d.componentes:[];return fil===ALL?comps:comps.filter(c=>matchAluno(componentAluno(c,d),fil));}
+  function debtVisible(d,fil=filtro()){const comps=Array.isArray(d.componentes)?d.componentes:[];if(fil===ALL)return true;if(comps.length)return comps.some(c=>matchAluno(componentAluno(c,d),fil))||(!comps.length&&matchAluno(d.alunoId,fil));return matchAluno(d.alunoId,fil);}
+  function debtInfo(d,fil=filtro()){
+    const comps=filteredComps(d,fil);
+    if(comps.length){
+      const infos=comps.map(c=>infoParcela({...c,inicio:c.inicio||d.inicio||defaultMonth()}));
+      const abertas=infos.filter(i=>i.parcelasRestantes>0), total=infos.reduce((s,i)=>s+i.total,0), pago=infos.reduce((s,i)=>s+i.pago,0), falta=infos.reduce((s,i)=>s+i.falta,0);
+      return{valorParcela:abertas.reduce((s,i)=>s+i.valorParcela,0),totalParcelas:infos.reduce((s,i)=>s+i.totalParcelas,0),parcelasPagas:infos.reduce((s,i)=>s+i.parcelasPagas,0),parcelasRestantes:abertas.reduce((s,i)=>s+i.parcelasRestantes,0),total,pago,falta,proximoMes:abertas.map(i=>i.proximoMes).sort()[0]||'',fimMes:infos.map(i=>i.fimMes).sort().pop()||d.inicio||defaultMonth(),progresso:total?Math.min(100,pago/total*100):0};
+    }
+    if(isCartao(d))return{valorParcela:0,totalParcelas:0,parcelasPagas:0,parcelasRestantes:0,total:0,pago:0,falta:0,proximoMes:'',fimMes:d.inicio||defaultMonth(),progresso:0};
+    return infoParcela(d);
+  }
+
+  window.addDivida=function(){
+    const s=ensure(), tipo=tipoNormal(document.getElementById('debt-tipo')?.value||'Cartão'), nomeEl=document.getElementById('debt-nome'), credorEl=document.getElementById('debt-credor'), valorEl=document.getElementById('debt-valor'), totalEl=document.getElementById('debt-total'), atualEl=document.getElementById('debt-atual'), inicioEl=document.getElementById('debt-inicio'), alunoEl=document.getElementById('debt-aluno');
+    const nome=(nomeEl?.value||'').trim()||(credorEl?.value||'').trim(), credor=(credorEl?.value||'').trim()||nome, inicio=inicioEl?.value||defaultMonth();
+    if(!nome){window.showToast?.('Digite o nome. Ex.: Nubank.',true);nomeEl?.focus();return;}
+    const nova={id:'d'+Date.now()+Math.floor(Math.random()*1000),nome,tipo,credor,inicio,valorParcela:0,totalParcelas:1,parcelaAtual:1,componentes:[],nextComponenteId:1,alunoId:cleanAluno(alunoEl?.value),criadoEm:new Date().toISOString()};
+    if(tipo!=='Cartão'){nova.valorParcela=num(valorEl?.value);nova.totalParcelas=Math.max(1,parseInt(totalEl?.value||'1',10));nova.parcelaAtual=Math.min(Math.max(1,parseInt(atualEl?.value||'1',10)),nova.totalParcelas+1);if(nova.valorParcela<=0){window.showToast?.('Informe o valor da parcela.',true);valorEl?.focus();return;}}
+    s.dividasParceladas.unshift(nova);s.nextDividaId=(Number(s.nextDividaId)||1)+1;
+    if(nomeEl)nomeEl.value='';if(credorEl)credorEl.value='';if(valorEl)valorEl.value='';if(totalEl)totalEl.value='12';if(atualEl)atualEl.value='1';if(inicioEl)inicioEl.value=defaultMonth();
+    window.renderDividas?.();if(typeof calcular==='function')calcular();saveSoon();window.showToast?.(tipo==='Cartão'?'Cartão criado. Agora adicione as compras dentro do card.':'Dívida adicionada.');
+    setTimeout(()=>document.getElementById('card-'+nova.id)?.scrollIntoView({behavior:'smooth',block:'center'}),120);
+  };
+  window.addComponenteDivida=function(dividaId){
+    const s=ensure(), d=s.dividasParceladas.find(x=>String(x.id)===String(dividaId)); if(!d)return;
+    if(!Array.isArray(d.componentes))d.componentes=[];
+    const p='comp-'+dividaId, nomeEl=document.getElementById(p+'-nome'), valorEl=document.getElementById(p+'-valor'), totalEl=document.getElementById(p+'-total'), atualEl=document.getElementById(p+'-atual'), inicioEl=document.getElementById(p+'-inicio'), alunoEl=document.getElementById(p+'-aluno');
+    const nome=(nomeEl?.value||'').trim(), valorParcela=num(valorEl?.value), totalParcelas=Math.max(1,parseInt(totalEl?.value||'1',10)), parcelaAtual=Math.min(Math.max(1,parseInt(atualEl?.value||'1',10)),totalParcelas+1), inicio=inicioEl?.value||d.inicio||defaultMonth();
+    if(!nome){window.showToast?.('Digite o nome da compra. Ex.: Celular.',true);nomeEl?.focus();return;} if(valorParcela<=0){window.showToast?.('Informe o valor da parcela do item.',true);valorEl?.focus();return;}
+    d.componentes.push({id:'c'+Date.now()+Math.floor(Math.random()*1000),nome,valorParcela,totalParcelas,parcelaAtual,inicio,alunoId:cleanAluno(alunoEl?.value)});
+    if(nomeEl)nomeEl.value='';if(valorEl)valorEl.value='';if(totalEl)totalEl.value='';if(atualEl)atualEl.value='';if(inicioEl)inicioEl.value=d.inicio||defaultMonth();
+    window.renderDividas?.();if(typeof calcular==='function')calcular();saveSoon();window.showToast?.('Item adicionado ao cartão.');
+  };
+
+  function componentHTML(d,fil=filtro()){
+    const comps=filteredComps(d,fil);
+    const rows=comps.map(c=>{const i=infoParcela({...c,inicio:c.inicio||d.inicio||defaultMonth()});const aid=componentAluno(c,d);return `<div class="debt-comp-line pf-debt-comp-line"><input value="${attr(c.nome||'')}" onchange="updateComponenteDivida('${attr(d.id)}','${attr(c.id)}','nome',this.value)" placeholder="Compra/item"><input type="number" min="0" step="0.01" value="${i.valorParcela||''}" onchange="updateComponenteDivida('${attr(d.id)}','${attr(c.id)}','valorParcela',this.value)" placeholder="Valor parcela"><input type="number" min="1" step="1" value="${i.totalParcelas}" onchange="updateComponenteDivida('${attr(d.id)}','${attr(c.id)}','totalParcelas',this.value)" placeholder="Qtd"><input type="number" min="1" step="1" value="${i.parcelaAtual}" onchange="updateComponenteDivida('${attr(d.id)}','${attr(c.id)}','parcelaAtual',this.value)" placeholder="Paga"><input type="month" value="${attr(i.inicio)}" onchange="updateComponenteDivida('${attr(d.id)}','${attr(c.id)}','inicio',this.value)"><select class="pf-aluno-select" onchange="updateComponenteDivida('${attr(d.id)}','${attr(c.id)}','alunoId',this.value)">${options(aid,false)}</select><button class="debt-mini-btn danger" onclick="delComponenteDivida('${attr(d.id)}','${attr(c.id)}')">×</button><div class="debt-comp-info">${alunoBadge(aid)} · Parcela ${i.parcelaAtual}/${i.totalParcelas} · falta <strong style="color:var(--red)">${money(i.falta)}</strong> · termina em ${monthName(i.fimMes)} ${i.parcelasRestantes>0?`<button class="debt-mini-btn" onclick="pagarParcelaComponente('${attr(d.id)}','${attr(c.id)}')">pagar</button><button class="debt-mini-btn" onclick="voltarParcelaComponente('${attr(d.id)}','${attr(c.id)}')">voltar</button>`:'<strong style="color:var(--green)">quitado</strong>'}</div></div>`;}).join('');
+    const def=currentDefaultAluno()||d.alunoId||'';
+    return `<div class="debt-components-box"><div class="debt-components-head"><strong>🧾 Detalhar o que compõe ${esc(d.nome)}</strong><span>${fil===ALL?'Mostrando todos os itens':'Filtro: '+esc(fil===GERAL?'Financeiro geral':alunoNome(fil))}</span></div>${rows||'<div class="debt-empty-small">Nenhum item encontrado para o filtro atual. Você pode adicionar um item abaixo.</div>'}<div class="debt-add-component-final pf-debt-add-component-final"><div><label>Compra/item</label><input id="comp-${attr(d.id)}-nome" placeholder="ex: Celular"></div><div><label>Valor parcela</label><input id="comp-${attr(d.id)}-valor" type="number" min="0" step="0.01" placeholder="200"></div><div><label>Qtd parcelas</label><input id="comp-${attr(d.id)}-total" type="number" min="1" step="1" placeholder="10"></div><div><label>Última parcela paga</label><input id="comp-${attr(d.id)}-atual" type="number" min="1" step="1" placeholder="1"></div><div><label>Mês já pago</label><input id="comp-${attr(d.id)}-inicio" type="month" value="${attr(d.inicio||defaultMonth())}"></div><div><label>Aluno</label><select id="comp-${attr(d.id)}-aluno" class="pf-aluno-select">${options(def,false)}</select></div><button class="btn btn-primary" onclick="addComponenteDivida('${attr(d.id)}')">+ Adicionar item</button><div class="pf-installment-note" style="grid-column:1/-1"><strong>Como preencher:</strong> em “Última parcela paga”, informe a parcela já quitada no mês escolhido. O painel projeta as próximas automaticamente.</div></div></div>`;
+  }
+  function detailedItems(dividas,fil=filtro()){
+    const out=[];dividas.forEach(d=>{const comps=filteredComps(d,fil);if(comps.length){comps.forEach(c=>out.push({parent:d,item:c,info:infoParcela({...c,inicio:c.inicio||d.inicio||defaultMonth()}),component:true,alunoId:componentAluno(c,d)}));}else if(!isCartao(d)&&matchAluno(d.alunoId,fil)){out.push({parent:d,item:d,info:infoParcela(d),component:false,alunoId:cleanAluno(d.alunoId)});}});return out;
+  }
+  function updateParentOptions(dividas){const sel=document.getElementById('debt-filter-parent');if(!sel)return;const cur=sel.value;sel.innerHTML='<option value="">Todos</option>'+dividas.map(d=>`<option value="${attr(d.id)}">${isCartao(d)?'💳 ':''}${esc(d.nome||'Dívida')}</option>`).join('');if(cur&&dividas.some(d=>String(d.id)===String(cur)))sel.value=cur;}
+  window.limparFiltrosDividas=function(){['debt-filter-parent','debt-filter-tipo','debt-filter-busca','debt-filter-status','debt-filter-ordem'].forEach(id=>{const el=document.getElementById(id);if(!el)return;if(id==='debt-filter-status')el.value='ativos';else if(id==='debt-filter-ordem')el.value='maior-parcela';else el.value='';});window.setFiltroAlunoFinanceiro(ALL);};
+  function renderDetailed(dividas,fil=filtro()){
+    const box=document.getElementById('dividas-itens-list');if(!box)return;updateParentOptions(dividas);
+    const parent=document.getElementById('debt-filter-parent')?.value||'', tipo=document.getElementById('debt-filter-tipo')?.value||'', busca=(document.getElementById('debt-filter-busca')?.value||'').toLowerCase().trim(), status=document.getElementById('debt-filter-status')?.value||'ativos', ordem=document.getElementById('debt-filter-ordem')?.value||'maior-parcela';
+    let items=detailedItems(dividas,fil);if(status==='ativos')items=items.filter(x=>x.info.parcelasRestantes>0);if(status==='quitados')items=items.filter(x=>x.info.parcelasRestantes<=0);if(parent)items=items.filter(x=>String(x.parent.id)===String(parent));if(tipo)items=items.filter(x=>tipoNormal(x.parent.tipo)===tipoNormal(tipo));if(busca)items=items.filter(x=>`${x.parent.nome} ${x.parent.credor} ${x.item.nome} ${tipoNormal(x.parent.tipo)} ${alunoNome(x.alunoId)}`.toLowerCase().includes(busca));
+    const sorts={'maior-parcela':(a,b)=>b.info.valorParcela-a.info.valorParcela,'menor-parcela':(a,b)=>a.info.valorParcela-b.info.valorParcela,'maior-falta':(a,b)=>b.info.falta-a.info.falta,'menor-falta':(a,b)=>a.info.falta-b.info.falta,'az':(a,b)=>String(a.item.nome||'').localeCompare(String(b.item.nome||''),'pt-BR'),'za':(a,b)=>String(b.item.nome||'').localeCompare(String(a.item.nome||''),'pt-BR'),'cartao-az':(a,b)=>String(a.parent.nome||'').localeCompare(String(b.parent.nome||''),'pt-BR'),'vencimento-proximo':(a,b)=>String(a.info.fimMes||'').localeCompare(String(b.info.fimMes||'')),'vencimento-distante':(a,b)=>String(b.info.fimMes||'').localeCompare(String(a.info.fimMes||'')),'mais-parcelas':(a,b)=>b.info.parcelasRestantes-a.info.parcelasRestantes};items.sort(sorts[ordem]||sorts['maior-parcela']);
+    if(!items.length){box.innerHTML=`<div class="debt-items-head"><div><div class="debt-items-title">📋 Lista detalhada das dívidas</div><div class="debt-item-small">Nenhum item encontrado para ${esc(fil===ALL?'todos os alunos':alunoNome(fil))}.</div></div></div><div class="debt-item-empty">Mude o filtro de aluno ou cadastre/vincule uma dívida.</div>`;return;}
+    const mensal=items.reduce((s,x)=>s+x.info.valorParcela,0), falta=items.reduce((s,x)=>s+x.info.falta,0);
+    box.innerHTML=`<div class="debt-items-head"><div><div class="debt-items-title">📋 Lista detalhada das dívidas</div><div class="debt-item-small">${items.length} item(ns) · ${esc(fil===ALL?'todos os alunos':alunoNome(fil))}</div></div><div style="text-align:right"><div class="debt-item-small">Mensal no filtro</div><div class="debt-item-money" style="color:var(--red)">${money(mensal)}</div><div class="debt-item-small">Falta: <strong>${money(falta)}</strong></div></div></div>`+items.map(x=>{const q=x.info.parcelasRestantes<=0,tt=tipoNormal(x.parent.tipo),marc=tt==='Cartão'?'💳':tt==='Financiamento'?'🏗️':tt==='Empréstimo'?'🏦':tt==='Loja'?'🛍️':'📌';return `<div class="debt-item-row ${q?'debt-item-quitado':''}"><div><span class="debt-parent-badge">${marc} ${esc(x.parent.nome||'Dívida')}</span></div><div class="debt-item-name"><strong>${esc(x.item.nome||x.parent.nome)}</strong><span>${esc(tt)}${x.parent.credor?' · '+esc(x.parent.credor):''}${q?' · quitado':''}</span>${alunoBadge(x.alunoId)}</div><div class="debt-item-small">Parcela <strong>${x.info.parcelaAtual}/${x.info.totalParcelas}</strong></div><div class="debt-item-money" style="color:var(--amber)">${money(x.info.valorParcela)}/mês</div><div class="debt-item-small">Falta <strong style="color:${q?'var(--green)':'var(--red)'}">${money(x.info.falta)}</strong><br>até ${monthName(x.info.fimMes)}</div><div style="text-align:right">${q?'<span class="debt-item-small" style="color:var(--green);font-weight:800">quitado</span>':`<button class="debt-mini-btn" onclick="${x.component?`pagarParcelaComponente('${attr(x.parent.id)}','${attr(x.item.id)}')`:`pagarParcelaDivida('${attr(x.parent.id)}')`}">pagar</button>`}</div></div>`;}).join('');
+  }
+  function injectDebtMonthly(){const summary=document.getElementById('dividas-summary');if(!summary||document.getElementById('pf-debt-monthly'))return;summary.insertAdjacentHTML('afterend',`<div class="pf-debt-monthly" id="pf-debt-monthly"><div class="pf-month-head"><div><div class="pf-month-title">📅 Visão mensal das dívidas</div><div class="pf-month-sub">A projeção também respeita o filtro de aluno selecionado acima.</div></div><div class="pf-month-nav"><button class="mes-nav" onclick="navegarMesDividas(-1)">‹</button><div class="pf-month-label" id="pf-debt-month-label">—</div><button class="mes-nav" onclick="navegarMesDividas(1)">›</button><button class="btn btn-sm" onclick="irMesAtualDividas()">Mês atual</button></div></div><div class="pf-debt-kpis" id="pf-debt-month-kpis"></div><div class="pf-debt-month-list" id="pf-debt-month-list"></div></div>`);}
+  function dueIn(info,key){const start=info.proximoMes||addMonths(info.inicio,1),diff=monthDiff(start,key);return info.parcelasRestantes>0&&info.valorParcela>0&&diff>=0&&diff<info.parcelasRestantes;}
+  function renderDebtMonth(){const label=document.getElementById('pf-debt-month-label'),kpis=document.getElementById('pf-debt-month-kpis'),box=document.getElementById('pf-debt-month-list');if(!label||!kpis||!box)return;const key=`${debtMonthDate.getFullYear()}-${String(debtMonthDate.getMonth()+1).padStart(2,'0')}`,fil=filtro();label.textContent=monthName(key);const due=detailedItems((ensure().dividasParceladas||[]).filter(d=>debtVisible(d,fil)),fil).filter(i=>dueIn(i.info,key));const groups={};due.forEach(i=>{const id=i.parent.id;if(!groups[id])groups[id]={name:i.parent.nome,tipo:tipoNormal(i.parent.tipo),credor:i.parent.credor,total:0,items:[]};groups[id].total+=i.info.valorParcela;groups[id].items.push(i);});const arr=Object.values(groups).sort((a,b)=>b.total-a.total),total=arr.reduce((s,g)=>s+g.total,0),big=arr[0];kpis.innerHTML=`<div class="stat-card"><div class="stat-label">Total no mês</div><div class="stat-value" style="color:var(--red)">${money(total)}</div><div class="stat-sub">${esc(fil===ALL?'todos os alunos':alunoNome(fil))}</div></div><div class="stat-card"><div class="stat-label">Dívidas cobradas</div><div class="stat-value" style="color:var(--amber)">${arr.length}</div><div class="stat-sub">cartões/contratos</div></div><div class="stat-card"><div class="stat-label">Parcelas no mês</div><div class="stat-value">${due.length}</div><div class="stat-sub">itens individuais</div></div><div class="stat-card"><div class="stat-label">Maior compromisso</div><div class="stat-value" style="font-size:15px;color:var(--teal)">${big?esc(big.name):'—'}</div><div class="stat-sub">${big?money(big.total):'sem parcelas'}</div></div>`;if(!arr.length){box.innerHTML='<div class="pf-debt-empty">Nenhuma parcela prevista para este mês no filtro atual.</div>';return;}box.innerHTML=arr.map(g=>`<div class="pf-debt-group"><div class="pf-debt-group-head"><div class="pf-debt-group-main"><div class="pf-debt-group-name"><strong>${esc(g.name)}</strong><small>${esc(g.tipo)}${g.credor?' · '+esc(g.credor):''}</small></div></div><div class="pf-debt-group-count">${g.items.length} ${g.items.length===1?'item':'itens'} no mês</div><div class="pf-debt-group-total">${money(g.total)}</div></div><div class="pf-debt-group-items">${g.items.map(i=>{const diff=monthDiff(i.info.proximoMes||addMonths(i.info.inicio,1),key),prev=Math.min(i.info.totalParcelas,i.info.parcelaAtual+diff+1);return `<div class="pf-debt-group-item"><div><strong>${esc(i.item.nome||i.parent.nome)}</strong><small>${alunoNome(i.alunoId)} · prevista neste mês: ${prev}/${i.info.totalParcelas}</small></div><div class="value">${money(i.info.valorParcela)}</div><div class="rest">saldo atual: ${money(i.info.falta)}</div></div>`;}).join('')}</div></div>`).join('');}
+  window.navegarMesDividas=function(dir){debtMonthDate=new Date(debtMonthDate.getFullYear(),debtMonthDate.getMonth()+Number(dir||0),1);renderDebtMonth();};
+  window.irMesAtualDividas=function(){debtMonthDate=new Date();renderDebtMonth();};
+  window.renderVisaoMensalDividas=renderDebtMonth;
+
+  window.renderDividas=function(){
+    injectAlunoUI();
+    const s=ensure(), fil=filtro(), start=document.getElementById('debt-inicio');if(start&&!start.value)start.value=defaultMonth();const debtAluno=document.getElementById('debt-aluno');if(debtAluno&&!debtAluno.value)debtAluno.value=currentDefaultAluno()||GERAL;
+    const dividas=(s.dividasParceladas||[]).filter(d=>debtVisible(d,fil));const infos=dividas.map(d=>({d,info:debtInfo(d,fil)}));const abertas=infos.filter(x=>isCartao(x.d)?true:x.info.parcelasRestantes>0),compromisso=infos.reduce((acc,x)=>acc+x.info.valorParcela,0),falta=infos.reduce((acc,x)=>acc+x.info.falta,0),pago=infos.reduce((acc,x)=>acc+x.info.pago,0),fim=infos.map(x=>x.info.fimMes).filter(Boolean).sort().pop()||'';
+    const summary=document.getElementById('dividas-summary');if(summary)summary.innerHTML=`<div class="stat-card"><div class="stat-label">Filtro</div><div class="stat-value" style="font-size:15px;color:var(--teal)">${esc(fil===ALL?'Todos':alunoNome(fil))}</div><div class="stat-sub">visão atual</div></div><div class="stat-card"><div class="stat-label">Dívidas abertas</div><div class="stat-value" style="color:var(--red)">${abertas.length}</div><div class="stat-sub">cartões e parcelamentos</div></div><div class="stat-card"><div class="stat-label">Compromisso mensal</div><div class="stat-value" style="color:var(--amber)">${money(compromisso)}</div><div class="stat-sub">parcelas ativas</div></div><div class="stat-card"><div class="stat-label">Falta pagar</div><div class="stat-value" style="color:var(--red)">${money(falta)}</div><div class="stat-sub">saldo restante</div></div><div class="stat-card"><div class="stat-label">Já pago</div><div class="stat-value" style="color:var(--green)">${money(pago)}</div><div class="stat-sub">estimado</div></div><div class="stat-card"><div class="stat-label">Último vencimento</div><div class="stat-value" style="font-size:16px">${fim?monthName(fim):'—'}</div><div class="stat-sub">pelas parcelas</div></div>`;
+    injectDebtMonthly();
+    const list=document.getElementById('dividas-list');if(list){if(!dividas.length){list.innerHTML=`<div class="debt-empty">💳 Nenhuma dívida encontrada para <strong>${esc(fil===ALL?'todos os alunos':alunoNome(fil))}</strong>. Cadastre uma nova acima ou mude o filtro.</div>`;}else{list.innerHTML=infos.map(({d,info})=>{const cartao=isCartao(d),aid=cleanAluno(d.alunoId),status=cartao&&!(filteredComps(d,fil)||[]).length?'adicione itens abaixo':(info.parcelasRestantes>0?`${info.parcelasRestantes} parcela(s) restantes`:'quitada');return `<div class="debt-card" id="card-${attr(d.id)}"><div class="debt-card-top"><div class="debt-title"><strong>${cartao?'💳 ':''}${esc(d.nome||'Dívida')}</strong><span>${esc(tipoNormal(d.tipo))}${d.credor?' · '+esc(d.credor):''}</span>${alunoBadge(aid)}</div><div><div class="debt-metric-label">Parcela mensal</div><div class="debt-metric-value" style="color:var(--amber)">${money(info.valorParcela)}</div></div><div><div class="debt-metric-label">Progresso</div><div class="debt-metric-value">${info.parcelasPagas}/${info.totalParcelas}</div></div><div><div class="debt-metric-label">Falta</div><div class="debt-metric-value" style="color:var(--red)">${money(info.falta)}</div></div><div class="debt-card-actions">${!cartao?`<button class="debt-mini-btn" onclick="voltarParcelaDivida('${attr(d.id)}')">↩ Voltar</button><button class="debt-mini-btn" onclick="pagarParcelaDivida('${attr(d.id)}')">✅ Pagar</button>`:''}<button class="debt-mini-btn danger" onclick="delDivida('${attr(d.id)}')">×</button></div></div><div class="debt-progress-bg"><div class="debt-progress-fg" style="width:${info.progresso.toFixed(1)}%;background:${info.parcelasRestantes?'var(--teal)':'var(--green)'}"></div></div><div class="debt-card-meta"><span>Status: <strong>${esc(status)}</strong></span><span>Termina: <strong>${info.fimMes?monthName(info.fimMes):'—'}</strong></span><span>Total: <strong>${money(info.total)}</strong></span></div><div class="debt-edit-grid pf-debt-edit-grid"><input value="${attr(d.nome||'')}" placeholder="Nome" onchange="updateDivida('${attr(d.id)}','nome',this.value)"><select onchange="updateDivida('${attr(d.id)}','tipo',this.value)">${['Cartão','Financiamento','Empréstimo','Loja','Outros'].map(t=>`<option value="${t}" ${tipoNormal(d.tipo)===t?'selected':''}>${t}</option>`).join('')}</select><input value="${attr(d.credor||'')}" placeholder="Credor" onchange="updateDivida('${attr(d.id)}','credor',this.value)"><input type="number" min="0" step="0.01" value="${!cartao?(d.valorParcela||''):''}" placeholder="Parcela" ${cartao?'disabled title="No cartão, some pelos itens abaixo"':''} onchange="updateDivida('${attr(d.id)}','valorParcela',this.value)"><input type="number" min="1" step="1" value="${!cartao?(d.totalParcelas||1):''}" placeholder="Total" ${cartao?'disabled title="No cartão, some pelos itens abaixo"':''} onchange="updateDivida('${attr(d.id)}','totalParcelas',this.value)"><input type="month" value="${attr(d.inicio||defaultMonth())}" onchange="updateDivida('${attr(d.id)}','inicio',this.value)"><select class="pf-aluno-select" onchange="updateDivida('${attr(d.id)}','alunoId',this.value)">${options(aid,false)}</select></div>${cartao?componentHTML(d,fil):''}</div>`;}).join('');}}
+    renderDetailed(dividas,fil);renderDebtMonth();
+  };
+
+  document.addEventListener('DOMContentLoaded',()=>{ensure();injectAlunoUI();window.renderExpenses?.();window.renderDividas?.();});
+  setTimeout(()=>{ensure();injectAlunoUI();window.renderExpenses?.();window.renderDividas?.();},250);
+})();
+</script>
+
 </body></html>
 
 <!-- PATCH V11: mobile responsivo SEM alterar a versão web/desktop -->
