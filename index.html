@@ -1771,13 +1771,14 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
   <div class="section-header">
     <div class="section-eyebrow">mensal independente</div>
     <div class="section-title" id="livre-title">Mensal livre</div>
-    <div class="section-desc">Comece do zero. Nada desta área é puxado do Geral ou do Mensal vinculado.</div>
+    <div class="section-desc">Comece do zero ou copie os lançamentos do mês anterior. Nada desta área é puxado do Geral ou do Mensal vinculado.</div>
   </div>
-  <div class="mes-selector livre-selector">
-    <button class="mes-nav" onclick="navLivre(-1)">‹</button>
+  <div class="mes-selector livre-selector livre-selector-main">
+    <button class="mes-nav" onclick="navLivre(-1)" aria-label="Mês anterior">‹</button>
     <div class="mes-label" id="livre-mes-label">—</div>
+    <button class="btn livre-copy-btn" id="livre-copy-prev-btn" onclick="copiarLivreMesAnterior()" title="Copiar receitas, despesas e doações do mês anterior">📋 Copiar mês anterior</button>
     <div class="mes-status" id="livre-mes-badge">independente</div>
-    <button class="mes-nav" onclick="navLivre(1)">›</button>
+    <button class="mes-nav" onclick="navLivre(1)" aria-label="Próximo mês">›</button>
   </div>
   <div class="livre-summary" id="livre-summary"></div>
   <div class="livre-grid">
@@ -5986,6 +5987,11 @@ window.addEventListener('DOMContentLoaded',()=>{
 .mode-switcher{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
 .mode-btn{padding:7px 7px!important;font-size:11px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .livre-selector{margin-bottom:16px}
+.livre-selector-main{flex-wrap:wrap}
+.livre-copy-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:32px;padding:5px 11px;border-color:var(--tbd);background:var(--tbg);color:var(--teal);font-weight:700}
+.livre-copy-btn:hover{background:rgba(15,166,147,.16);border-color:var(--teal)}
+body.dark .livre-copy-btn:hover{background:rgba(45,212,191,.16)}
+.livre-copy-btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
 .livre-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
 .livre-summary .stat-card{min-width:0}
 .livre-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
@@ -6002,7 +6008,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 .livre-resumo-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.livre-resumo-list{background:var(--s1);border:1px solid var(--bd);border-radius:14px;overflow:hidden}.livre-resumo-list h3{font-size:14px;padding:13px 15px;border-bottom:1px solid var(--bd)}.livre-resumo-item{display:flex;justify-content:space-between;gap:12px;padding:10px 15px;border-bottom:1px solid var(--bd);font-size:12px}.livre-resumo-item:last-child{border-bottom:0}.livre-resumo-item span{color:var(--mu)}.livre-resumo-item strong{white-space:nowrap}
 .livre-anual-table{width:100%;border-collapse:collapse;background:var(--s1);border:1px solid var(--bd);border-radius:14px;overflow:hidden}.livre-anual-table th,.livre-anual-table td{padding:11px 13px;border-bottom:1px solid var(--bd);text-align:right;font-size:12px}.livre-anual-table th:first-child,.livre-anual-table td:first-child{text-align:left}.livre-anual-table th{color:var(--mu);font-size:10px;text-transform:uppercase;letter-spacing:.5px;background:var(--s2)}.livre-anual-table tr.clickable{cursor:pointer}.livre-anual-table tr.clickable:hover td{background:var(--tbg)}
 @media(max-width:900px){.livre-grid,.livre-resumo-grid{grid-template-columns:1fr}.livre-card:nth-child(3){grid-column:auto}.livre-summary{grid-template-columns:1fr 1fr}.mode-btn{font-size:10px!important;padding:7px 3px!important}}
-@media(max-width:620px){.livre-row{grid-template-columns:34px minmax(0,1fr) 32px}.livre-money-wrap{grid-column:2/3}.livre-del{grid-column:3;grid-row:1/3}.livre-summary{grid-template-columns:1fr}.mode-switcher{grid-template-columns:1fr!important}.mode-btn{font-size:11px!important}.livre-actions .btn{flex:1}.livre-anual-table{display:block;overflow-x:auto}}
+@media(max-width:620px){.livre-row{grid-template-columns:34px minmax(0,1fr) 32px}.livre-money-wrap{grid-column:2/3}.livre-del{grid-column:3;grid-row:1/3}.livre-summary{grid-template-columns:1fr}.mode-switcher{grid-template-columns:1fr!important}.mode-btn{font-size:11px!important}.livre-actions .btn{flex:1}.livre-anual-table{display:block;overflow-x:auto}.livre-selector-main .livre-copy-btn{order:4;width:100%;margin-top:2px}}
 </style>
 <script>
 (function(){
@@ -6016,6 +6022,10 @@ window.addEventListener('DOMContentLoaded',()=>{
   const TITLES_L = {'livre-lancamentos':'Mensal livre','livre-resumo':'Resumo mensal livre','livre-anual':'Visão anual livre'};
   const mesesLivreNomes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   function keyLivre(a=livreAnoAtual,m=livreMesAtual){return `${a}-${String(m+1).padStart(2,'0')}`}
+  function mesAnteriorLivre(a=livreAnoAtual,m=livreMesAtual){return m===0?{ano:a-1,mes:11}:{ano:a,mes:m-1}}
+  function possuiDadosLivre(d){return !!d&&['receitas','despesas','doacoes'].some(tipo=>Array.isArray(d[tipo])&&d[tipo].length>0)}
+  function novoIdLivre(){return `ml${Date.now().toString(36)}${(livreNextId++).toString(36)}${Math.random().toString(36).slice(2,5)}`}
+  function updateLivreCopyButton(){const btn=document.getElementById('livre-copy-prev-btn');if(!btn)return;const ant=mesAnteriorLivre(),nomeAnterior=`${mesesLivreNomes[ant.mes]} ${ant.ano}`,nomeAtual=`${mesesLivreNomes[livreMesAtual]} ${livreAnoAtual}`;btn.innerHTML=`📋 Copiar ${mesesLivreNomes[ant.mes]}`;btn.title=`Copiar receitas, despesas e doações de ${nomeAnterior} para ${nomeAtual}`;}
   function moneyLivre(v){return (Number(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:2})}
   function escLivre(v){return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
   function newMonthLivre(){return {receitas:[],despesas:[],doacoes:[]}}
@@ -6035,13 +6045,59 @@ window.addEventListener('DOMContentLoaded',()=>{
   }
   function iconLivre(tipo){return tipo==='receitas'?'💰':tipo==='despesas'?'📌':'🙏'}
   function renderListLivre(tipo){const d=getLivre(),box=document.getElementById(`livre-${tipo}-list`);if(!box)return;const arr=d[tipo];if(!arr.length){box.innerHTML=`<div class="livre-empty">Nenhum item ainda. Use o botão abaixo para começar do zero.</div>`;return}box.innerHTML=arr.map(x=>`<div class="livre-row ${tipo}"><div class="livre-icon">${iconLivre(tipo)}</div><input type="text" value="${escLivre(x.nome)}" placeholder="Nome do item" oninput="updateLivreItem('${tipo}','${x.id}','nome',this.value)"><div class="livre-money-wrap"><span>R$</span><input type="number" min="0" step="0.01" value="${Number(x.valor)||0}" oninput="updateLivreItem('${tipo}','${x.id}','valor',this.value)"></div><button class="livre-del" onclick="deleteLivreItem('${tipo}','${x.id}')" title="Excluir">×</button></div>`).join('')}
-  function renderLivre(){const d=getLivre(),t=totalsLivre(d),nome=`${mesesLivreNomes[livreMesAtual]} ${livreAnoAtual}`;['livre-mes-label','livre-resumo-label'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=nome});const title=document.getElementById('livre-title');if(title)title.textContent=`Mensal livre — ${nome}`;document.getElementById('livre-total-receitas').textContent=moneyLivre(t.receitas);document.getElementById('livre-total-despesas').textContent=moneyLivre(t.despesas);document.getElementById('livre-total-doacoes').textContent=moneyLivre(t.doacoes);const s=document.getElementById('livre-summary');if(s)s.innerHTML=`<div class="stat-card"><div class="stat-label">Receitas</div><div class="stat-value" style="color:var(--green)">${moneyLivre(t.receitas)}</div><div class="stat-sub">criadas nesta área</div></div><div class="stat-card"><div class="stat-label">Despesas</div><div class="stat-value" style="color:var(--red)">${moneyLivre(t.despesas)}</div><div class="stat-sub">sem vínculo com o Geral</div></div><div class="stat-card"><div class="stat-label">Doações/outros</div><div class="stat-value" style="color:var(--purple)">${moneyLivre(t.doacoes)}</div><div class="stat-sub">opcional</div></div><div class="stat-card"><div class="stat-label">Saldo livre</div><div class="stat-value" style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldo)}</div><div class="stat-sub">resultado do mês</div></div>`;['receitas','despesas','doacoes'].forEach(renderListLivre)}
+  function renderLivre(){const d=getLivre(),t=totalsLivre(d),nome=`${mesesLivreNomes[livreMesAtual]} ${livreAnoAtual}`;['livre-mes-label','livre-resumo-label'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=nome});const title=document.getElementById('livre-title');if(title)title.textContent=`Mensal livre — ${nome}`;document.getElementById('livre-total-receitas').textContent=moneyLivre(t.receitas);document.getElementById('livre-total-despesas').textContent=moneyLivre(t.despesas);document.getElementById('livre-total-doacoes').textContent=moneyLivre(t.doacoes);const s=document.getElementById('livre-summary');if(s)s.innerHTML=`<div class="stat-card"><div class="stat-label">Receitas</div><div class="stat-value" style="color:var(--green)">${moneyLivre(t.receitas)}</div><div class="stat-sub">criadas nesta área</div></div><div class="stat-card"><div class="stat-label">Despesas</div><div class="stat-value" style="color:var(--red)">${moneyLivre(t.despesas)}</div><div class="stat-sub">sem vínculo com o Geral</div></div><div class="stat-card"><div class="stat-label">Doações/outros</div><div class="stat-value" style="color:var(--purple)">${moneyLivre(t.doacoes)}</div><div class="stat-sub">opcional</div></div><div class="stat-card"><div class="stat-label">Saldo livre</div><div class="stat-value" style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldo)}</div><div class="stat-sub">resultado do mês</div></div>`;['receitas','despesas','doacoes'].forEach(renderListLivre);updateLivreCopyButton()}
   function rowsResumo(tipo,d){const arr=d[tipo]||[];if(!arr.length)return '<div class="livre-resumo-item"><span>Nenhum item</span><strong>—</strong></div>';return arr.map(x=>`<div class="livre-resumo-item"><span>${escLivre(x.nome||'Sem nome')}</span><strong>${moneyLivre(x.valor)}</strong></div>`).join('')}
   function renderResumoLivre(){const d=getLivre(),t=totalsLivre(d),nome=`${mesesLivreNomes[livreMesAtual]} ${livreAnoAtual}`;const tt=document.getElementById('livre-resumo-title');if(tt)tt.textContent=`Resumo livre — ${nome}`;const box=document.getElementById('livre-resumo-content');if(!box)return;box.innerHTML=`<div class="livre-summary"><div class="stat-card"><div class="stat-label">Receitas</div><div class="stat-value" style="color:var(--green)">${moneyLivre(t.receitas)}</div></div><div class="stat-card"><div class="stat-label">Despesas</div><div class="stat-value" style="color:var(--red)">${moneyLivre(t.despesas)}</div></div><div class="stat-card"><div class="stat-label">Doações/outros</div><div class="stat-value" style="color:var(--purple)">${moneyLivre(t.doacoes)}</div></div><div class="stat-card"><div class="stat-label">Saldo</div><div class="stat-value" style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldo)}</div></div></div><div class="livre-resumo-grid"><div class="livre-resumo-list"><h3>💰 Receitas</h3>${rowsResumo('receitas',d)}</div><div class="livre-resumo-list"><h3>📌 Despesas</h3>${rowsResumo('despesas',d)}</div><div class="livre-resumo-list"><h3>🙏 Doações / outros</h3>${rowsResumo('doacoes',d)}</div><div class="livre-resumo-list"><h3>📊 Leitura do mês</h3><div class="livre-resumo-item"><span>Percentual comprometido</span><strong>${t.receitas>0?(((t.despesas+t.doacoes)/t.receitas)*100).toFixed(1):'0.0'}%</strong></div><div class="livre-resumo-item"><span>Sobra da receita</span><strong style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldo)}</strong></div></div></div>`}
   function renderAnualLivre(){const box=document.getElementById('livre-anual-content');if(!box)return;const label=document.getElementById('livre-ano-label');if(label)label.textContent=livreAnoVisual;let tr='',tot={receitas:0,despesas:0,doacoes:0,saldo:0};for(let m=0;m<12;m++){const d=mensalLivreData[keyLivre(livreAnoVisual,m)]||newMonthLivre(),t=totalsLivre(d);Object.keys(tot).forEach(k=>tot[k]+=t[k]);tr+=`<tr class="clickable" onclick="abrirLivreMes(${livreAnoVisual},${m})"><td>${mesesLivreNomes[m]}</td><td style="color:var(--green)">${moneyLivre(t.receitas)}</td><td style="color:var(--red)">${moneyLivre(t.despesas)}</td><td style="color:var(--purple)">${moneyLivre(t.doacoes)}</td><td style="color:${t.saldo>=0?'var(--green)':'var(--red)'};font-weight:800">${moneyLivre(t.saldo)}</td></tr>`}box.innerHTML=`<div class="livre-summary"><div class="stat-card"><div class="stat-label">Receitas no ano</div><div class="stat-value" style="color:var(--green)">${moneyLivre(tot.receitas)}</div></div><div class="stat-card"><div class="stat-label">Despesas no ano</div><div class="stat-value" style="color:var(--red)">${moneyLivre(tot.despesas)}</div></div><div class="stat-card"><div class="stat-label">Doações/outros</div><div class="stat-value" style="color:var(--purple)">${moneyLivre(tot.doacoes)}</div></div><div class="stat-card"><div class="stat-label">Saldo anual</div><div class="stat-value" style="color:${tot.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(tot.saldo)}</div></div></div><table class="livre-anual-table"><thead><tr><th>Mês</th><th>Receitas</th><th>Despesas</th><th>Doações/outros</th><th>Saldo</th></tr></thead><tbody>${tr}</tbody></table>`}
   window.addLivreItem=function(tipo){const d=getLivre();d[tipo].push({id:`ml${livreNextId++}`,nome:tipo==='receitas'?'Nova receita':tipo==='despesas'?'Nova despesa':'Novo item',valor:0});renderLivre();autoSaveLivre();setTimeout(()=>{const box=document.getElementById(`livre-${tipo}-list`);const ins=box?.querySelectorAll('input[type=text]');ins?.[ins.length-1]?.select()},30)};
   window.updateLivreItem=function(tipo,id,campo,valor){const x=getLivre()[tipo].find(i=>String(i.id)===String(id));if(!x)return;if(campo==='valor'){const n=String(valor).replace(/\./g,'').replace(',','.');x[campo]=Math.max(0,Number(n)||0)}else{x[campo]=valor}refreshLivreTotals();autoSaveLivre()};
   window.deleteLivreItem=function(tipo,id){const d=getLivre();d[tipo]=d[tipo].filter(i=>String(i.id)!==String(id));renderLivre();autoSaveLivre()};
+  window.copiarLivreMesAnterior=async function(){
+    const btn=document.getElementById('livre-copy-prev-btn');
+    const ant=mesAnteriorLivre();
+    const origemKey=keyLivre(ant.ano,ant.mes);
+    const destinoKey=keyLivre();
+    const origem=mensalLivreData[origemKey];
+    const nomeAnterior=`${mesesLivreNomes[ant.mes]} ${ant.ano}`;
+    const nomeAtual=`${mesesLivreNomes[livreMesAtual]} ${livreAnoAtual}`;
+
+    if(!possuiDadosLivre(origem)){
+      window.showToast?.(`⚠️ ${nomeAnterior} não possui lançamentos para copiar.`,true);
+      return;
+    }
+
+    const atual=mensalLivreData[destinoKey];
+    if(possuiDadosLivre(atual)){
+      const substituir=confirm(`${nomeAtual} já possui lançamentos.\n\nDeseja substituir tudo pelos dados de ${nomeAnterior}?`);
+      if(!substituir)return;
+    }
+
+    if(btn){btn.disabled=true;btn.textContent='Copiando...';}
+    try{
+      const copiarTipo=tipo=>(origem[tipo]||[]).map(item=>({
+        id:novoIdLivre(),
+        nome:String(item?.nome??''),
+        valor:Math.max(0,Number(item?.valor)||0)
+      }));
+
+      mensalLivreData[destinoKey]={
+        receitas:copiarTipo('receitas'),
+        despesas:copiarTipo('despesas'),
+        doacoes:copiarTipo('doacoes')
+      };
+
+      renderLivre();
+      window.showToast?.(`📋 Lançamentos de ${nomeAnterior} copiados para ${nomeAtual}.`);
+      if(typeof window.salvarFirestore==='function')await window.salvarFirestore();
+      else autoSaveLivre();
+    }catch(e){
+      console.error('Erro ao copiar mês anterior do Mensal livre:',e);
+      window.showToast?.('❌ Não foi possível copiar o mês anterior.',true);
+    }finally{
+      if(btn)btn.disabled=false;
+      updateLivreCopyButton();
+    }
+  };
   window.limparLivreMes=function(){if(!confirm('Limpar todos os lançamentos deste mês livre?'))return;mensalLivreData[keyLivre()]=newMonthLivre();renderLivre();autoSaveLivre()};
   window.navLivre=function(dir){livreMesAtual+=dir;if(livreMesAtual<0){livreMesAtual=11;livreAnoAtual--}if(livreMesAtual>11){livreMesAtual=0;livreAnoAtual++}const vis=SECS_L.find(id=>document.getElementById(id)?.style.display==='block');if(vis==='sec-livre-resumo')renderResumoLivre();else renderLivre()};
   window.navAnoLivre=function(dir){livreAnoVisual+=dir;renderAnualLivre()};
