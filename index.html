@@ -1783,17 +1783,53 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
   <div class="livre-summary" id="livre-summary"></div>
   <div class="livre-grid">
     <div class="card livre-card">
-      <div class="livre-card-head"><div><strong>💰 Receitas do mês</strong><span>Renomeie e adicione quantas quiser</span></div><b id="livre-total-receitas">R$ 0</b></div>
+      <div class="livre-card-head">
+        <div><strong>💰 Receitas do mês</strong><span>Renomeie, ordene ou arraste para mudar a posição</span></div>
+        <div class="livre-head-actions">
+          <select class="livre-sort-select" id="livre-sort-receitas" onchange="ordenarLivre('receitas',this.value)" title="Ordenar receitas">
+            <option value="manual">↕ Manual</option>
+            <option value="az">A → Z</option>
+            <option value="za">Z → A</option>
+            <option value="maior">Maior valor</option>
+            <option value="menor">Menor valor</option>
+          </select>
+          <b id="livre-total-receitas">R$ 0</b>
+        </div>
+      </div>
       <div id="livre-receitas-list"></div>
       <button class="livre-add" onclick="addLivreItem('receitas')">＋ Adicionar receita</button>
     </div>
     <div class="card livre-card">
-      <div class="livre-card-head"><div><strong>📌 Despesas do mês</strong><span>Crie sua própria lista do zero</span></div><b class="red" id="livre-total-despesas">R$ 0</b></div>
+      <div class="livre-card-head">
+        <div><strong>📌 Despesas do mês</strong><span>Ordene por nome, valor ou arraste manualmente</span></div>
+        <div class="livre-head-actions">
+          <select class="livre-sort-select" id="livre-sort-despesas" onchange="ordenarLivre('despesas',this.value)" title="Ordenar despesas">
+            <option value="manual">↕ Manual</option>
+            <option value="az">A → Z</option>
+            <option value="za">Z → A</option>
+            <option value="maior">Maior valor</option>
+            <option value="menor">Menor valor</option>
+          </select>
+          <b class="red" id="livre-total-despesas">R$ 0</b>
+        </div>
+      </div>
       <div id="livre-despesas-list"></div>
       <button class="livre-add" onclick="addLivreItem('despesas')">＋ Adicionar despesa</button>
     </div>
     <div class="card livre-card">
-      <div class="livre-card-head"><div><strong>🙏 Doações / outros</strong><span>Opcional e independente</span></div><b class="purple" id="livre-total-doacoes">R$ 0</b></div>
+      <div class="livre-card-head">
+        <div><strong>🙏 Doações / outros</strong><span>Ordene ou arraste os itens livremente</span></div>
+        <div class="livre-head-actions">
+          <select class="livre-sort-select" id="livre-sort-doacoes" onchange="ordenarLivre('doacoes',this.value)" title="Ordenar doações">
+            <option value="manual">↕ Manual</option>
+            <option value="az">A → Z</option>
+            <option value="za">Z → A</option>
+            <option value="maior">Maior valor</option>
+            <option value="menor">Menor valor</option>
+          </select>
+          <b class="purple" id="livre-total-doacoes">R$ 0</b>
+        </div>
+      </div>
       <div id="livre-doacoes-list"></div>
       <button class="livre-add" onclick="addLivreItem('doacoes')">＋ Adicionar item</button>
     </div>
@@ -5999,7 +6035,16 @@ body.dark .livre-copy-btn:hover{background:rgba(45,212,191,.16)}
 .livre-card:nth-child(3){grid-column:1/-1}
 .livre-card-head{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:15px 16px;border-bottom:1px solid var(--bd)}
 .livre-card-head strong{display:block;font-size:14px}.livre-card-head span{display:block;font-size:11px;color:var(--mu);margin-top:2px}.livre-card-head b{font-family:'Space Grotesk',sans-serif;color:var(--green);white-space:nowrap}.livre-card-head b.red{color:var(--red)}.livre-card-head b.purple{color:var(--purple)}
-.livre-row{display:grid;grid-template-columns:38px minmax(0,1fr) 150px 34px;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--bd)}
+.livre-row{display:grid;grid-template-columns:24px 38px minmax(0,1fr) 150px 34px;gap:9px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--bd);transition:background .15s,border-color .15s,opacity .15s}
+.livre-row.drag-over{background:var(--tbg);box-shadow:inset 0 2px 0 var(--teal)}
+.livre-row.dragging{opacity:.45}
+.livre-drag{width:22px;height:32px;display:flex;align-items:center;justify-content:center;border:0;background:transparent;color:var(--di);cursor:grab;font-size:18px;line-height:1;user-select:none;touch-action:none}
+.livre-drag:hover{color:var(--teal)}
+.livre-drag:active{cursor:grabbing}
+.livre-head-actions{display:flex;align-items:center;justify-content:flex-end;gap:9px;flex-wrap:wrap}
+.livre-sort-select{height:32px;border:1px solid var(--bd2);border-radius:8px;background:var(--s2);color:var(--mu);padding:0 9px;font:600 11px Inter,sans-serif;outline:none;cursor:pointer}
+.livre-sort-select:hover,.livre-sort-select:focus{border-color:var(--tbd);color:var(--teal)}
+.livre-sort-select option{background:var(--s1);color:var(--tx)}
 .livre-row:last-child{border-bottom:0}.livre-icon{width:34px;height:34px;border-radius:9px;background:var(--s2);display:grid;place-items:center}.livre-row input{width:100%;height:38px;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--tx);font-family:inherit;font-size:13px;padding:0 10px;outline:none}.livre-row input:hover,.livre-row input:focus{border-color:var(--tbd);background:var(--s2)}
 .livre-money-wrap{display:flex;align-items:center;border:1px solid var(--bd2);border-radius:9px;background:var(--s2);height:38px;overflow:hidden}.livre-money-wrap span{padding-left:10px;color:var(--di);font-size:11px}.livre-money-wrap input{text-align:right;font-weight:800;color:var(--green);border:0;background:transparent;padding-left:4px}.livre-row.despesas .livre-money-wrap input{color:var(--red)}.livre-row.doacoes .livre-money-wrap input{color:var(--purple)}
 .livre-del{width:32px;height:32px;border:0;border-radius:9px;background:var(--s2);color:var(--di);cursor:pointer;font-size:17px}.livre-del:hover{background:rgba(220,38,38,.1);color:var(--red)}
@@ -6008,7 +6053,7 @@ body.dark .livre-copy-btn:hover{background:rgba(45,212,191,.16)}
 .livre-resumo-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.livre-resumo-list{background:var(--s1);border:1px solid var(--bd);border-radius:14px;overflow:hidden}.livre-resumo-list h3{font-size:14px;padding:13px 15px;border-bottom:1px solid var(--bd)}.livre-resumo-item{display:flex;justify-content:space-between;gap:12px;padding:10px 15px;border-bottom:1px solid var(--bd);font-size:12px}.livre-resumo-item:last-child{border-bottom:0}.livre-resumo-item span{color:var(--mu)}.livre-resumo-item strong{white-space:nowrap}
 .livre-anual-table{width:100%;border-collapse:collapse;background:var(--s1);border:1px solid var(--bd);border-radius:14px;overflow:hidden}.livre-anual-table th,.livre-anual-table td{padding:11px 13px;border-bottom:1px solid var(--bd);text-align:right;font-size:12px}.livre-anual-table th:first-child,.livre-anual-table td:first-child{text-align:left}.livre-anual-table th{color:var(--mu);font-size:10px;text-transform:uppercase;letter-spacing:.5px;background:var(--s2)}.livre-anual-table tr.clickable{cursor:pointer}.livre-anual-table tr.clickable:hover td{background:var(--tbg)}
 @media(max-width:900px){.livre-grid,.livre-resumo-grid{grid-template-columns:1fr}.livre-card:nth-child(3){grid-column:auto}.livre-summary{grid-template-columns:1fr 1fr}.mode-btn{font-size:10px!important;padding:7px 3px!important}}
-@media(max-width:620px){.livre-row{grid-template-columns:34px minmax(0,1fr) 32px}.livre-money-wrap{grid-column:2/3}.livre-del{grid-column:3;grid-row:1/3}.livre-summary{grid-template-columns:1fr}.mode-switcher{grid-template-columns:1fr!important}.mode-btn{font-size:11px!important}.livre-actions .btn{flex:1}.livre-anual-table{display:block;overflow-x:auto}.livre-selector-main .livre-copy-btn{order:4;width:100%;margin-top:2px}}
+@media(max-width:620px){.livre-row{grid-template-columns:22px 34px minmax(0,1fr) 32px}.livre-money-wrap{grid-column:3/4}.livre-del{grid-column:4;grid-row:1/3}.livre-drag{grid-column:1;grid-row:1/3}.livre-icon{grid-column:2}.livre-row>input[type=text]{grid-column:3}.livre-head-actions{width:100%;justify-content:space-between}.livre-card-head{align-items:flex-start;flex-direction:column}.livre-sort-select{flex:1;min-width:135px}.livre-summary{grid-template-columns:1fr}.mode-switcher{grid-template-columns:1fr!important}.mode-btn{font-size:11px!important}.livre-actions .btn{flex:1}.livre-anual-table{display:block;overflow-x:auto}.livre-selector-main .livre-copy-btn{order:4;width:100%;margin-top:2px}}
 </style>
 <script>
 (function(){
@@ -6018,6 +6063,8 @@ body.dark .livre-copy-btn:hover{background:rgba(45,212,191,.16)}
   let livreAnoVisual = livreAnoAtual;
   let livreNextId = 1;
   let livreSaveTimer = null;
+  let livreDragAtual = null;
+  const livreSortModes = {receitas:'manual',despesas:'manual',doacoes:'manual'};
   const SECS_L = ['sec-livre-lancamentos','sec-livre-resumo','sec-livre-anual'];
   const TITLES_L = {'livre-lancamentos':'Mensal livre','livre-resumo':'Resumo mensal livre','livre-anual':'Visão anual livre'};
   const mesesLivreNomes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -6044,12 +6091,95 @@ body.dark .livre-copy-btn:hover{background:rgba(45,212,191,.16)}
     }
   }
   function iconLivre(tipo){return tipo==='receitas'?'💰':tipo==='despesas'?'📌':'🙏'}
-  function renderListLivre(tipo){const d=getLivre(),box=document.getElementById(`livre-${tipo}-list`);if(!box)return;const arr=d[tipo];if(!arr.length){box.innerHTML=`<div class="livre-empty">Nenhum item ainda. Use o botão abaixo para começar do zero.</div>`;return}box.innerHTML=arr.map(x=>`<div class="livre-row ${tipo}"><div class="livre-icon">${iconLivre(tipo)}</div><input type="text" value="${escLivre(x.nome)}" placeholder="Nome do item" oninput="updateLivreItem('${tipo}','${x.id}','nome',this.value)"><div class="livre-money-wrap"><span>R$</span><input type="number" min="0" step="0.01" value="${Number(x.valor)||0}" oninput="updateLivreItem('${tipo}','${x.id}','valor',this.value)"></div><button class="livre-del" onclick="deleteLivreItem('${tipo}','${x.id}')" title="Excluir">×</button></div>`).join('')}
+  function renderListLivre(tipo){
+    const d=getLivre(),box=document.getElementById(`livre-${tipo}-list`);
+    if(!box)return;
+    const arr=d[tipo];
+    const select=document.getElementById(`livre-sort-${tipo}`);
+    if(select)select.value=livreSortModes[tipo]||'manual';
+    if(!arr.length){
+      box.innerHTML=`<div class="livre-empty">Nenhum item ainda. Use o botão abaixo para começar do zero.</div>`;
+      return;
+    }
+    box.innerHTML=arr.map(x=>`
+      <div class="livre-row ${tipo}" data-livre-id="${escLivre(x.id)}"
+        ondragover="livreDragOver(event,'${tipo}','${escLivre(x.id)}')"
+        ondragleave="livreDragLeave(event)"
+        ondrop="livreDrop(event,'${tipo}','${escLivre(x.id)}')">
+        <button class="livre-drag" draggable="true"
+          ondragstart="livreDragStart(event,'${tipo}','${escLivre(x.id)}')"
+          ondragend="livreDragEnd(event)"
+          title="Arraste para mudar a posição" aria-label="Arrastar item">⋮⋮</button>
+        <div class="livre-icon">${iconLivre(tipo)}</div>
+        <input type="text" value="${escLivre(x.nome)}" placeholder="Nome do item"
+          oninput="updateLivreItem('${tipo}','${x.id}','nome',this.value)">
+        <div class="livre-money-wrap"><span>R$</span>
+          <input type="number" min="0" step="0.01" value="${Number(x.valor)||0}"
+            oninput="updateLivreItem('${tipo}','${x.id}','valor',this.value)">
+        </div>
+        <button class="livre-del" onclick="deleteLivreItem('${tipo}','${x.id}')" title="Excluir">×</button>
+      </div>`).join('');
+  }
   function renderLivre(){const d=getLivre(),t=totalsLivre(d),nome=`${mesesLivreNomes[livreMesAtual]} ${livreAnoAtual}`;['livre-mes-label','livre-resumo-label'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=nome});const title=document.getElementById('livre-title');if(title)title.textContent=`Mensal livre — ${nome}`;document.getElementById('livre-total-receitas').textContent=moneyLivre(t.receitas);document.getElementById('livre-total-despesas').textContent=moneyLivre(t.despesas);document.getElementById('livre-total-doacoes').textContent=moneyLivre(t.doacoes);const s=document.getElementById('livre-summary');if(s)s.innerHTML=`<div class="stat-card"><div class="stat-label">Receitas</div><div class="stat-value" style="color:var(--green)">${moneyLivre(t.receitas)}</div><div class="stat-sub">criadas nesta área</div></div><div class="stat-card"><div class="stat-label">Despesas</div><div class="stat-value" style="color:var(--red)">${moneyLivre(t.despesas)}</div><div class="stat-sub">sem vínculo com o Geral</div></div><div class="stat-card"><div class="stat-label">Doações/outros</div><div class="stat-value" style="color:var(--purple)">${moneyLivre(t.doacoes)}</div><div class="stat-sub">opcional</div></div><div class="stat-card"><div class="stat-label">Saldo livre</div><div class="stat-value" style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldo)}</div><div class="stat-sub">resultado do mês</div></div>`;['receitas','despesas','doacoes'].forEach(renderListLivre);updateLivreCopyButton()}
   function rowsResumo(tipo,d){const arr=d[tipo]||[];if(!arr.length)return '<div class="livre-resumo-item"><span>Nenhum item</span><strong>—</strong></div>';return arr.map(x=>`<div class="livre-resumo-item"><span>${escLivre(x.nome||'Sem nome')}</span><strong>${moneyLivre(x.valor)}</strong></div>`).join('')}
   function renderResumoLivre(){const d=getLivre(),t=totalsLivre(d),nome=`${mesesLivreNomes[livreMesAtual]} ${livreAnoAtual}`;const tt=document.getElementById('livre-resumo-title');if(tt)tt.textContent=`Resumo livre — ${nome}`;const box=document.getElementById('livre-resumo-content');if(!box)return;box.innerHTML=`<div class="livre-summary"><div class="stat-card"><div class="stat-label">Receitas</div><div class="stat-value" style="color:var(--green)">${moneyLivre(t.receitas)}</div></div><div class="stat-card"><div class="stat-label">Despesas</div><div class="stat-value" style="color:var(--red)">${moneyLivre(t.despesas)}</div></div><div class="stat-card"><div class="stat-label">Doações/outros</div><div class="stat-value" style="color:var(--purple)">${moneyLivre(t.doacoes)}</div></div><div class="stat-card"><div class="stat-label">Saldo</div><div class="stat-value" style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldo)}</div></div></div><div class="livre-resumo-grid"><div class="livre-resumo-list"><h3>💰 Receitas</h3>${rowsResumo('receitas',d)}</div><div class="livre-resumo-list"><h3>📌 Despesas</h3>${rowsResumo('despesas',d)}</div><div class="livre-resumo-list"><h3>🙏 Doações / outros</h3>${rowsResumo('doacoes',d)}</div><div class="livre-resumo-list"><h3>📊 Leitura do mês</h3><div class="livre-resumo-item"><span>Percentual comprometido</span><strong>${t.receitas>0?(((t.despesas+t.doacoes)/t.receitas)*100).toFixed(1):'0.0'}%</strong></div><div class="livre-resumo-item"><span>Sobra da receita</span><strong style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldo)}</strong></div></div></div>`}
   function renderAnualLivre(){const box=document.getElementById('livre-anual-content');if(!box)return;const label=document.getElementById('livre-ano-label');if(label)label.textContent=livreAnoVisual;let tr='',tot={receitas:0,despesas:0,doacoes:0,saldo:0};for(let m=0;m<12;m++){const d=mensalLivreData[keyLivre(livreAnoVisual,m)]||newMonthLivre(),t=totalsLivre(d);Object.keys(tot).forEach(k=>tot[k]+=t[k]);tr+=`<tr class="clickable" onclick="abrirLivreMes(${livreAnoVisual},${m})"><td>${mesesLivreNomes[m]}</td><td style="color:var(--green)">${moneyLivre(t.receitas)}</td><td style="color:var(--red)">${moneyLivre(t.despesas)}</td><td style="color:var(--purple)">${moneyLivre(t.doacoes)}</td><td style="color:${t.saldo>=0?'var(--green)':'var(--red)'};font-weight:800">${moneyLivre(t.saldo)}</td></tr>`}box.innerHTML=`<div class="livre-summary"><div class="stat-card"><div class="stat-label">Receitas no ano</div><div class="stat-value" style="color:var(--green)">${moneyLivre(tot.receitas)}</div></div><div class="stat-card"><div class="stat-label">Despesas no ano</div><div class="stat-value" style="color:var(--red)">${moneyLivre(tot.despesas)}</div></div><div class="stat-card"><div class="stat-label">Doações/outros</div><div class="stat-value" style="color:var(--purple)">${moneyLivre(tot.doacoes)}</div></div><div class="stat-card"><div class="stat-label">Saldo anual</div><div class="stat-value" style="color:${tot.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(tot.saldo)}</div></div></div><table class="livre-anual-table"><thead><tr><th>Mês</th><th>Receitas</th><th>Despesas</th><th>Doações/outros</th><th>Saldo</th></tr></thead><tbody>${tr}</tbody></table>`}
-  window.addLivreItem=function(tipo){const d=getLivre();d[tipo].push({id:`ml${livreNextId++}`,nome:tipo==='receitas'?'Nova receita':tipo==='despesas'?'Nova despesa':'Novo item',valor:0});renderLivre();autoSaveLivre();setTimeout(()=>{const box=document.getElementById(`livre-${tipo}-list`);const ins=box?.querySelectorAll('input[type=text]');ins?.[ins.length-1]?.select()},30)};
+  window.ordenarLivre=function(tipo,modo){
+    const arr=getLivre()[tipo];
+    livreSortModes[tipo]=modo||'manual';
+    if(modo==='az')arr.sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR',{sensitivity:'base',numeric:true}));
+    else if(modo==='za')arr.sort((a,b)=>String(b.nome||'').localeCompare(String(a.nome||''),'pt-BR',{sensitivity:'base',numeric:true}));
+    else if(modo==='maior')arr.sort((a,b)=>(Number(b.valor)||0)-(Number(a.valor)||0));
+    else if(modo==='menor')arr.sort((a,b)=>(Number(a.valor)||0)-(Number(b.valor)||0));
+    renderListLivre(tipo);
+    autoSaveLivre();
+  };
+
+  window.livreDragStart=function(event,tipo,id){
+    livreDragAtual={tipo,id:String(id)};
+    livreSortModes[tipo]='manual';
+    event.dataTransfer.effectAllowed='move';
+    event.dataTransfer.setData('text/plain',String(id));
+    const row=event.currentTarget.closest('.livre-row');
+    if(row)setTimeout(()=>row.classList.add('dragging'),0);
+  };
+
+  window.livreDragOver=function(event,tipo,id){
+    if(!livreDragAtual||livreDragAtual.tipo!==tipo||livreDragAtual.id===String(id))return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect='move';
+    document.querySelectorAll(`#livre-${tipo}-list .livre-row.drag-over`).forEach(el=>el.classList.remove('drag-over'));
+    event.currentTarget.classList.add('drag-over');
+  };
+
+  window.livreDragLeave=function(event){
+    if(!event.currentTarget.contains(event.relatedTarget))event.currentTarget.classList.remove('drag-over');
+  };
+
+  window.livreDrop=function(event,tipo,destinoId){
+    event.preventDefault();
+    const origem=livreDragAtual;
+    document.querySelectorAll('.livre-row.drag-over').forEach(el=>el.classList.remove('drag-over'));
+    if(!origem||origem.tipo!==tipo||origem.id===String(destinoId))return;
+    const arr=getLivre()[tipo];
+    const de=arr.findIndex(x=>String(x.id)===origem.id);
+    let para=arr.findIndex(x=>String(x.id)===String(destinoId));
+    if(de<0||para<0)return;
+    const [movido]=arr.splice(de,1);
+    if(de<para)para--;
+    arr.splice(para,0,movido);
+    livreSortModes[tipo]='manual';
+    renderListLivre(tipo);
+    autoSaveLivre();
+  };
+
+  window.livreDragEnd=function(event){
+    event.currentTarget.closest('.livre-row')?.classList.remove('dragging');
+    document.querySelectorAll('.livre-row.drag-over').forEach(el=>el.classList.remove('drag-over'));
+    livreDragAtual=null;
+  };
+
+  window.addLivreItem=function(tipo){const d=getLivre();livreSortModes[tipo]='manual';d[tipo].push({id:`ml${livreNextId++}`,nome:tipo==='receitas'?'Nova receita':tipo==='despesas'?'Nova despesa':'Novo item',valor:0});renderLivre();autoSaveLivre();setTimeout(()=>{const box=document.getElementById(`livre-${tipo}-list`);const ins=box?.querySelectorAll('input[type=text]');ins?.[ins.length-1]?.select()},30)};
   window.updateLivreItem=function(tipo,id,campo,valor){const x=getLivre()[tipo].find(i=>String(i.id)===String(id));if(!x)return;if(campo==='valor'){const n=String(valor).replace(/\./g,'').replace(',','.');x[campo]=Math.max(0,Number(n)||0)}else{x[campo]=valor}refreshLivreTotals();autoSaveLivre()};
   window.deleteLivreItem=function(tipo,id){const d=getLivre();d[tipo]=d[tipo].filter(i=>String(i.id)!==String(id));renderLivre();autoSaveLivre()};
   window.copiarLivreMesAnterior=async function(){
