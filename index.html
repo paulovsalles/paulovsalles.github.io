@@ -8013,3 +8013,302 @@ body[data-pf-mode="saude"] .page-section:not([id^="sec-saude-"]){display:none!im
   setTimeout(()=>{updateStaticText();rebuildForm();window.renderDividas();},500);
 })();
 </script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     WISHLIST / COMPRAS PLANEJADAS — adicionado ao PainelFin
+════════════════════════════════════════════════════════════════ -->
+<style>
+/* ─── WISHLIST ─── */
+.wl-form-card{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:15px 16px;margin-bottom:14px}
+.wl-form-title{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--di);margin-bottom:11px}
+.wl-form-grid{display:grid;grid-template-columns:1.35fr 1fr 1fr 1fr 1fr 1fr auto;gap:9px;align-items:end}
+.wl-field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.wl-field label{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--di)}
+.wl-field input,.wl-field select,.wl-toolbar select{height:38px;border:1px solid var(--bd);background:var(--s2);color:var(--tx);border-radius:9px;padding:0 10px;font-family:'Inter',sans-serif;font-size:12px;outline:none;min-width:0}
+.wl-field input:focus,.wl-field select:focus,.wl-toolbar select:focus{border-color:var(--tbd)}
+.wl-help{margin-top:10px;font-size:11px;color:var(--mu);line-height:1.5}
+.wl-toolbar{display:flex;align-items:end;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:11px 13px;margin-bottom:14px}
+.wl-toolbar-left{display:flex;gap:8px;align-items:end;flex-wrap:wrap}
+.wl-toolbar-box{display:flex;flex-direction:column;gap:4px}
+.wl-toolbar-box label{font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--di)}
+.wl-priority-group{margin-bottom:15px}
+.wl-priority-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;padding:0 2px}
+.wl-priority-title{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.wl-priority-total{font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;color:var(--mu)}
+.wl-list{display:flex;flex-direction:column;gap:9px}
+.wl-card{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:13px 14px;transition:border-color .15s,opacity .15s}
+.wl-card:hover{border-color:var(--tbd)}
+.wl-card.done{opacity:.65;background:rgba(74,222,128,.035)}
+.wl-card-top{display:grid;grid-template-columns:minmax(180px,1fr) 145px auto;gap:9px;align-items:center;margin-bottom:11px}
+.wl-name-input{width:100%;border:none;background:transparent;outline:none;color:var(--tx);font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;padding:2px 0}
+.wl-priority-select{height:32px;border:1px solid var(--bd);background:var(--s2);color:var(--tx);border-radius:8px;padding:0 8px;font-size:11px;outline:none}
+.wl-actions{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+.wl-mini-btn{border:1px solid var(--bd);background:var(--s2);color:var(--mu);border-radius:7px;padding:5px 8px;font-size:10.5px;font-weight:700;cursor:pointer;white-space:nowrap}
+.wl-mini-btn:hover{border-color:var(--tbd);color:var(--teal)}
+.wl-mini-btn.ok:hover{border-color:rgba(74,222,128,.35);color:var(--green)}
+.wl-mini-btn.danger:hover{border-color:rgba(248,113,113,.35);color:var(--red)}
+.wl-metrics{display:grid;grid-template-columns:repeat(4,minmax(100px,1fr));gap:8px;margin-bottom:10px}
+.wl-metric{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:8px 10px;min-width:0}
+.wl-metric label{display:block;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--di);margin-bottom:4px}
+.wl-money-input{display:flex;align-items:center;background:var(--s3);border:1px solid var(--bd);border-radius:7px;overflow:hidden}
+.wl-money-input span{padding-left:7px;font-size:10px;color:var(--di)}
+.wl-money-input input,.wl-month-input{width:100%;height:28px;border:none;background:transparent;outline:none;color:var(--tx);font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;padding:0 7px}
+.wl-month-input{border:1px solid var(--bd);background:var(--s3);border-radius:7px}
+.wl-progress-bg{height:6px;background:var(--bd);border-radius:5px;overflow:hidden;margin-bottom:7px}
+.wl-progress-fg{height:6px;border-radius:5px;background:var(--teal);transition:width .35s}
+.wl-bottom{display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:11px;color:var(--mu);flex-wrap:wrap}
+.wl-forecast{font-weight:700;color:var(--teal)}
+.wl-target-note{font-size:10px;color:var(--di)}
+.wl-empty{background:var(--s1);border:1px dashed var(--bd2);border-radius:14px;padding:28px;text-align:center;color:var(--mu);font-size:13px}
+.wl-badge{display:inline-flex;align-items:center;gap:5px;border:1px solid;border-radius:999px;padding:3px 8px;font-size:10px;font-weight:800}
+@media(max-width:1050px){.wl-form-grid{grid-template-columns:1fr 1fr 1fr}.wl-form-grid .btn{grid-column:1/-1}.wl-card-top{grid-template-columns:1fr 150px}.wl-actions{grid-column:1/-1;justify-content:flex-start}.wl-metrics{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.wl-form-grid,.wl-card-top,.wl-metrics{grid-template-columns:1fr}.wl-toolbar-left{width:100%}.wl-toolbar-box{flex:1;min-width:120px}.wl-toolbar select{width:100%}}
+</style>
+
+<script>
+(function(){
+  const WL_PRIORITIES = {
+    necessidade:{label:'Necessidade', icon:'🚨', color:'var(--red)',    bg:'rgba(248,113,113,.10)', rank:0},
+    importante: {label:'Importante',  icon:'⭐', color:'var(--amber)',  bg:'rgba(251,191,36,.10)',  rank:1},
+    desejo:     {label:'Desejo',      icon:'💙', color:'var(--blue)',   bg:'rgba(96,165,250,.10)',  rank:2},
+    sonho:      {label:'Sonho',       icon:'✨', color:'var(--purple)', bg:'rgba(167,139,250,.10)', rank:3}
+  };
+
+  let wishlistData = [];
+  let nextWishlistId = 1;
+
+  function num(v){ return Math.max(0, Number(String(v ?? '').replace(',','.')) || 0); }
+  function money(v){
+    try { return typeof fmt === 'function' ? fmt(v) : new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(num(v)); }
+    catch(e){ return 'R$ ' + Math.round(num(v)).toLocaleString('pt-BR'); }
+  }
+  function esc(v){ return String(v ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;'); }
+  function attr(v){ return esc(v); }
+  function saveSoon(){ if(typeof window.agendarAutoSave === 'function') window.agendarAutoSave(650); }
+  function activeItems(){ return wishlistData.filter(i=>!i.comprado); }
+
+  function forecast(item){
+    const valor=num(item.valor), guardado=Math.min(valor,num(item.guardado)), falta=Math.max(0,valor-guardado), aporte=num(item.aporte), alvo=Math.max(0,parseInt(item.prazoMeses||0,10)||0);
+    const pct=valor>0?Math.min(100,guardado/valor*100):0;
+    const meses=falta<=0?0:(aporte>0?Math.ceil(falta/aporte):null);
+    let previsao='';
+    if(item.comprado) previsao='✅ Comprado';
+    else if(falta<=0) previsao='✅ Valor já disponível';
+    else if(meses!==null){
+      const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()+meses);
+      const nome=d.toLocaleDateString('pt-BR',{month:'short',year:'numeric'}).replace('.','');
+      previsao=`${meses} ${meses===1?'mês':'meses'} · ${nome}`;
+    } else previsao='Defina um aporte mensal';
+    const necessarioAlvo=alvo>0?falta/alvo:0;
+    return {valor,guardado,falta,aporte,alvo,pct,meses,previsao,necessarioAlvo};
+  }
+
+  function injectNav(){
+    if(document.getElementById('nav-wishlist')) return;
+    const navInvest=document.getElementById('nav-investir');
+    const navGeral=document.getElementById('nav-geral');
+    if(!navGeral) return;
+    const btn=document.createElement('button');
+    btn.className='nav-item'; btn.id='nav-wishlist';
+    btn.setAttribute('onclick',"goTo('wishlist');renderWishlist()");
+    btn.innerHTML='<span class="nav-icon">💖</span><span>Wishlist</span><span class="nav-status" id="dot-wishlist"></span>';
+    if(navInvest) navGeral.insertBefore(btn,navInvest); else navGeral.appendChild(btn);
+  }
+
+  function injectSection(){
+    if(document.getElementById('sec-wishlist')) return;
+    const sec=document.createElement('div');
+    sec.className='page-section'; sec.id='sec-wishlist';
+    sec.innerHTML=`
+      <div class="section-header">
+        <div class="section-eyebrow">compras planejadas</div>
+        <div class="section-title">Wishlist</div>
+        <div class="section-desc">Organize o que precisa ou quer comprar por prioridade, valor e prazo. O PainelFin calcula quanto falta e em quanto tempo você consegue comprar.</div>
+      </div>
+
+      <div class="stats-grid" id="wishlist-stats"></div>
+
+      <div class="wl-form-card">
+        <div class="wl-form-title">＋ Adicionar à wishlist</div>
+        <div class="wl-form-grid">
+          <div class="wl-field"><label>Item</label><input id="wl-name" type="text" placeholder="ex: notebook, pneu, viagem"></div>
+          <div class="wl-field"><label>Prioridade</label><select id="wl-priority">
+            <option value="necessidade">🚨 Necessidade</option><option value="importante">⭐ Importante</option><option value="desejo" selected>💙 Desejo</option><option value="sonho">✨ Sonho</option>
+          </select></div>
+          <div class="wl-field"><label>Valor total</label><input id="wl-value" type="number" min="0" step="0.01" placeholder="2500"></div>
+          <div class="wl-field"><label>Já guardado</label><input id="wl-saved" type="number" min="0" step="0.01" placeholder="0"></div>
+          <div class="wl-field"><label>Aporte / mês</label><input id="wl-monthly" type="number" min="0" step="0.01" placeholder="300"></div>
+          <div class="wl-field"><label>Prazo desejado</label><input id="wl-target" type="number" min="0" step="1" placeholder="meses"></div>
+          <button class="btn btn-primary" style="height:38px" onclick="addWishlistItem()">Adicionar</button>
+        </div>
+        <div class="wl-help">O <strong>aporte/mês</strong> calcula a previsão real da compra. O <strong>prazo desejado</strong> é opcional e mostra quanto seria necessário guardar por mês para cumprir aquela meta.</div>
+      </div>
+
+      <div class="wl-toolbar">
+        <div class="wl-toolbar-left">
+          <div class="wl-toolbar-box"><label>Prioridade</label><select id="wl-filter-priority" onchange="renderWishlist()"><option value="">Todas</option><option value="necessidade">Necessidade</option><option value="importante">Importante</option><option value="desejo">Desejo</option><option value="sonho">Sonho</option></select></div>
+          <div class="wl-toolbar-box"><label>Status</label><select id="wl-filter-status" onchange="renderWishlist()"><option value="ativos">Pendentes</option><option value="todos">Todos</option><option value="comprados">Comprados</option></select></div>
+          <div class="wl-toolbar-box"><label>Ordenar dentro da prioridade</label><select id="wl-sort" onchange="renderWishlist()"><option value="prazo">Compra mais próxima</option><option value="maior">Maior valor</option><option value="menor">Menor valor</option><option value="az">A → Z</option></select></div>
+        </div>
+        <button class="btn btn-sm" onclick="clearWishlistFilters()">Limpar filtros</button>
+      </div>
+
+      <div id="wishlist-groups"></div>
+    `;
+    const invest=document.getElementById('sec-investir');
+    const content=document.querySelector('.content');
+    if(invest?.parentNode) invest.parentNode.insertBefore(sec,invest); else content?.appendChild(sec);
+  }
+
+  function ensureNavigation(){
+    try { if(typeof SECS_G!=='undefined' && !SECS_G.includes('sec-wishlist')) SECS_G.push('sec-wishlist'); } catch(e){}
+    try { if(typeof TITLES_G!=='undefined') TITLES_G.wishlist='Wishlist'; } catch(e){}
+  }
+
+  window.addWishlistItem=function(){
+    const nome=(document.getElementById('wl-name')?.value||'').trim();
+    const prioridade=document.getElementById('wl-priority')?.value||'desejo';
+    const valor=num(document.getElementById('wl-value')?.value);
+    const guardado=num(document.getElementById('wl-saved')?.value);
+    const aporte=num(document.getElementById('wl-monthly')?.value);
+    const prazoMeses=Math.max(0,parseInt(document.getElementById('wl-target')?.value||'0',10)||0);
+    if(!nome){ window.showToast?.('Informe o nome do item.',true); return; }
+    if(valor<=0){ window.showToast?.('Informe o valor da compra.',true); return; }
+    wishlistData.push({id:'w'+nextWishlistId++,nome,prioridade,valor,guardado,aporte,prazoMeses,comprado:false,criadoEm:new Date().toISOString()});
+    ['wl-name','wl-value','wl-saved','wl-monthly','wl-target'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+    renderWishlist(); saveSoon(); window.showToast?.('💖 Item adicionado à wishlist!');
+  };
+
+  window.updateWishlist=function(id,campo,valor){
+    const item=wishlistData.find(x=>String(x.id)===String(id)); if(!item)return;
+    if(['valor','guardado','aporte'].includes(campo)) item[campo]=num(valor);
+    else if(campo==='prazoMeses') item[campo]=Math.max(0,parseInt(valor||'0',10)||0);
+    else item[campo]=valor;
+    renderWishlist(); saveSoon();
+  };
+
+  window.toggleWishlistBought=function(id){
+    const item=wishlistData.find(x=>String(x.id)===String(id)); if(!item)return;
+    item.comprado=!item.comprado;
+    item.compradoEm=item.comprado?new Date().toISOString():null;
+    renderWishlist(); saveSoon();
+    window.showToast?.(item.comprado?'✅ Marcado como comprado.':'↩ Item voltou para pendentes.');
+  };
+
+  window.deleteWishlistItem=function(id){
+    const item=wishlistData.find(x=>String(x.id)===String(id)); if(!item)return;
+    if(!confirm(`Remover "${item.nome}" da wishlist?`))return;
+    wishlistData=wishlistData.filter(x=>String(x.id)!==String(id));
+    renderWishlist(); saveSoon();
+  };
+
+  window.clearWishlistFilters=function(){
+    const p=document.getElementById('wl-filter-priority'),s=document.getElementById('wl-filter-status'),o=document.getElementById('wl-sort');
+    if(p)p.value=''; if(s)s.value='ativos'; if(o)o.value='prazo'; renderWishlist();
+  };
+
+  function sortItems(items,mode){
+    const a=[...items];
+    if(mode==='maior') return a.sort((x,y)=>num(y.valor)-num(x.valor));
+    if(mode==='menor') return a.sort((x,y)=>num(x.valor)-num(y.valor));
+    if(mode==='az') return a.sort((x,y)=>(x.nome||'').localeCompare(y.nome||'','pt-BR',{sensitivity:'base'}));
+    return a.sort((x,y)=>{
+      const fx=forecast(x),fy=forecast(y);
+      const mx=fx.meses===null?99999:fx.meses,my=fy.meses===null?99999:fy.meses;
+      return mx-my || fx.falta-fy.falta;
+    });
+  }
+
+  function itemHTML(item){
+    const p=WL_PRIORITIES[item.prioridade]||WL_PRIORITIES.desejo;
+    const f=forecast(item);
+    let alvo='';
+    if(!item.comprado && f.alvo>0 && f.falta>0){
+      const diff=Math.max(0,f.necessarioAlvo-f.aporte);
+      alvo = diff>0
+        ? `Prazo de ${f.alvo} meses: precisa guardar ${money(f.necessarioAlvo)}/mês (${money(diff)}/mês acima do aporte atual).`
+        : `Seu aporte atual atende ao prazo desejado de ${f.alvo} meses.`;
+    }
+    return `<div class="wl-card ${item.comprado?'done':''}" style="border-left:3px solid ${p.color}">
+      <div class="wl-card-top">
+        <input class="wl-name-input" value="${attr(item.nome)}" onchange="updateWishlist('${attr(item.id)}','nome',this.value)">
+        <select class="wl-priority-select" onchange="updateWishlist('${attr(item.id)}','prioridade',this.value)">
+          ${Object.entries(WL_PRIORITIES).map(([k,v])=>`<option value="${k}" ${k===item.prioridade?'selected':''}>${v.icon} ${v.label}</option>`).join('')}
+        </select>
+        <div class="wl-actions">
+          <button class="wl-mini-btn ok" onclick="toggleWishlistBought('${attr(item.id)}')">${item.comprado?'↩ Reabrir':'✅ Comprado'}</button>
+          <button class="wl-mini-btn danger" onclick="deleteWishlistItem('${attr(item.id)}')">× Remover</button>
+        </div>
+      </div>
+      <div class="wl-metrics">
+        <div class="wl-metric"><label>Valor total</label><div class="wl-money-input"><span>R$</span><input type="number" min="0" step="0.01" value="${item.valor||''}" onchange="updateWishlist('${attr(item.id)}','valor',this.value)"></div></div>
+        <div class="wl-metric"><label>Já guardado</label><div class="wl-money-input"><span>R$</span><input type="number" min="0" step="0.01" value="${item.guardado||''}" onchange="updateWishlist('${attr(item.id)}','guardado',this.value)"></div></div>
+        <div class="wl-metric"><label>Aporte mensal</label><div class="wl-money-input"><span>R$</span><input type="number" min="0" step="0.01" value="${item.aporte||''}" onchange="updateWishlist('${attr(item.id)}','aporte',this.value)"></div></div>
+        <div class="wl-metric"><label>Prazo desejado (meses)</label><input class="wl-month-input" type="number" min="0" step="1" value="${item.prazoMeses||''}" placeholder="opcional" onchange="updateWishlist('${attr(item.id)}','prazoMeses',this.value)"></div>
+      </div>
+      <div class="wl-progress-bg"><div class="wl-progress-fg" style="width:${f.pct.toFixed(1)}%;background:${item.comprado?'var(--green)':p.color}"></div></div>
+      <div class="wl-bottom">
+        <div><strong style="color:${p.color}">${money(f.guardado)}</strong> de ${money(f.valor)} · falta <strong style="color:var(--tx)">${money(f.falta)}</strong></div>
+        <div class="wl-forecast">${esc(f.previsao)}</div>
+      </div>
+      ${alvo?`<div class="wl-target-note" style="margin-top:5px">🎯 ${esc(alvo)}</div>`:''}
+    </div>`;
+  }
+
+  window.renderWishlist=function(){
+    const stats=document.getElementById('wishlist-stats'),groups=document.getElementById('wishlist-groups');
+    if(!stats||!groups)return;
+    const ativos=activeItems();
+    const total=ativos.reduce((s,i)=>s+num(i.valor),0);
+    const guardado=ativos.reduce((s,i)=>s+Math.min(num(i.valor),num(i.guardado)),0);
+    const falta=ativos.reduce((s,i)=>s+forecast(i).falta,0);
+    const aporte=ativos.reduce((s,i)=>s+num(i.aporte),0);
+    stats.innerHTML=`
+      <div class="stat-card"><div class="stat-label">Itens pendentes</div><div class="stat-value" style="color:var(--teal)">${ativos.length}</div><div class="stat-sub">na wishlist</div></div>
+      <div class="stat-card"><div class="stat-label">Valor planejado</div><div class="stat-value" style="color:var(--tx)">${money(total)}</div><div class="stat-sub">soma das compras pendentes</div></div>
+      <div class="stat-card"><div class="stat-label">Já guardado</div><div class="stat-value" style="color:var(--green)">${money(guardado)}</div><div class="stat-sub">${total>0?(guardado/total*100).toFixed(1):'0.0'}% do total</div></div>
+      <div class="stat-card"><div class="stat-label">Ainda falta</div><div class="stat-value" style="color:var(--red)">${money(falta)}</div><div class="stat-sub">para comprar tudo</div></div>
+      <div class="stat-card"><div class="stat-label">Aporte planejado</div><div class="stat-value" style="color:var(--amber)">${money(aporte)}</div><div class="stat-sub">por mês</div></div>`;
+
+    const prio=document.getElementById('wl-filter-priority')?.value||'';
+    const status=document.getElementById('wl-filter-status')?.value||'ativos';
+    const sort=document.getElementById('wl-sort')?.value||'prazo';
+    let items=wishlistData.filter(i=>!prio||i.prioridade===prio);
+    if(status==='ativos')items=items.filter(i=>!i.comprado);
+    if(status==='comprados')items=items.filter(i=>i.comprado);
+
+    if(!items.length){
+      groups.innerHTML='<div class="wl-empty">💖 Nenhum item nessa visualização.<br><span style="font-size:11px">Adicione uma compra acima ou altere os filtros.</span></div>';
+    } else {
+      groups.innerHTML=Object.entries(WL_PRIORITIES).sort((a,b)=>a[1].rank-b[1].rank).map(([key,p])=>{
+        const arr=sortItems(items.filter(i=>(i.prioridade||'desejo')===key),sort);
+        if(!arr.length)return'';
+        const soma=arr.reduce((s,i)=>s+forecast(i).falta,0);
+        return `<div class="wl-priority-group"><div class="wl-priority-head"><div class="wl-priority-title" style="color:${p.color}"><span>${p.icon}</span>${p.label}<span class="wl-badge" style="color:${p.color};background:${p.bg};border-color:${p.color}">${arr.length}</span></div><div class="wl-priority-total">falta ${money(soma)}</div></div><div class="wl-list">${arr.map(itemHTML).join('')}</div></div>`;
+      }).join('');
+    }
+    const dot=document.getElementById('dot-wishlist'); if(dot) dot.className='nav-status '+(ativos.length?'done':'');
+  };
+
+  // Inclui a wishlist no objeto salvo no Firebase sem quebrar as extensões já existentes.
+  const collectPrev=window.coletarDados;
+  if(typeof collectPrev==='function'){
+    window.coletarDados=function(){
+      const base=collectPrev.apply(this,arguments)||{};
+      return {...base,wishlistData,nextWishlistId};
+    };
+  }
+  const applyPrev=window.applyData;
+  if(typeof applyPrev==='function'){
+    window.applyData=function(d){
+      applyPrev.apply(this,arguments);
+      wishlistData=Array.isArray(d?.wishlistData)?d.wishlistData:[];
+      nextWishlistId=Number(d?.nextWishlistId)||Math.max(1,...wishlistData.map(i=>Number(String(i.id||'').replace(/\D/g,''))||0))+1;
+      renderWishlist();
+    };
+  }
+
+  injectNav(); injectSection(); ensureNavigation(); renderWishlist();
+  document.addEventListener('DOMContentLoaded',()=>{injectNav();injectSection();ensureNavigation();renderWishlist();});
+})();
+</script>
