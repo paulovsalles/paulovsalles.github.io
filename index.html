@@ -1784,10 +1784,12 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
   <div class="livre-grid">
     <div class="card livre-card">
       <div class="livre-card-head">
-        <div><strong>💰 Receitas do mês</strong><span>Renomeie, ordene ou arraste para mudar a posição</span></div>
+        <div><strong>💰 Receitas do mês</strong><span>Marque ✓ quando o valor realmente entrar</span></div>
         <div class="livre-head-actions">
           <select class="livre-sort-select" id="livre-sort-receitas" onchange="ordenarLivre('receitas',this.value)" title="Ordenar receitas">
             <option value="manual">↕ Manual</option>
+            <option value="pendentes">○ Pendentes primeiro</option>
+            <option value="concluidos">✓ Concluídos primeiro</option>
             <option value="az">A → Z</option>
             <option value="za">Z → A</option>
             <option value="maior">Maior valor</option>
@@ -1801,10 +1803,12 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
     </div>
     <div class="card livre-card">
       <div class="livre-card-head">
-        <div><strong>📌 Despesas do mês</strong><span>Ordene por nome, valor ou arraste manualmente</span></div>
+        <div><strong>📌 Despesas do mês</strong><span>Marque ✓ quando a despesa for paga</span></div>
         <div class="livre-head-actions">
           <select class="livre-sort-select" id="livre-sort-despesas" onchange="ordenarLivre('despesas',this.value)" title="Ordenar despesas">
             <option value="manual">↕ Manual</option>
+            <option value="pendentes">○ Pendentes primeiro</option>
+            <option value="concluidos">✓ Concluídos primeiro</option>
             <option value="az">A → Z</option>
             <option value="za">Z → A</option>
             <option value="maior">Maior valor</option>
@@ -1818,10 +1822,12 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
     </div>
     <div class="card livre-card">
       <div class="livre-card-head">
-        <div><strong>🙏 Doações / outros</strong><span>Ordene ou arraste os itens livremente</span></div>
+        <div><strong>🙏 Doações / outros</strong><span>Marque ✓ quando o valor for pago ou entregue</span></div>
         <div class="livre-head-actions">
           <select class="livre-sort-select" id="livre-sort-doacoes" onchange="ordenarLivre('doacoes',this.value)" title="Ordenar doações">
             <option value="manual">↕ Manual</option>
+            <option value="pendentes">○ Pendentes primeiro</option>
+            <option value="concluidos">✓ Concluídos primeiro</option>
             <option value="az">A → Z</option>
             <option value="za">Z → A</option>
             <option value="maior">Maior valor</option>
@@ -1857,6 +1863,13 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
           <div>
             <small>Dízimo calculado</small>
             <strong class="purple" id="livre-dizimo-valor">R$ 0,00</strong>
+          </div>
+          <div class="livre-dizimo-status">
+            <small>Status</small>
+            <label class="livre-dizimo-paid-check" title="Marque quando o dízimo tiver sido pago">
+              <input type="checkbox" id="livre-dizimo-pago" onchange="toggleLivreDizimoPago(this.checked)">
+              <span>✓ Pago</span>
+            </label>
           </div>
         </div>
         <div class="livre-dizimo-note" id="livre-dizimo-note">
@@ -6110,6 +6123,152 @@ body.dark .livre-copy-btn:hover{background:rgba(45,212,191,.16)}
 @media(max-width:900px){.livre-grid,.livre-resumo-grid{grid-template-columns:1fr}.livre-card:nth-child(3){grid-column:auto}.livre-summary{grid-template-columns:1fr 1fr}.mode-btn{font-size:10px!important;padding:7px 3px!important}}
 @media(max-width:620px){.livre-row{grid-template-columns:22px 34px minmax(0,1fr) 32px}.livre-money-wrap{grid-column:3/4}.livre-del{grid-column:4;grid-row:1/3}.livre-drag{grid-column:1;grid-row:1/3}.livre-icon{grid-column:2}.livre-row>input[type=text]{grid-column:3}.livre-head-actions{width:100%;justify-content:space-between}.livre-card-head{align-items:flex-start;flex-direction:column}.livre-sort-select{flex:1;min-width:135px}.livre-summary{grid-template-columns:1fr}.mode-switcher{grid-template-columns:1fr!important}.mode-btn{font-size:11px!important}.livre-actions .btn{flex:1}.livre-anual-table{display:block;overflow-x:auto}.livre-selector-main .livre-copy-btn{order:4;width:100%;margin-top:2px}}
 </style>
+
+<style>
+/* ===== MENSAL LIVRE — STATUS PAGO / RECEBIDO ===== */
+.livre-row{
+  grid-template-columns:24px 38px minmax(0,1fr) 136px 38px 34px !important;
+}
+.livre-row.quitado{
+  background:rgba(22,163,74,.045);
+}
+body.dark .livre-row.quitado{
+  background:rgba(74,222,128,.045);
+}
+.livre-row.quitado > input[type="text"]{
+  color:var(--mu);
+}
+.livre-paid-check{
+  width:36px;height:36px;
+  display:grid;place-items:center;
+  border:1px solid var(--bd2);
+  border-radius:9px;
+  background:var(--s2);
+  cursor:pointer;
+  transition:all .15s;
+  position:relative;
+  user-select:none;
+}
+.livre-paid-check:hover{
+  border-color:rgba(22,163,74,.45);
+  background:rgba(22,163,74,.08);
+}
+.livre-paid-check input{
+  position:absolute !important;
+  opacity:0 !important;
+  width:1px !important;
+  height:1px !important;
+  padding:0 !important;
+  pointer-events:none;
+}
+.livre-paid-check span{
+  font-size:16px;
+  font-weight:900;
+  color:var(--di);
+  opacity:.45;
+  line-height:1;
+}
+.livre-paid-check input:checked + span{
+  color:#fff;
+  opacity:1;
+}
+.livre-paid-check.checked{
+  background:var(--green);
+  border-color:var(--green);
+  box-shadow:0 0 0 3px rgba(22,163,74,.08);
+}
+.livre-paid-check.checked:hover{
+  background:var(--green);
+  border-color:var(--green);
+}
+
+.livre-summary .stat-sub{
+  line-height:1.45;
+}
+.livre-summary .stat-sub strong{
+  color:var(--tx);
+  font-weight:800;
+}
+
+.livre-dizimo-grid{
+  grid-template-columns:110px 1fr 1fr 105px !important;
+}
+.livre-dizimo-status{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.livre-dizimo-paid-check{
+  height:36px;
+  border:1px solid var(--bd);
+  border-radius:8px;
+  background:var(--s1);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  position:relative;
+  overflow:hidden;
+}
+.livre-dizimo-paid-check input{
+  position:absolute;
+  opacity:0;
+  pointer-events:none;
+}
+.livre-dizimo-paid-check span{
+  font-size:11px;
+  font-weight:800;
+  color:var(--di);
+  transition:.15s;
+}
+.livre-dizimo-paid-check:has(input:checked){
+  background:rgba(22,163,74,.10);
+  border-color:rgba(22,163,74,.35);
+}
+.livre-dizimo-paid-check input:checked + span{
+  color:var(--green);
+}
+.livre-dizimo-paid-check:has(input:disabled){
+  opacity:.45;
+  cursor:not-allowed;
+}
+
+.livre-status-tag{
+  display:inline-flex;
+  align-items:center;
+  margin-left:7px;
+  padding:2px 7px;
+  border-radius:999px;
+  border:1px solid var(--bd);
+  background:var(--s2);
+  color:var(--di);
+  font-size:9px;
+  font-weight:800;
+  white-space:nowrap;
+}
+.livre-status-tag.ok{
+  color:var(--green);
+  border-color:rgba(22,163,74,.28);
+  background:rgba(22,163,74,.08);
+}
+
+@media(max-width:900px){
+  .livre-dizimo-grid{grid-template-columns:1fr 1fr !important;}
+}
+@media(max-width:620px){
+  .livre-row{
+    grid-template-columns:22px 34px minmax(0,1fr) 38px 32px !important;
+  }
+  .livre-drag{grid-column:1;grid-row:1/3 !important;}
+  .livre-icon{grid-column:2;grid-row:1;}
+  .livre-row>input[type="text"]{grid-column:3/5 !important;grid-row:1;}
+  .livre-money-wrap{grid-column:2/4 !important;grid-row:2;}
+  .livre-paid-check{grid-column:4;grid-row:2;}
+  .livre-del{grid-column:5 !important;grid-row:1/3 !important;}
+  .livre-dizimo-grid{grid-template-columns:1fr 1fr !important;}
+}
+</style>
+
 <script>
 (function(){
   let mensalLivreData = {};
@@ -6130,10 +6289,51 @@ body.dark .livre-copy-btn:hover{background:rgba(45,212,191,.16)}
   function updateLivreCopyButton(){const btn=document.getElementById('livre-copy-prev-btn');if(!btn)return;const ant=mesAnteriorLivre(),nomeAnterior=`${mesesLivreNomes[ant.mes]} ${ant.ano}`,nomeAtual=`${mesesLivreNomes[livreMesAtual]} ${livreAnoAtual}`;btn.innerHTML=`📋 Copiar ${mesesLivreNomes[ant.mes]}`;btn.title=`Copiar receitas, despesas e doações de ${nomeAnterior} para ${nomeAtual}`;}
   function moneyLivre(v){return (Number(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:2})}
   function escLivre(v){return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
-  function newMonthLivre(){return {receitas:[],despesas:[],doacoes:[],dizimoAtivo:false,dizimoPct:10}}
-  function getLivre(){const k=keyLivre();if(!mensalLivreData[k])mensalLivreData[k]=newMonthLivre();const d=mensalLivreData[k];['receitas','despesas','doacoes'].forEach(t=>{if(!Array.isArray(d[t]))d[t]=[]});if(typeof d.dizimoAtivo!=='boolean')d.dizimoAtivo=false;if(!Number.isFinite(Number(d.dizimoPct)))d.dizimoPct=10;return d}
+  function newMonthLivre(){return {receitas:[],despesas:[],doacoes:[],dizimoAtivo:false,dizimoPct:10,dizimoPago:false}}
+  function getLivre(){
+    const k=keyLivre();
+    if(!mensalLivreData[k])mensalLivreData[k]=newMonthLivre();
+    const d=mensalLivreData[k];
+    ['receitas','despesas','doacoes'].forEach(t=>{
+      if(!Array.isArray(d[t]))d[t]=[];
+      d[t].forEach(x=>{if(typeof x.pago!=='boolean')x.pago=false});
+    });
+    if(typeof d.dizimoAtivo!=='boolean')d.dizimoAtivo=false;
+    if(!Number.isFinite(Number(d.dizimoPct)))d.dizimoPct=10;
+    if(typeof d.dizimoPago!=='boolean')d.dizimoPago=false;
+    return d;
+  }
   function calcLivreDizimo(d=getLivre()){const receitas=(d.receitas||[]).reduce((s,x)=>s+(Number(x.valor)||0),0);const pct=Math.min(100,Math.max(0,Number(d.dizimoPct)||0));return d.dizimoAtivo?receitas*(pct/100):0}
-  function totalsLivre(d=getLivre()){const sum=t=>(d[t]||[]).reduce((s,x)=>s+(Number(x.valor)||0),0);const receitas=sum('receitas'),despesas=sum('despesas'),doacoesManuais=sum('doacoes'),dizimo=calcLivreDizimo(d),doacoes=doacoesManuais+dizimo;return {receitas,despesas,doacoes,dizimo,doacoesManuais,saldo:receitas-despesas-doacoes}}
+  function totalsLivre(d=getLivre()){
+    const sum=t=>(d[t]||[]).reduce((s,x)=>s+(Number(x.valor)||0),0);
+    const sumPago=t=>(d[t]||[]).reduce((s,x)=>s+(x.pago?(Number(x.valor)||0):0),0);
+    const receitas=sum('receitas');
+    const despesas=sum('despesas');
+    const doacoesManuais=sum('doacoes');
+    const dizimo=calcLivreDizimo(d);
+    const doacoes=doacoesManuais+dizimo;
+
+    const receitasRecebidas=sumPago('receitas');
+    const despesasPagas=sumPago('despesas');
+    const doacoesManuaisPagas=sumPago('doacoes');
+    const dizimoPago=(d.dizimoAtivo&&d.dizimoPago)?dizimo:0;
+    const doacoesPagas=doacoesManuaisPagas+dizimoPago;
+    const totalPago=despesasPagas+doacoesPagas;
+
+    const saldo=receitas-despesas-doacoes;
+    const saldoAtual=receitasRecebidas-totalPago;
+    const aReceber=Math.max(0,receitas-receitasRecebidas);
+    const aPagar=Math.max(0,(despesas+doacoes)-totalPago);
+
+    return {
+      receitas,despesas,doacoes,dizimo,doacoesManuais,saldo,
+      receitasRecebidas,despesasPagas,doacoesPagas,totalPago,
+      saldoAtual,aReceber,aPagar
+    };
+  }
+  function cardsLivreHtml(t){
+    return `<div class="stat-card"><div class="stat-label">Receitas previstas</div><div class="stat-value" style="color:var(--green)">${moneyLivre(t.receitas)}</div><div class="stat-sub">recebido <strong>${moneyLivre(t.receitasRecebidas)}</strong> · falta ${moneyLivre(t.aReceber)}</div></div><div class="stat-card"><div class="stat-label">Despesas previstas</div><div class="stat-value" style="color:var(--red)">${moneyLivre(t.despesas)}</div><div class="stat-sub">pago <strong>${moneyLivre(t.despesasPagas)}</strong> · falta ${moneyLivre(Math.max(0,t.despesas-t.despesasPagas))}</div></div><div class="stat-card"><div class="stat-label">Doações/outros</div><div class="stat-value" style="color:var(--purple)">${moneyLivre(t.doacoes)}</div><div class="stat-sub">pago <strong>${moneyLivre(t.doacoesPagas)}</strong> · falta ${moneyLivre(Math.max(0,t.doacoes-t.doacoesPagas))}</div></div><div class="stat-card"><div class="stat-label">Disponível agora</div><div class="stat-value" style="color:${t.saldoAtual>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldoAtual)}</div><div class="stat-sub">a receber ${moneyLivre(t.aReceber)} · a pagar ${moneyLivre(t.aPagar)}<br>projeção final <strong>${moneyLivre(t.saldo)}</strong></div></div>`;
+  }
   function autoSaveLivre(){clearTimeout(livreSaveTimer);livreSaveTimer=setTimeout(()=>{if(typeof window.salvarFirestore==='function')window.salvarFirestore();},60000)}
   function refreshLivreTotals(){
     const d=getLivre(), t=totalsLivre(d);
@@ -6142,9 +6342,7 @@ body.dark .livre-copy-btn:hover{background:rgba(45,212,191,.16)}
     setTxt('livre-total-despesas',t.despesas);
     setTxt('livre-total-doacoes',t.doacoes);
     const s=document.getElementById('livre-summary');
-    if(s){
-      s.innerHTML=`<div class="stat-card"><div class="stat-label">Receitas</div><div class="stat-value" style="color:var(--green)">${moneyLivre(t.receitas)}</div><div class="stat-sub">criadas nesta área</div></div><div class="stat-card"><div class="stat-label">Despesas</div><div class="stat-value" style="color:var(--red)">${moneyLivre(t.despesas)}</div><div class="stat-sub">sem vínculo com o Geral</div></div><div class="stat-card"><div class="stat-label">Doações/outros</div><div class="stat-value" style="color:var(--purple)">${moneyLivre(t.doacoes)}</div><div class="stat-sub">opcional</div></div><div class="stat-card"><div class="stat-label">Saldo livre</div><div class="stat-value" style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldo)}</div><div class="stat-sub">resultado do mês</div></div>`;
-    }
+    if(s)s.innerHTML=cardsLivreHtml(t);
   }
   function iconLivre(tipo){return tipo==='receitas'?'💰':tipo==='despesas'?'📌':'🙏'}
   function renderLivreDizimo(){
@@ -6155,16 +6353,18 @@ body.dark .livre-copy-btn:hover{background:rgba(45,212,191,.16)}
     const pct=document.getElementById('livre-dizimo-pct');
     const base=document.getElementById('livre-dizimo-base');
     const val=document.getElementById('livre-dizimo-valor');
+    const pago=document.getElementById('livre-dizimo-pago');
     const box=document.getElementById('livre-dizimo-box');
     const note=document.getElementById('livre-dizimo-note');
     if(ativo)ativo.checked=!!d.dizimoAtivo;
     if(pct)pct.value=Number(d.dizimoPct)||0;
     if(base)base.textContent=moneyLivre(receitas);
     if(val)val.textContent=moneyLivre(valor);
+    if(pago){pago.checked=!!d.dizimoPago;pago.disabled=!d.dizimoAtivo;}
     if(box)box.classList.toggle('disabled',!d.dizimoAtivo);
     if(note)note.textContent=d.dizimoAtivo
-      ? `${Number(d.dizimoPct)||0}% de ${moneyLivre(receitas)} = ${moneyLivre(valor)}. O valor já está incluído em Doações/outros.`
-      : 'Ative para incluir automaticamente o dízimo em Doações/outros e descontá-lo do saldo livre.';
+      ? `${Number(d.dizimoPct)||0}% de ${moneyLivre(receitas)} = ${moneyLivre(valor)}. ${d.dizimoPago?'Marcado como pago e já abatido do disponível atual.':'Ainda não foi abatido do disponível atual.'}`
+      : 'Ative para incluir automaticamente o dízimo em Doações/outros. Depois marque como pago quando ele sair de fato.';
   }
   function renderListLivre(tipo){
     const d=getLivre(),box=document.getElementById(`livre-${tipo}-list`);
@@ -6176,8 +6376,11 @@ body.dark .livre-copy-btn:hover{background:rgba(45,212,191,.16)}
       box.innerHTML=`<div class="livre-empty">Nenhum item ainda. Use o botão abaixo para começar do zero.</div>`;
       return;
     }
-    box.innerHTML=arr.map(x=>`
-      <div class="livre-row ${tipo}" data-livre-id="${escLivre(x.id)}"
+    box.innerHTML=arr.map(x=>{
+      const rotulo=tipo==='receitas'?'recebido':'pago';
+      const acao=tipo==='receitas'?'recebido':'pago';
+      return `
+      <div class="livre-row ${tipo} ${x.pago?'quitado':''}" data-livre-id="${escLivre(x.id)}"
         ondragover="livreDragOver(event,'${tipo}','${escLivre(x.id)}')"
         ondragleave="livreDragLeave(event)"
         ondrop="livreDrop(event,'${tipo}','${escLivre(x.id)}')">
@@ -6192,17 +6395,87 @@ body.dark .livre-copy-btn:hover{background:rgba(45,212,191,.16)}
           <input type="number" min="0" step="0.01" value="${Number(x.valor)||0}"
             oninput="updateLivreItem('${tipo}','${x.id}','valor',this.value)">
         </div>
+        <label class="livre-paid-check ${x.pago?'checked':''}"
+          title="${x.pago?`Marcado como ${rotulo}`:`Marcar como ${acao}`}"
+          aria-label="${x.pago?`Marcado como ${rotulo}`:`Marcar como ${acao}`}">
+          <input type="checkbox" ${x.pago?'checked':''}
+            onchange="toggleLivrePago('${tipo}','${x.id}',this.checked)">
+          <span>✓</span>
+        </label>
         <button class="livre-del" onclick="deleteLivreItem('${tipo}','${x.id}')" title="Excluir">×</button>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }
-  function renderLivre(){const d=getLivre(),t=totalsLivre(d),nome=`${mesesLivreNomes[livreMesAtual]} ${livreAnoAtual}`;['livre-mes-label','livre-resumo-label'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=nome});const title=document.getElementById('livre-title');if(title)title.textContent=`Mensal livre — ${nome}`;document.getElementById('livre-total-receitas').textContent=moneyLivre(t.receitas);document.getElementById('livre-total-despesas').textContent=moneyLivre(t.despesas);document.getElementById('livre-total-doacoes').textContent=moneyLivre(t.doacoes);const s=document.getElementById('livre-summary');if(s)s.innerHTML=`<div class="stat-card"><div class="stat-label">Receitas</div><div class="stat-value" style="color:var(--green)">${moneyLivre(t.receitas)}</div><div class="stat-sub">criadas nesta área</div></div><div class="stat-card"><div class="stat-label">Despesas</div><div class="stat-value" style="color:var(--red)">${moneyLivre(t.despesas)}</div><div class="stat-sub">sem vínculo com o Geral</div></div><div class="stat-card"><div class="stat-label">Doações/outros</div><div class="stat-value" style="color:var(--purple)">${moneyLivre(t.doacoes)}</div><div class="stat-sub">opcional</div></div><div class="stat-card"><div class="stat-label">Saldo livre</div><div class="stat-value" style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldo)}</div><div class="stat-sub">resultado do mês</div></div>`;['receitas','despesas','doacoes'].forEach(renderListLivre);renderLivreDizimo();updateLivreCopyButton()}
-  function rowsResumo(tipo,d){const arr=d[tipo]||[];let extra='';if(tipo==='doacoes'&&d.dizimoAtivo){extra=`<div class="livre-resumo-item"><span>🙏 Dízimo automático (${Number(d.dizimoPct)||0}%)</span><strong style="color:var(--purple)">${moneyLivre(calcLivreDizimo(d))}</strong></div>`}if(!arr.length&&!extra)return '<div class="livre-resumo-item"><span>Nenhum item</span><strong>—</strong></div>';return extra+arr.map(x=>`<div class="livre-resumo-item"><span>${escLivre(x.nome||'Sem nome')}</span><strong>${moneyLivre(x.valor)}</strong></div>`).join('')}
-  function renderResumoLivre(){const d=getLivre(),t=totalsLivre(d),nome=`${mesesLivreNomes[livreMesAtual]} ${livreAnoAtual}`;const tt=document.getElementById('livre-resumo-title');if(tt)tt.textContent=`Resumo livre — ${nome}`;const box=document.getElementById('livre-resumo-content');if(!box)return;box.innerHTML=`<div class="livre-summary"><div class="stat-card"><div class="stat-label">Receitas</div><div class="stat-value" style="color:var(--green)">${moneyLivre(t.receitas)}</div></div><div class="stat-card"><div class="stat-label">Despesas</div><div class="stat-value" style="color:var(--red)">${moneyLivre(t.despesas)}</div></div><div class="stat-card"><div class="stat-label">Doações/outros</div><div class="stat-value" style="color:var(--purple)">${moneyLivre(t.doacoes)}</div></div><div class="stat-card"><div class="stat-label">Saldo</div><div class="stat-value" style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldo)}</div></div></div><div class="livre-resumo-grid"><div class="livre-resumo-list"><h3>💰 Receitas</h3>${rowsResumo('receitas',d)}</div><div class="livre-resumo-list"><h3>📌 Despesas</h3>${rowsResumo('despesas',d)}</div><div class="livre-resumo-list"><h3>🙏 Doações / outros</h3>${rowsResumo('doacoes',d)}</div><div class="livre-resumo-list"><h3>📊 Leitura do mês</h3><div class="livre-resumo-item"><span>Percentual comprometido</span><strong>${t.receitas>0?(((t.despesas+t.doacoes)/t.receitas)*100).toFixed(1):'0.0'}%</strong></div><div class="livre-resumo-item"><span>Sobra da receita</span><strong style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldo)}</strong></div></div></div>`}
-  function renderAnualLivre(){const box=document.getElementById('livre-anual-content');if(!box)return;const label=document.getElementById('livre-ano-label');if(label)label.textContent=livreAnoVisual;let tr='',tot={receitas:0,despesas:0,doacoes:0,saldo:0};for(let m=0;m<12;m++){const d=mensalLivreData[keyLivre(livreAnoVisual,m)]||newMonthLivre(),t=totalsLivre(d);Object.keys(tot).forEach(k=>tot[k]+=t[k]);tr+=`<tr class="clickable" onclick="abrirLivreMes(${livreAnoVisual},${m})"><td>${mesesLivreNomes[m]}</td><td style="color:var(--green)">${moneyLivre(t.receitas)}</td><td style="color:var(--red)">${moneyLivre(t.despesas)}</td><td style="color:var(--purple)">${moneyLivre(t.doacoes)}</td><td style="color:${t.saldo>=0?'var(--green)':'var(--red)'};font-weight:800">${moneyLivre(t.saldo)}</td></tr>`}box.innerHTML=`<div class="livre-summary"><div class="stat-card"><div class="stat-label">Receitas no ano</div><div class="stat-value" style="color:var(--green)">${moneyLivre(tot.receitas)}</div></div><div class="stat-card"><div class="stat-label">Despesas no ano</div><div class="stat-value" style="color:var(--red)">${moneyLivre(tot.despesas)}</div></div><div class="stat-card"><div class="stat-label">Doações/outros</div><div class="stat-value" style="color:var(--purple)">${moneyLivre(tot.doacoes)}</div></div><div class="stat-card"><div class="stat-label">Saldo anual</div><div class="stat-value" style="color:${tot.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(tot.saldo)}</div></div></div><table class="livre-anual-table"><thead><tr><th>Mês</th><th>Receitas</th><th>Despesas</th><th>Doações/outros</th><th>Saldo</th></tr></thead><tbody>${tr}</tbody></table>`}
+  function renderLivre(){
+    const d=getLivre(),nome=`${mesesLivreNomes[livreMesAtual]} ${livreAnoAtual}`;
+    ['livre-mes-label','livre-resumo-label'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=nome});
+    const title=document.getElementById('livre-title');
+    if(title)title.textContent=`Mensal livre — ${nome}`;
+    refreshLivreTotals();
+    ['receitas','despesas','doacoes'].forEach(renderListLivre);
+    renderLivreDizimo();
+    updateLivreCopyButton();
+  }
+  function statusLivreTexto(tipo,pago){
+    if(tipo==='receitas')return pago?'Recebido':'A receber';
+    return pago?'Pago':'A pagar';
+  }
+  function rowsResumo(tipo,d){
+    const arr=d[tipo]||[];
+    let extra='';
+    if(tipo==='doacoes'&&d.dizimoAtivo){
+      extra=`<div class="livre-resumo-item"><span>🙏 Dízimo automático (${Number(d.dizimoPct)||0}%) <small class="livre-status-tag ${d.dizimoPago?'ok':''}">${d.dizimoPago?'✓ Pago':'○ A pagar'}</small></span><strong style="color:var(--purple)">${moneyLivre(calcLivreDizimo(d))}</strong></div>`;
+    }
+    if(!arr.length&&!extra)return '<div class="livre-resumo-item"><span>Nenhum item</span><strong>—</strong></div>';
+    return extra+arr.map(x=>`<div class="livre-resumo-item"><span>${escLivre(x.nome||'Sem nome')} <small class="livre-status-tag ${x.pago?'ok':''}">${x.pago?'✓':'○'} ${statusLivreTexto(tipo,!!x.pago)}</small></span><strong>${moneyLivre(x.valor)}</strong></div>`).join('');
+  }
+  function renderResumoLivre(){
+    const d=getLivre(),t=totalsLivre(d),nome=`${mesesLivreNomes[livreMesAtual]} ${livreAnoAtual}`;
+    const tt=document.getElementById('livre-resumo-title');
+    if(tt)tt.textContent=`Resumo livre — ${nome}`;
+    const box=document.getElementById('livre-resumo-content');
+    if(!box)return;
+    box.innerHTML=`<div class="livre-summary">${cardsLivreHtml(t)}</div><div class="livre-resumo-grid"><div class="livre-resumo-list"><h3>💰 Receitas</h3>${rowsResumo('receitas',d)}</div><div class="livre-resumo-list"><h3>📌 Despesas</h3>${rowsResumo('despesas',d)}</div><div class="livre-resumo-list"><h3>🙏 Doações / outros</h3>${rowsResumo('doacoes',d)}</div><div class="livre-resumo-list"><h3>📊 Leitura do mês</h3><div class="livre-resumo-item"><span>Recebido até agora</span><strong style="color:var(--green)">${moneyLivre(t.receitasRecebidas)}</strong></div><div class="livre-resumo-item"><span>Pago até agora</span><strong style="color:var(--red)">${moneyLivre(t.totalPago)}</strong></div><div class="livre-resumo-item"><span>A receber</span><strong>${moneyLivre(t.aReceber)}</strong></div><div class="livre-resumo-item"><span>A pagar</span><strong>${moneyLivre(t.aPagar)}</strong></div><div class="livre-resumo-item"><span>Disponível agora</span><strong style="color:${t.saldoAtual>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldoAtual)}</strong></div><div class="livre-resumo-item"><span>Saldo projetado</span><strong style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldo)}</strong></div></div></div>`;
+  }
+  function renderAnualLivre(){
+    const box=document.getElementById('livre-anual-content');
+    if(!box)return;
+    const label=document.getElementById('livre-ano-label');
+    if(label)label.textContent=livreAnoVisual;
+    let tr='';
+    const tot={receitas:0,receitasRecebidas:0,compromissos:0,totalPago:0,aPagar:0,saldo:0,saldoAtual:0};
+    for(let m=0;m<12;m++){
+      const d=mensalLivreData[keyLivre(livreAnoVisual,m)]||newMonthLivre(),t=totalsLivre(d);
+      tot.receitas+=t.receitas;
+      tot.receitasRecebidas+=t.receitasRecebidas;
+      tot.compromissos+=t.despesas+t.doacoes;
+      tot.totalPago+=t.totalPago;
+      tot.aPagar+=t.aPagar;
+      tot.saldo+=t.saldo;
+      tot.saldoAtual+=t.saldoAtual;
+      tr+=`<tr class="clickable" onclick="abrirLivreMes(${livreAnoVisual},${m})"><td>${mesesLivreNomes[m]}</td><td style="color:var(--green)">${moneyLivre(t.receitas)}</td><td style="color:var(--red)">${moneyLivre(t.despesas+t.doacoes)}</td><td style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldo)}</td><td style="color:${t.saldoAtual>=0?'var(--green)':'var(--red)'};font-weight:800">${moneyLivre(t.saldoAtual)}</td></tr>`;
+    }
+    box.innerHTML=`<div class="livre-summary"><div class="stat-card"><div class="stat-label">Receitas previstas</div><div class="stat-value" style="color:var(--green)">${moneyLivre(tot.receitas)}</div><div class="stat-sub">recebidas ${moneyLivre(tot.receitasRecebidas)}</div></div><div class="stat-card"><div class="stat-label">Compromissos</div><div class="stat-value" style="color:var(--red)">${moneyLivre(tot.compromissos)}</div><div class="stat-sub">pagos ${moneyLivre(tot.totalPago)}</div></div><div class="stat-card"><div class="stat-label">Ainda a pagar</div><div class="stat-value" style="color:var(--amber)">${moneyLivre(tot.aPagar)}</div><div class="stat-sub">pelos status marcados</div></div><div class="stat-card"><div class="stat-label">Disponível realizado</div><div class="stat-value" style="color:${tot.saldoAtual>=0?'var(--green)':'var(--red)'}">${moneyLivre(tot.saldoAtual)}</div><div class="stat-sub">saldo projetado ${moneyLivre(tot.saldo)}</div></div></div><table class="livre-anual-table"><thead><tr><th>Mês</th><th>Receitas previstas</th><th>Compromissos</th><th>Saldo projetado</th><th>Disponível agora</th></tr></thead><tbody>${tr}</tbody></table>`;
+  }
   window.toggleLivreDizimo=function(ativo){
     const d=getLivre();
     d.dizimoAtivo=!!ativo;
     renderLivre();
+    autoSaveLivre();
+  };
+  window.toggleLivreDizimoPago=function(pago){
+    const d=getLivre();
+    d.dizimoPago=!!pago;
+    refreshLivreTotals();
+    renderLivreDizimo();
+    autoSaveLivre();
+  };
+  window.toggleLivrePago=function(tipo,id,pago){
+    const x=getLivre()[tipo]?.find(i=>String(i.id)===String(id));
+    if(!x)return;
+    x.pago=!!pago;
+    refreshLivreTotals();
+    renderListLivre(tipo);
     autoSaveLivre();
   };
   window.updateLivreDizimoPct=function(valor){
@@ -6220,6 +6493,8 @@ body.dark .livre-copy-btn:hover{background:rgba(45,212,191,.16)}
     else if(modo==='za')arr.sort((a,b)=>String(b.nome||'').localeCompare(String(a.nome||''),'pt-BR',{sensitivity:'base',numeric:true}));
     else if(modo==='maior')arr.sort((a,b)=>(Number(b.valor)||0)-(Number(a.valor)||0));
     else if(modo==='menor')arr.sort((a,b)=>(Number(a.valor)||0)-(Number(b.valor)||0));
+    else if(modo==='pendentes')arr.sort((a,b)=>Number(!!a.pago)-Number(!!b.pago));
+    else if(modo==='concluidos')arr.sort((a,b)=>Number(!!b.pago)-Number(!!a.pago));
     renderListLivre(tipo);
     autoSaveLivre();
   };
@@ -6268,7 +6543,7 @@ body.dark .livre-copy-btn:hover{background:rgba(45,212,191,.16)}
     livreDragAtual=null;
   };
 
-  window.addLivreItem=function(tipo){const d=getLivre();livreSortModes[tipo]='manual';d[tipo].push({id:`ml${livreNextId++}`,nome:tipo==='receitas'?'Nova receita':tipo==='despesas'?'Nova despesa':'Novo item',valor:0});renderLivre();autoSaveLivre();setTimeout(()=>{const box=document.getElementById(`livre-${tipo}-list`);const ins=box?.querySelectorAll('input[type=text]');ins?.[ins.length-1]?.select()},30)};
+  window.addLivreItem=function(tipo){const d=getLivre();livreSortModes[tipo]='manual';d[tipo].push({id:`ml${livreNextId++}`,nome:tipo==='receitas'?'Nova receita':tipo==='despesas'?'Nova despesa':'Novo item',valor:0,pago:false});renderLivre();autoSaveLivre();setTimeout(()=>{const box=document.getElementById(`livre-${tipo}-list`);const ins=box?.querySelectorAll('input[type=text]');ins?.[ins.length-1]?.select()},30)};
   window.updateLivreItem=function(tipo,id,campo,valor){const x=getLivre()[tipo].find(i=>String(i.id)===String(id));if(!x)return;if(campo==='valor'){const n=String(valor).replace(/\./g,'').replace(',','.');x[campo]=Math.max(0,Number(n)||0)}else{x[campo]=valor}refreshLivreTotals();if(tipo==='receitas')renderLivreDizimo();autoSaveLivre()};
   window.deleteLivreItem=function(tipo,id){const d=getLivre();d[tipo]=d[tipo].filter(i=>String(i.id)!==String(id));renderLivre();autoSaveLivre()};
   window.copiarLivreMesAnterior=async function(){
@@ -6296,7 +6571,8 @@ body.dark .livre-copy-btn:hover{background:rgba(45,212,191,.16)}
       const copiarTipo=tipo=>(origem[tipo]||[]).map(item=>({
         id:novoIdLivre(),
         nome:String(item?.nome??''),
-        valor:Math.max(0,Number(item?.valor)||0)
+        valor:Math.max(0,Number(item?.valor)||0),
+        pago:false
       }));
 
       mensalLivreData[destinoKey]={
@@ -6304,7 +6580,8 @@ body.dark .livre-copy-btn:hover{background:rgba(45,212,191,.16)}
         despesas:copiarTipo('despesas'),
         doacoes:copiarTipo('doacoes'),
         dizimoAtivo:!!origem.dizimoAtivo,
-        dizimoPct:Number.isFinite(Number(origem.dizimoPct))?Number(origem.dizimoPct):10
+        dizimoPct:Number.isFinite(Number(origem.dizimoPct))?Number(origem.dizimoPct):10,
+        dizimoPago:false
       };
 
       renderLivre();
