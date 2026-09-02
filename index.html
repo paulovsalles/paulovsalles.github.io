@@ -1780,11 +1780,21 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
     <div class="mes-status" id="livre-mes-badge">independente</div>
     <button class="mes-nav" onclick="navLivre(1)" aria-label="Próximo mês">›</button>
   </div>
+  <div class="livre-status-control" id="livre-status-control">
+    <div class="livre-status-control-text">
+      <strong>✓ Controle de pago / recebido</strong>
+      <span id="livre-status-control-note">Ativado: marque cada receita recebida e cada despesa paga.</span>
+    </div>
+    <label class="livre-status-switch" title="Ativar ou desativar o controle de pago/recebido">
+      <input type="checkbox" id="livre-status-ativo" onchange="toggleLivreStatus(this.checked)" checked>
+      <span></span>
+    </label>
+  </div>
   <div class="livre-summary" id="livre-summary"></div>
   <div class="livre-grid">
     <div class="card livre-card">
       <div class="livre-card-head">
-        <div><strong>💰 Receitas do mês</strong><span>Marque ✓ quando o valor realmente entrar</span></div>
+        <div><strong>💰 Receitas do mês</strong><span id="livre-hint-receitas">Marque ✓ quando o valor realmente entrar</span></div>
         <div class="livre-head-actions">
           <select class="livre-sort-select" id="livre-sort-receitas" onchange="ordenarLivre('receitas',this.value)" title="Ordenar receitas">
             <option value="manual">↕ Manual</option>
@@ -1803,7 +1813,7 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
     </div>
     <div class="card livre-card">
       <div class="livre-card-head">
-        <div><strong>📌 Despesas do mês</strong><span>Marque ✓ quando a despesa for paga</span></div>
+        <div><strong>📌 Despesas do mês</strong><span id="livre-hint-despesas">Marque ✓ quando a despesa for paga</span></div>
         <div class="livre-head-actions">
           <select class="livre-sort-select" id="livre-sort-despesas" onchange="ordenarLivre('despesas',this.value)" title="Ordenar despesas">
             <option value="manual">↕ Manual</option>
@@ -1822,7 +1832,7 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
     </div>
     <div class="card livre-card">
       <div class="livre-card-head">
-        <div><strong>🙏 Doações / outros</strong><span>Marque ✓ quando o valor for pago ou entregue</span></div>
+        <div><strong>🙏 Doações / outros</strong><span id="livre-hint-doacoes">Marque ✓ quando o valor for pago ou entregue</span></div>
         <div class="livre-head-actions">
           <select class="livre-sort-select" id="livre-sort-doacoes" onchange="ordenarLivre('doacoes',this.value)" title="Ordenar doações">
             <option value="manual">↕ Manual</option>
@@ -6126,6 +6136,23 @@ body.dark .livre-copy-btn:hover{background:rgba(45,212,191,.16)}
 
 <style>
 /* ===== MENSAL LIVRE — STATUS PAGO / RECEBIDO ===== */
+.livre-status-control{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:11px 14px;margin:-4px 0 14px;
+  border:1px solid var(--tbd);border-radius:12px;background:var(--tbg);
+}
+.livre-status-control-text{display:flex;flex-direction:column;min-width:0}
+.livre-status-control-text strong{font-size:12px;color:var(--teal)}
+.livre-status-control-text span{font-size:10px;color:var(--mu);margin-top:1px}
+.livre-status-switch{position:relative;width:38px;height:22px;flex-shrink:0;cursor:pointer}
+.livre-status-switch input{position:absolute;opacity:0;pointer-events:none}
+.livre-status-switch span{position:absolute;inset:0;border-radius:999px;background:var(--s3);border:1px solid var(--bd2);transition:.2s}
+.livre-status-switch span:after{content:'';position:absolute;width:16px;height:16px;left:2px;top:2px;border-radius:50%;background:var(--mu);transition:.2s}
+.livre-status-switch input:checked+span{background:var(--teal);border-color:var(--teal)}
+.livre-status-switch input:checked+span:after{transform:translateX(16px);background:#fff}
+#sec-livre-lancamentos.livre-status-off .livre-status-control{border-color:var(--bd);background:var(--s2)}
+#sec-livre-lancamentos.livre-status-off .livre-status-control-text strong{color:var(--mu)}
+#sec-livre-lancamentos.livre-status-off .livre-row{grid-template-columns:24px 38px minmax(0,1fr) 136px 34px !important}
 .livre-row{
   grid-template-columns:24px 38px minmax(0,1fr) 136px 38px 34px !important;
 }
@@ -6266,6 +6293,11 @@ body.dark .livre-row.quitado{
   .livre-paid-check{grid-column:4;grid-row:2;}
   .livre-del{grid-column:5 !important;grid-row:1/3 !important;}
   .livre-dizimo-grid{grid-template-columns:1fr 1fr !important;}
+  .livre-status-control{align-items:flex-start}
+  #sec-livre-lancamentos.livre-status-off .livre-row{grid-template-columns:22px 34px minmax(0,1fr) 32px !important;}
+  #sec-livre-lancamentos.livre-status-off .livre-row>input[type="text"]{grid-column:3/4 !important;grid-row:1;}
+  #sec-livre-lancamentos.livre-status-off .livre-money-wrap{grid-column:2/4 !important;grid-row:2;}
+  #sec-livre-lancamentos.livre-status-off .livre-del{grid-column:4 !important;grid-row:1/3 !important;}
 }
 </style>
 
@@ -6289,7 +6321,7 @@ body.dark .livre-row.quitado{
   function updateLivreCopyButton(){const btn=document.getElementById('livre-copy-prev-btn');if(!btn)return;const ant=mesAnteriorLivre(),nomeAnterior=`${mesesLivreNomes[ant.mes]} ${ant.ano}`,nomeAtual=`${mesesLivreNomes[livreMesAtual]} ${livreAnoAtual}`;btn.innerHTML=`📋 Copiar ${mesesLivreNomes[ant.mes]}`;btn.title=`Copiar receitas, despesas e doações de ${nomeAnterior} para ${nomeAtual}`;}
   function moneyLivre(v){return (Number(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:2})}
   function escLivre(v){return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
-  function newMonthLivre(){return {receitas:[],despesas:[],doacoes:[],dizimoAtivo:false,dizimoPct:10,dizimoPago:false}}
+  function newMonthLivre(){return {receitas:[],despesas:[],doacoes:[],statusAtivo:true,dizimoAtivo:false,dizimoPct:10,dizimoPago:false}}
   function getLivre(){
     const k=keyLivre();
     if(!mensalLivreData[k])mensalLivreData[k]=newMonthLivre();
@@ -6298,6 +6330,7 @@ body.dark .livre-row.quitado{
       if(!Array.isArray(d[t]))d[t]=[];
       d[t].forEach(x=>{if(typeof x.pago!=='boolean')x.pago=false});
     });
+    if(typeof d.statusAtivo!=='boolean')d.statusAtivo=true;
     if(typeof d.dizimoAtivo!=='boolean')d.dizimoAtivo=false;
     if(!Number.isFinite(Number(d.dizimoPct)))d.dizimoPct=10;
     if(typeof d.dizimoPago!=='boolean')d.dizimoPago=false;
@@ -6307,31 +6340,35 @@ body.dark .livre-row.quitado{
   function totalsLivre(d=getLivre()){
     const sum=t=>(d[t]||[]).reduce((s,x)=>s+(Number(x.valor)||0),0);
     const sumPago=t=>(d[t]||[]).reduce((s,x)=>s+(x.pago?(Number(x.valor)||0):0),0);
+    const statusAtivo=d.statusAtivo!==false;
     const receitas=sum('receitas');
     const despesas=sum('despesas');
     const doacoesManuais=sum('doacoes');
     const dizimo=calcLivreDizimo(d);
     const doacoes=doacoesManuais+dizimo;
+    const saldo=receitas-despesas-doacoes;
 
-    const receitasRecebidas=sumPago('receitas');
-    const despesasPagas=sumPago('despesas');
-    const doacoesManuaisPagas=sumPago('doacoes');
-    const dizimoPago=(d.dizimoAtivo&&d.dizimoPago)?dizimo:0;
+    const receitasRecebidas=statusAtivo?sumPago('receitas'):0;
+    const despesasPagas=statusAtivo?sumPago('despesas'):0;
+    const doacoesManuaisPagas=statusAtivo?sumPago('doacoes'):0;
+    const dizimoPago=statusAtivo?(d.dizimoAtivo&&d.dizimoPago?dizimo:0):0;
     const doacoesPagas=doacoesManuaisPagas+dizimoPago;
     const totalPago=despesasPagas+doacoesPagas;
 
-    const saldo=receitas-despesas-doacoes;
-    const saldoAtual=receitasRecebidas-totalPago;
-    const aReceber=Math.max(0,receitas-receitasRecebidas);
-    const aPagar=Math.max(0,(despesas+doacoes)-totalPago);
+    const saldoAtual=statusAtivo?receitasRecebidas-totalPago:saldo;
+    const aReceber=statusAtivo?Math.max(0,receitas-receitasRecebidas):0;
+    const aPagar=statusAtivo?Math.max(0,(despesas+doacoes)-totalPago):0;
 
     return {
-      receitas,despesas,doacoes,dizimo,doacoesManuais,saldo,
+      statusAtivo,receitas,despesas,doacoes,dizimo,doacoesManuais,saldo,
       receitasRecebidas,despesasPagas,doacoesPagas,totalPago,
       saldoAtual,aReceber,aPagar
     };
   }
-  function cardsLivreHtml(t){
+  function cardsLivreHtml(t,d=getLivre()){
+    if(d.statusAtivo===false){
+      return `<div class="stat-card"><div class="stat-label">Receitas do mês</div><div class="stat-value" style="color:var(--green)">${moneyLivre(t.receitas)}</div><div class="stat-sub">controle de recebimento desativado</div></div><div class="stat-card"><div class="stat-label">Despesas do mês</div><div class="stat-value" style="color:var(--red)">${moneyLivre(t.despesas)}</div><div class="stat-sub">controle de pagamento desativado</div></div><div class="stat-card"><div class="stat-label">Doações/outros</div><div class="stat-value" style="color:var(--purple)">${moneyLivre(t.doacoes)}</div><div class="stat-sub">consideradas na projeção do mês</div></div><div class="stat-card"><div class="stat-label">Saldo projetado</div><div class="stat-value" style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldo)}</div><div class="stat-sub">sem acompanhamento de pago / recebido</div></div>`;
+    }
     return `<div class="stat-card"><div class="stat-label">Receitas previstas</div><div class="stat-value" style="color:var(--green)">${moneyLivre(t.receitas)}</div><div class="stat-sub">recebido <strong>${moneyLivre(t.receitasRecebidas)}</strong> · falta ${moneyLivre(t.aReceber)}</div></div><div class="stat-card"><div class="stat-label">Despesas previstas</div><div class="stat-value" style="color:var(--red)">${moneyLivre(t.despesas)}</div><div class="stat-sub">pago <strong>${moneyLivre(t.despesasPagas)}</strong> · falta ${moneyLivre(Math.max(0,t.despesas-t.despesasPagas))}</div></div><div class="stat-card"><div class="stat-label">Doações/outros</div><div class="stat-value" style="color:var(--purple)">${moneyLivre(t.doacoes)}</div><div class="stat-sub">pago <strong>${moneyLivre(t.doacoesPagas)}</strong> · falta ${moneyLivre(Math.max(0,t.doacoes-t.doacoesPagas))}</div></div><div class="stat-card"><div class="stat-label">Disponível agora</div><div class="stat-value" style="color:${t.saldoAtual>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldoAtual)}</div><div class="stat-sub">a receber ${moneyLivre(t.aReceber)} · a pagar ${moneyLivre(t.aPagar)}<br>projeção final <strong>${moneyLivre(t.saldo)}</strong></div></div>`;
   }
   function autoSaveLivre(){clearTimeout(livreSaveTimer);livreSaveTimer=setTimeout(()=>{if(typeof window.salvarFirestore==='function')window.salvarFirestore();},60000)}
@@ -6342,11 +6379,36 @@ body.dark .livre-row.quitado{
     setTxt('livre-total-despesas',t.despesas);
     setTxt('livre-total-doacoes',t.doacoes);
     const s=document.getElementById('livre-summary');
-    if(s)s.innerHTML=cardsLivreHtml(t);
+    if(s)s.innerHTML=cardsLivreHtml(t,d);
   }
   function iconLivre(tipo){return tipo==='receitas'?'💰':tipo==='despesas'?'📌':'🙏'}
+  function renderLivreStatusControl(){
+    const d=getLivre();
+    const ativo=d.statusAtivo!==false;
+    const input=document.getElementById('livre-status-ativo');
+    const note=document.getElementById('livre-status-control-note');
+    const sec=document.getElementById('sec-livre-lancamentos');
+    if(input)input.checked=ativo;
+    if(note)note.textContent=ativo
+      ? 'Ativado: marque cada receita recebida e cada despesa/doação paga.'
+      : 'Desativado: os ✓ ficam ocultos e o painel mostra apenas a projeção do mês.';
+    if(sec)sec.classList.toggle('livre-status-off',!ativo);
+    const hints={
+      receitas:ativo?'Marque ✓ quando o valor realmente entrar':'Controle de recebimento desativado',
+      despesas:ativo?'Marque ✓ quando a despesa for paga':'Controle de pagamento desativado',
+      doacoes:ativo?'Marque ✓ quando o valor for pago ou entregue':'Controle de pagamento desativado'
+    };
+    Object.entries(hints).forEach(([tipo,txt])=>{const e=document.getElementById(`livre-hint-${tipo}`);if(e)e.textContent=txt});
+    ['receitas','despesas','doacoes'].forEach(tipo=>{
+      const select=document.getElementById(`livre-sort-${tipo}`);
+      if(!select)return;
+      [...select.options].forEach(opt=>{if(opt.value==='pendentes'||opt.value==='concluidos')opt.disabled=!ativo});
+      if(!ativo&&(livreSortModes[tipo]==='pendentes'||livreSortModes[tipo]==='concluidos'))livreSortModes[tipo]='manual';
+    });
+  }
   function renderLivreDizimo(){
     const d=getLivre();
+    const statusAtivo=d.statusAtivo!==false;
     const receitas=(d.receitas||[]).reduce((s,x)=>s+(Number(x.valor)||0),0);
     const valor=calcLivreDizimo(d);
     const ativo=document.getElementById('livre-dizimo-ativo');
@@ -6354,21 +6416,26 @@ body.dark .livre-row.quitado{
     const base=document.getElementById('livre-dizimo-base');
     const val=document.getElementById('livre-dizimo-valor');
     const pago=document.getElementById('livre-dizimo-pago');
+    const pagoBox=document.querySelector('#livre-dizimo-box .livre-dizimo-status');
     const box=document.getElementById('livre-dizimo-box');
     const note=document.getElementById('livre-dizimo-note');
     if(ativo)ativo.checked=!!d.dizimoAtivo;
     if(pct)pct.value=Number(d.dizimoPct)||0;
     if(base)base.textContent=moneyLivre(receitas);
     if(val)val.textContent=moneyLivre(valor);
-    if(pago){pago.checked=!!d.dizimoPago;pago.disabled=!d.dizimoAtivo;}
+    if(pago){pago.checked=!!d.dizimoPago;pago.disabled=!d.dizimoAtivo||!statusAtivo;}
+    if(pagoBox)pagoBox.style.display=statusAtivo?'':'none';
     if(box)box.classList.toggle('disabled',!d.dizimoAtivo);
-    if(note)note.textContent=d.dizimoAtivo
-      ? `${Number(d.dizimoPct)||0}% de ${moneyLivre(receitas)} = ${moneyLivre(valor)}. ${d.dizimoPago?'Marcado como pago e já abatido do disponível atual.':'Ainda não foi abatido do disponível atual.'}`
-      : 'Ative para incluir automaticamente o dízimo em Doações/outros. Depois marque como pago quando ele sair de fato.';
+    if(note){
+      if(!d.dizimoAtivo)note.textContent='Ative para incluir automaticamente o dízimo em Doações/outros.';
+      else if(!statusAtivo)note.textContent=`${Number(d.dizimoPct)||0}% de ${moneyLivre(receitas)} = ${moneyLivre(valor)}. O controle de pago/recebido está desativado, então o dízimo entra somente na projeção do mês.`;
+      else note.textContent=`${Number(d.dizimoPct)||0}% de ${moneyLivre(receitas)} = ${moneyLivre(valor)}. ${d.dizimoPago?'Marcado como pago e já abatido do disponível atual.':'Ainda não foi abatido do disponível atual.'}`;
+    }
   }
   function renderListLivre(tipo){
     const d=getLivre(),box=document.getElementById(`livre-${tipo}-list`);
     if(!box)return;
+    const statusAtivo=d.statusAtivo!==false;
     const arr=d[tipo];
     const select=document.getElementById(`livre-sort-${tipo}`);
     if(select)select.value=livreSortModes[tipo]||'manual';
@@ -6379,8 +6446,16 @@ body.dark .livre-row.quitado{
     box.innerHTML=arr.map(x=>{
       const rotulo=tipo==='receitas'?'recebido':'pago';
       const acao=tipo==='receitas'?'recebido':'pago';
+      const check=statusAtivo?`
+        <label class="livre-paid-check ${x.pago?'checked':''}"
+          title="${x.pago?`Marcado como ${rotulo}`:`Marcar como ${acao}`}"
+          aria-label="${x.pago?`Marcado como ${rotulo}`:`Marcar como ${acao}`}">
+          <input type="checkbox" ${x.pago?'checked':''}
+            onchange="toggleLivrePago('${tipo}','${x.id}',this.checked)">
+          <span>✓</span>
+        </label>`:'';
       return `
-      <div class="livre-row ${tipo} ${x.pago?'quitado':''}" data-livre-id="${escLivre(x.id)}"
+      <div class="livre-row ${tipo} ${statusAtivo&&x.pago?'quitado':''}" data-livre-id="${escLivre(x.id)}"
         ondragover="livreDragOver(event,'${tipo}','${escLivre(x.id)}')"
         ondragleave="livreDragLeave(event)"
         ondrop="livreDrop(event,'${tipo}','${escLivre(x.id)}')">
@@ -6395,13 +6470,7 @@ body.dark .livre-row.quitado{
           <input type="number" min="0" step="0.01" value="${Number(x.valor)||0}"
             oninput="updateLivreItem('${tipo}','${x.id}','valor',this.value)">
         </div>
-        <label class="livre-paid-check ${x.pago?'checked':''}"
-          title="${x.pago?`Marcado como ${rotulo}`:`Marcar como ${acao}`}"
-          aria-label="${x.pago?`Marcado como ${rotulo}`:`Marcar como ${acao}`}">
-          <input type="checkbox" ${x.pago?'checked':''}
-            onchange="toggleLivrePago('${tipo}','${x.id}',this.checked)">
-          <span>✓</span>
-        </label>
+        ${check}
         <button class="livre-del" onclick="deleteLivreItem('${tipo}','${x.id}')" title="Excluir">×</button>
       </div>`;
     }).join('');
@@ -6412,6 +6481,7 @@ body.dark .livre-row.quitado{
     const title=document.getElementById('livre-title');
     if(title)title.textContent=`Mensal livre — ${nome}`;
     refreshLivreTotals();
+    renderLivreStatusControl();
     ['receitas','despesas','doacoes'].forEach(renderListLivre);
     renderLivreDizimo();
     updateLivreCopyButton();
@@ -6422,12 +6492,17 @@ body.dark .livre-row.quitado{
   }
   function rowsResumo(tipo,d){
     const arr=d[tipo]||[];
+    const statusAtivo=d.statusAtivo!==false;
     let extra='';
     if(tipo==='doacoes'&&d.dizimoAtivo){
-      extra=`<div class="livre-resumo-item"><span>🙏 Dízimo automático (${Number(d.dizimoPct)||0}%) <small class="livre-status-tag ${d.dizimoPago?'ok':''}">${d.dizimoPago?'✓ Pago':'○ A pagar'}</small></span><strong style="color:var(--purple)">${moneyLivre(calcLivreDizimo(d))}</strong></div>`;
+      const tag=statusAtivo?` <small class="livre-status-tag ${d.dizimoPago?'ok':''}">${d.dizimoPago?'✓ Pago':'○ A pagar'}</small>`:'';
+      extra=`<div class="livre-resumo-item"><span>🙏 Dízimo automático (${Number(d.dizimoPct)||0}%)${tag}</span><strong style="color:var(--purple)">${moneyLivre(calcLivreDizimo(d))}</strong></div>`;
     }
     if(!arr.length&&!extra)return '<div class="livre-resumo-item"><span>Nenhum item</span><strong>—</strong></div>';
-    return extra+arr.map(x=>`<div class="livre-resumo-item"><span>${escLivre(x.nome||'Sem nome')} <small class="livre-status-tag ${x.pago?'ok':''}">${x.pago?'✓':'○'} ${statusLivreTexto(tipo,!!x.pago)}</small></span><strong>${moneyLivre(x.valor)}</strong></div>`).join('');
+    return extra+arr.map(x=>{
+      const tag=statusAtivo?` <small class="livre-status-tag ${x.pago?'ok':''}">${x.pago?'✓':'○'} ${statusLivreTexto(tipo,!!x.pago)}</small>`:'';
+      return `<div class="livre-resumo-item"><span>${escLivre(x.nome||'Sem nome')}${tag}</span><strong>${moneyLivre(x.valor)}</strong></div>`;
+    }).join('');
   }
   function renderResumoLivre(){
     const d=getLivre(),t=totalsLivre(d),nome=`${mesesLivreNomes[livreMesAtual]} ${livreAnoAtual}`;
@@ -6435,7 +6510,10 @@ body.dark .livre-row.quitado{
     if(tt)tt.textContent=`Resumo livre — ${nome}`;
     const box=document.getElementById('livre-resumo-content');
     if(!box)return;
-    box.innerHTML=`<div class="livre-summary">${cardsLivreHtml(t)}</div><div class="livre-resumo-grid"><div class="livre-resumo-list"><h3>💰 Receitas</h3>${rowsResumo('receitas',d)}</div><div class="livre-resumo-list"><h3>📌 Despesas</h3>${rowsResumo('despesas',d)}</div><div class="livre-resumo-list"><h3>🙏 Doações / outros</h3>${rowsResumo('doacoes',d)}</div><div class="livre-resumo-list"><h3>📊 Leitura do mês</h3><div class="livre-resumo-item"><span>Recebido até agora</span><strong style="color:var(--green)">${moneyLivre(t.receitasRecebidas)}</strong></div><div class="livre-resumo-item"><span>Pago até agora</span><strong style="color:var(--red)">${moneyLivre(t.totalPago)}</strong></div><div class="livre-resumo-item"><span>A receber</span><strong>${moneyLivre(t.aReceber)}</strong></div><div class="livre-resumo-item"><span>A pagar</span><strong>${moneyLivre(t.aPagar)}</strong></div><div class="livre-resumo-item"><span>Disponível agora</span><strong style="color:${t.saldoAtual>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldoAtual)}</strong></div><div class="livre-resumo-item"><span>Saldo projetado</span><strong style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldo)}</strong></div></div></div>`;
+    const leitura=d.statusAtivo!==false
+      ? `<div class="livre-resumo-item"><span>Recebido até agora</span><strong style="color:var(--green)">${moneyLivre(t.receitasRecebidas)}</strong></div><div class="livre-resumo-item"><span>Pago até agora</span><strong style="color:var(--red)">${moneyLivre(t.totalPago)}</strong></div><div class="livre-resumo-item"><span>A receber</span><strong>${moneyLivre(t.aReceber)}</strong></div><div class="livre-resumo-item"><span>A pagar</span><strong>${moneyLivre(t.aPagar)}</strong></div><div class="livre-resumo-item"><span>Disponível agora</span><strong style="color:${t.saldoAtual>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldoAtual)}</strong></div><div class="livre-resumo-item"><span>Saldo projetado</span><strong style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldo)}</strong></div>`
+      : `<div class="livre-resumo-item"><span>Controle pago / recebido</span><strong>Desativado</strong></div><div class="livre-resumo-item"><span>Total de receitas</span><strong style="color:var(--green)">${moneyLivre(t.receitas)}</strong></div><div class="livre-resumo-item"><span>Total de despesas + doações</span><strong style="color:var(--red)">${moneyLivre(t.despesas+t.doacoes)}</strong></div><div class="livre-resumo-item"><span>Saldo projetado</span><strong style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldo)}</strong></div>`;
+    box.innerHTML=`<div class="livre-summary">${cardsLivreHtml(t,d)}</div><div class="livre-resumo-grid"><div class="livre-resumo-list"><h3>💰 Receitas</h3>${rowsResumo('receitas',d)}</div><div class="livre-resumo-list"><h3>📌 Despesas</h3>${rowsResumo('despesas',d)}</div><div class="livre-resumo-list"><h3>🙏 Doações / outros</h3>${rowsResumo('doacoes',d)}</div><div class="livre-resumo-list"><h3>📊 Leitura do mês</h3>${leitura}</div></div>`;
   }
   function renderAnualLivre(){
     const box=document.getElementById('livre-anual-content');
@@ -6443,20 +6521,38 @@ body.dark .livre-row.quitado{
     const label=document.getElementById('livre-ano-label');
     if(label)label.textContent=livreAnoVisual;
     let tr='';
-    const tot={receitas:0,receitasRecebidas:0,compromissos:0,totalPago:0,aPagar:0,saldo:0,saldoAtual:0};
+    const tot={receitas:0,receitasRecebidas:0,compromissos:0,totalPago:0,aPagar:0,saldo:0,saldoAtual:0,statusMeses:0};
     for(let m=0;m<12;m++){
       const d=mensalLivreData[keyLivre(livreAnoVisual,m)]||newMonthLivre(),t=totalsLivre(d);
       tot.receitas+=t.receitas;
-      tot.receitasRecebidas+=t.receitasRecebidas;
       tot.compromissos+=t.despesas+t.doacoes;
-      tot.totalPago+=t.totalPago;
-      tot.aPagar+=t.aPagar;
       tot.saldo+=t.saldo;
-      tot.saldoAtual+=t.saldoAtual;
-      tr+=`<tr class="clickable" onclick="abrirLivreMes(${livreAnoVisual},${m})"><td>${mesesLivreNomes[m]}</td><td style="color:var(--green)">${moneyLivre(t.receitas)}</td><td style="color:var(--red)">${moneyLivre(t.despesas+t.doacoes)}</td><td style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldo)}</td><td style="color:${t.saldoAtual>=0?'var(--green)':'var(--red)'};font-weight:800">${moneyLivre(t.saldoAtual)}</td></tr>`;
+      if(t.statusAtivo){
+        tot.statusMeses++;
+        tot.receitasRecebidas+=t.receitasRecebidas;
+        tot.totalPago+=t.totalPago;
+        tot.aPagar+=t.aPagar;
+        tot.saldoAtual+=t.saldoAtual;
+      }
+      const realizado=t.statusAtivo
+        ? `<span style="color:${t.saldoAtual>=0?'var(--green)':'var(--red)'};font-weight:800">${moneyLivre(t.saldoAtual)}</span>`
+        : `<span style="color:var(--di)" title="Controle pago/recebido desativado neste mês">—</span>`;
+      tr+=`<tr class="clickable" onclick="abrirLivreMes(${livreAnoVisual},${m})"><td>${mesesLivreNomes[m]}</td><td style="color:var(--green)">${moneyLivre(t.receitas)}</td><td style="color:var(--red)">${moneyLivre(t.despesas+t.doacoes)}</td><td style="color:${t.saldo>=0?'var(--green)':'var(--red)'}">${moneyLivre(t.saldo)}</td><td>${realizado}</td></tr>`;
     }
-    box.innerHTML=`<div class="livre-summary"><div class="stat-card"><div class="stat-label">Receitas previstas</div><div class="stat-value" style="color:var(--green)">${moneyLivre(tot.receitas)}</div><div class="stat-sub">recebidas ${moneyLivre(tot.receitasRecebidas)}</div></div><div class="stat-card"><div class="stat-label">Compromissos</div><div class="stat-value" style="color:var(--red)">${moneyLivre(tot.compromissos)}</div><div class="stat-sub">pagos ${moneyLivre(tot.totalPago)}</div></div><div class="stat-card"><div class="stat-label">Ainda a pagar</div><div class="stat-value" style="color:var(--amber)">${moneyLivre(tot.aPagar)}</div><div class="stat-sub">pelos status marcados</div></div><div class="stat-card"><div class="stat-label">Disponível realizado</div><div class="stat-value" style="color:${tot.saldoAtual>=0?'var(--green)':'var(--red)'}">${moneyLivre(tot.saldoAtual)}</div><div class="stat-sub">saldo projetado ${moneyLivre(tot.saldo)}</div></div></div><table class="livre-anual-table"><thead><tr><th>Mês</th><th>Receitas previstas</th><th>Compromissos</th><th>Saldo projetado</th><th>Disponível agora</th></tr></thead><tbody>${tr}</tbody></table>`;
+    const realizadoAno=tot.statusMeses?moneyLivre(tot.saldoAtual):'—';
+    box.innerHTML=`<div class="livre-summary"><div class="stat-card"><div class="stat-label">Receitas previstas</div><div class="stat-value" style="color:var(--green)">${moneyLivre(tot.receitas)}</div><div class="stat-sub">recebidas nos meses com controle: ${moneyLivre(tot.receitasRecebidas)}</div></div><div class="stat-card"><div class="stat-label">Compromissos</div><div class="stat-value" style="color:var(--red)">${moneyLivre(tot.compromissos)}</div><div class="stat-sub">pagos nos meses com controle: ${moneyLivre(tot.totalPago)}</div></div><div class="stat-card"><div class="stat-label">Ainda a pagar</div><div class="stat-value" style="color:var(--amber)">${moneyLivre(tot.aPagar)}</div><div class="stat-sub">considera somente meses com status ativo</div></div><div class="stat-card"><div class="stat-label">Disponível realizado</div><div class="stat-value" style="color:${tot.saldoAtual>=0?'var(--green)':'var(--red)'}">${realizadoAno}</div><div class="stat-sub">${tot.statusMeses} mês(es) com controle ativo · saldo projetado ${moneyLivre(tot.saldo)}</div></div></div><table class="livre-anual-table"><thead><tr><th>Mês</th><th>Receitas previstas</th><th>Compromissos</th><th>Saldo projetado</th><th>Disponível agora</th></tr></thead><tbody>${tr}</tbody></table>`;
   }
+  window.toggleLivreStatus=function(ativo){
+    const d=getLivre();
+    d.statusAtivo=!!ativo;
+    if(!d.statusAtivo){
+      ['receitas','despesas','doacoes'].forEach(tipo=>{
+        if(livreSortModes[tipo]==='pendentes'||livreSortModes[tipo]==='concluidos')livreSortModes[tipo]='manual';
+      });
+    }
+    renderLivre();
+    autoSaveLivre();
+  };
   window.toggleLivreDizimo=function(ativo){
     const d=getLivre();
     d.dizimoAtivo=!!ativo;
@@ -6579,6 +6675,7 @@ body.dark .livre-row.quitado{
         receitas:copiarTipo('receitas'),
         despesas:copiarTipo('despesas'),
         doacoes:copiarTipo('doacoes'),
+        statusAtivo:origem.statusAtivo!==false,
         dizimoAtivo:!!origem.dizimoAtivo,
         dizimoPct:Number.isFinite(Number(origem.dizimoPct))?Number(origem.dizimoPct):10,
         dizimoPago:false
