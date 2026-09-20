@@ -6370,14 +6370,14 @@ body.dark .livre-row.quitado{
 /* Cada lançamento ocupa UMA linha. Categoria = ícone à esquerda; data = chip compacto. */
 .livre-row{
   display:grid !important;
-  grid-template-columns:18px 34px minmax(82px,1fr) 82px 108px 34px 28px !important;
+  grid-template-columns:14px 32px minmax(125px,1fr) 72px 92px 32px 26px !important;
   gap:7px !important;
   align-items:center !important;
   padding:10px 12px !important;
   min-height:56px;
 }
 #sec-livre-lancamentos.livre-status-off .livre-row{
-  grid-template-columns:18px 34px minmax(82px,1fr) 82px 108px 28px !important;
+  grid-template-columns:14px 32px minmax(145px,1fr) 72px 96px 26px !important;
 }
 .livre-drag{grid-column:auto !important;grid-row:auto !important;align-self:center}
 .livre-main-cell{min-width:0;display:block !important;grid-column:auto !important;grid-row:auto !important}
@@ -6405,7 +6405,9 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
+  min-width:0;
 }
+.livre-name-input:focus{overflow:visible;text-overflow:clip}
 .livre-name-input:hover,.livre-name-input:focus{border-color:var(--tbd) !important;background:var(--s2) !important}
 
 /* O próprio ícone vira o seletor de categoria, sem escrever “Grupo” em cada linha. */
@@ -6422,9 +6424,9 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
   display:flex;
   align-items:center;
   justify-content:center;
-  gap:5px;
+  gap:4px;
   min-width:0;
-  padding:0 7px;
+  padding:0 5px;
   border:1px solid var(--bd2);
   border-radius:9px;
   background:var(--s2);
@@ -6489,9 +6491,9 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
 @media(max-width:900px){
   .livre-dizimo-grid{grid-template-columns:1fr 1fr !important}
   .livre-card.livre-wide-card{grid-column:auto !important}
-  .livre-row{grid-template-columns:16px 32px minmax(74px,1fr) 76px 98px 32px 26px !important;gap:6px !important;padding:9px 9px !important}
+  .livre-row{grid-template-columns:14px 30px minmax(120px,1fr) 68px 90px 30px 24px !important;gap:6px !important;padding:9px 9px !important}
   #sec-livre-lancamentos.livre-status-off .livre-row{grid-template-columns:16px 32px minmax(74px,1fr) 76px 98px 26px !important}
-  .livre-date-chip{padding:0 5px}.livre-date-chip b{font-size:10px}
+  .livre-date-chip{padding:0 4px}.livre-date-chip b{font-size:10px}
 }
 
 @media(max-width:620px){
@@ -7496,11 +7498,9 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
 
     if(tipo==='receitas')renderLivreDizimo();
 
-    if(
-      (campo==='grupo' && livreSortModes[tipo]==='grupo') ||
-      (campo==='vencimento' && livreSortModes[tipo]==='vencimento') ||
-      (campo==='pagoEm' && ['pagamento','concluidos','pendentes'].includes(livreSortModes[tipo]))
-    ){
+    // Grupo e datas alteram elementos visuais (ícone, chip e/ou posição do grupo),
+    // então a linha precisa ser redesenhada imediatamente, mesmo no modo Manual.
+    if(campo==='grupo' || campo==='vencimento' || campo==='pagoEm'){
       renderListLivre(tipo);
     }
 
