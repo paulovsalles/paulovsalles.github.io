@@ -6361,32 +6361,29 @@ body.dark .livre-row.quitado{
 
 
 <style>
-/* ===== MENSAL LIVRE V4 — clean e compacto ===== */
+/* ===== MENSAL LIVRE V5 — uma linha, sem rótulos repetidos ===== */
 .livre-summary{grid-template-columns:repeat(auto-fit,minmax(160px,1fr)) !important}
 .livre-card:nth-child(3){grid-column:auto !important}
 .livre-card.livre-wide-card{grid-column:1/-1 !important}
 .livre-card-head b.invest{color:var(--blue)}
 
-/* Linha do lançamento: nome/valor em cima, metadados lado a lado embaixo */
+/* Cada lançamento ocupa UMA linha. Categoria = ícone à esquerda; data = chip compacto. */
 .livre-row{
   display:grid !important;
-  grid-template-columns:20px 36px minmax(0,1fr) 118px 34px 30px !important;
-  grid-template-rows:auto auto;
-  column-gap:9px;
-  row-gap:5px;
+  grid-template-columns:18px 34px minmax(82px,1fr) 82px 108px 34px 28px !important;
+  gap:7px !important;
   align-items:center !important;
-  padding:11px 12px !important;
+  padding:10px 12px !important;
+  min-height:56px;
 }
 #sec-livre-lancamentos.livre-status-off .livre-row{
-  grid-template-columns:20px 36px minmax(0,1fr) 118px 30px !important;
+  grid-template-columns:18px 34px minmax(82px,1fr) 82px 108px 28px !important;
 }
-.livre-drag{grid-column:1;grid-row:1/3;align-self:center}
-.livre-icon{grid-column:2;grid-row:1/3;align-self:center}
-.livre-main-cell{grid-column:3;grid-row:1/3;min-width:0;display:flex;flex-direction:column;gap:5px}
-.livre-money-wrap{grid-column:4;grid-row:1;align-self:center;height:36px !important}
-.livre-paid-check{grid-column:5;grid-row:1/3;align-self:center}
-.livre-del{grid-column:6;grid-row:1/3;align-self:center}
-#sec-livre-lancamentos.livre-status-off .livre-del{grid-column:5}
+.livre-drag{grid-column:auto !important;grid-row:auto !important;align-self:center}
+.livre-main-cell{min-width:0;display:block !important;grid-column:auto !important;grid-row:auto !important}
+.livre-money-wrap{grid-column:auto !important;grid-row:auto !important;height:36px !important;min-width:0}
+.livre-paid-check{grid-column:auto !important;grid-row:auto !important;align-self:center}
+.livre-del{grid-column:auto !important;grid-row:auto !important;align-self:center;width:28px;height:32px}
 
 .livre-row.quitado{background:rgba(15,166,147,.035)}
 body.dark .livre-row.quitado{background:rgba(45,212,191,.045)}
@@ -6395,7 +6392,7 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
 
 .livre-name-input{
   width:100% !important;
-  height:30px !important;
+  height:34px !important;
   border:1px solid transparent !important;
   border-radius:8px !important;
   background:transparent !important;
@@ -6403,112 +6400,83 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
   font-family:Inter,sans-serif !important;
   font-size:13px !important;
   font-weight:700 !important;
-  padding:0 6px !important;
+  padding:0 4px !important;
   outline:none !important;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 .livre-name-input:hover,.livre-name-input:focus{border-color:var(--tbd) !important;background:var(--s2) !important}
 
-/* Metadados compactos: grupo + data + alerta na mesma linha */
-.livre-meta-row{
-  display:flex !important;
-  align-items:center !important;
-  gap:6px !important;
-  flex-wrap:nowrap !important;
-  min-width:0;
-  overflow:visible;
+/* O próprio ícone vira o seletor de categoria, sem escrever “Grupo” em cada linha. */
+.livre-icon.livre-icon-select{position:relative;cursor:pointer;overflow:hidden}
+.livre-icon.livre-icon-select:hover{outline:1px solid var(--tbd);background:var(--tbg)}
+.livre-icon.livre-icon-select select{
+  position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;
 }
-.livre-group-field,.livre-mini-field{
-  display:flex !important;
-  align-items:center !important;
-  gap:4px !important;
-  min-height:27px !important;
-  height:27px !important;
-  padding:0 7px !important;
-  border:1px solid var(--bd) !important;
-  border-radius:999px !important;
-  background:var(--s2) !important;
-  flex:0 1 auto;
-  min-width:0 !important;
-}
-.livre-group-field>span,.livre-mini-field>span{
-  display:none !important;
-}
-.livre-group-select{
-  width:auto !important;
-  max-width:118px !important;
-  min-width:84px !important;
-  height:25px !important;
-  border:0 !important;
-  background:transparent !important;
-  color:var(--mu) !important;
-  font:700 10.5px Inter,sans-serif !important;
-  padding:0 18px 0 0 !important;
-  outline:none !important;
-  cursor:pointer;
-}
-.livre-group-select option{background:var(--s1);color:var(--tx)}
 
-.livre-mini-field:has(input[type="date"])::before{
-  content:'📅';
-  font-size:10px;
-  opacity:.8;
-  flex-shrink:0;
-}
-.livre-date-paid:has(input[type="date"])::before{content:'✓';color:var(--green);font-weight:900;font-size:11px}
-.livre-mini-field input[type="date"]{
-  width:96px !important;
-  min-width:96px !important;
-  height:25px !important;
-  border:0 !important;
-  background:transparent !important;
-  color:var(--tx) !important;
-  font:700 10.5px Inter,sans-serif !important;
-  padding:0 !important;
-  outline:none !important;
-}
-.livre-date-paid{border-color:rgba(22,163,74,.18) !important;background:rgba(22,163,74,.045) !important}
-
-.livre-due-badge{
-  display:inline-flex !important;
+/* Uma única data visível: vencimento enquanto pendente; data real após pagar/receber. */
+.livre-date-chip{
+  position:relative;
+  height:32px;
+  display:flex;
   align-items:center;
   justify-content:center;
-  min-height:27px;
-  height:27px;
-  padding:0 8px;
-  border-radius:999px;
-  border:1px solid var(--bd);
+  gap:5px;
+  min-width:0;
+  padding:0 7px;
+  border:1px solid var(--bd2);
+  border-radius:9px;
   background:var(--s2);
-  color:var(--mu) !important;
-  font-size:9.5px !important;
-  font-weight:800;
-  white-space:nowrap;
-  flex:0 0 auto;
-}
-.livre-due-badge.ok{color:var(--green) !important;border-color:rgba(22,163,74,.25);background:rgba(22,163,74,.07)}
-.livre-due-badge.warn{color:var(--amber) !important;border-color:rgba(217,119,6,.25);background:rgba(217,119,6,.07)}
-.livre-due-badge.bad{color:var(--red) !important;border-color:rgba(220,38,38,.22);background:rgba(220,38,38,.06)}
-
-/* Grupos visualmente separados, mas discretos */
-.livre-group-block{
-  margin:10px 12px 12px;
-  border:1px solid var(--bd);
-  border-radius:13px;
+  color:var(--mu);
+  cursor:pointer;
   overflow:hidden;
-  background:var(--s1);
+  transition:border-color .15s,background .15s,color .15s;
+}
+.livre-date-chip:hover{border-color:var(--tbd);color:var(--teal)}
+.livre-date-chip .date-icon{font-size:10px;line-height:1;flex-shrink:0}
+.livre-date-chip b{font:800 10.5px 'Space Grotesk',sans-serif;white-space:nowrap;color:inherit}
+.livre-date-chip i{width:5px;height:5px;border-radius:50%;background:var(--di);flex-shrink:0}
+.livre-date-chip input{
+  position:absolute !important;inset:0 !important;width:100% !important;height:100% !important;
+  opacity:0 !important;cursor:pointer !important;border:0 !important;padding:0 !important;
+}
+.livre-date-chip.warn{color:var(--amber);border-color:rgba(217,119,6,.30);background:rgba(217,119,6,.07)}
+.livre-date-chip.warn i{background:var(--amber)}
+.livre-date-chip.bad{color:var(--red);border-color:rgba(220,38,38,.27);background:rgba(220,38,38,.06)}
+.livre-date-chip.bad i{background:var(--red)}
+.livre-date-chip.ok{color:var(--green);border-color:rgba(22,163,74,.25);background:rgba(22,163,74,.07)}
+.livre-date-chip.ok i{background:var(--green)}
+.livre-date-chip.empty b{color:var(--di);font-weight:700}
+
+/* Remove a linha antiga de metadados: não há mais chips “Grupo / Vence” embaixo. */
+.livre-meta-row,.livre-group-field,.livre-mini-field,.livre-due-badge{display:none !important}
+
+/* Grupos: separação clara, sem criar um “card dentro do card”. */
+.livre-group-block{
+  margin:9px 0 12px;
+  border:0;
+  border-radius:0;
+  overflow:visible;
+  background:transparent;
 }
 .livre-group-head{
   display:flex;
   justify-content:space-between;
   align-items:center;
   gap:10px;
-  padding:8px 11px;
+  margin:0 10px 2px;
+  padding:7px 10px;
+  border:1px solid var(--bd);
+  border-left:3px solid var(--teal);
+  border-radius:9px;
   background:var(--s2);
-  border-bottom:1px solid var(--bd);
 }
-.livre-group-info{display:flex;align-items:center;gap:8px;min-width:0}
+.livre-group-info{display:flex;align-items:center;gap:7px;min-width:0}
 .livre-group-head strong{font-size:10px;letter-spacing:.045em;text-transform:uppercase;color:var(--tx);white-space:nowrap}
 .livre-group-head small{color:var(--di);font-size:9.5px;font-weight:600;white-space:nowrap}
 .livre-group-head b{font-family:'Space Grotesk',sans-serif;font-size:11px;color:var(--teal);white-space:nowrap}
+.livre-group-body{border-bottom:1px solid var(--bd)}
 .livre-group-body .livre-row{border-bottom:1px solid var(--bd)}
 .livre-group-body .livre-row:last-child{border-bottom:0}
 
@@ -6521,28 +6489,29 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
 @media(max-width:900px){
   .livre-dizimo-grid{grid-template-columns:1fr 1fr !important}
   .livre-card.livre-wide-card{grid-column:auto !important}
-  .livre-row{grid-template-columns:18px 34px minmax(0,1fr) 108px 34px 28px !important}
-  .livre-group-select{max-width:100px !important;min-width:72px !important}
-  .livre-mini-field input[type="date"]{width:90px !important;min-width:90px !important}
+  .livre-row{grid-template-columns:16px 32px minmax(74px,1fr) 76px 98px 32px 26px !important;gap:6px !important;padding:9px 9px !important}
+  #sec-livre-lancamentos.livre-status-off .livre-row{grid-template-columns:16px 32px minmax(74px,1fr) 76px 98px 26px !important}
+  .livre-date-chip{padding:0 5px}.livre-date-chip b{font-size:10px}
 }
 
 @media(max-width:620px){
   .livre-row{
-    grid-template-columns:18px 32px minmax(0,1fr) 34px !important;
-    grid-template-rows:auto auto auto;
+    grid-template-columns:18px 32px minmax(0,1fr) 30px !important;
+    grid-template-rows:auto auto;
+    gap:7px !important;
   }
-  .livre-drag{grid-column:1;grid-row:1/4}
-  .livre-icon{grid-column:2;grid-row:1/4}
-  .livre-main-cell{grid-column:3/5;grid-row:1/3}
-  .livre-money-wrap{grid-column:3;grid-row:3;width:120px}
-  .livre-paid-check{grid-column:4;grid-row:3}
-  .livre-del{grid-column:4;grid-row:1}
+  .livre-drag{grid-column:1;grid-row:1/3 !important}
+  .livre-icon{grid-column:2;grid-row:1/3 !important}
+  .livre-main-cell{grid-column:3;grid-row:1 !important}
+  .livre-del{grid-column:4;grid-row:1 !important}
+  .livre-date-chip{grid-column:3;grid-row:2;width:86px;justify-self:start}
+  .livre-money-wrap{grid-column:3;grid-row:2;width:108px;margin-left:93px}
+  .livre-paid-check{grid-column:4;grid-row:2 !important}
   #sec-livre-lancamentos.livre-status-off .livre-row{grid-template-columns:18px 32px minmax(0,1fr) 30px !important}
-  #sec-livre-lancamentos.livre-status-off .livre-main-cell{grid-column:3/5}
-  #sec-livre-lancamentos.livre-status-off .livre-money-wrap{grid-column:3}
-  #sec-livre-lancamentos.livre-status-off .livre-del{grid-column:4}
-  .livre-meta-row{flex-wrap:wrap !important}
-  .livre-group-select{max-width:120px !important}
+  #sec-livre-lancamentos.livre-status-off .livre-date-chip{grid-column:3;grid-row:2}
+  #sec-livre-lancamentos.livre-status-off .livre-money-wrap{grid-column:3;grid-row:2}
+  #sec-livre-lancamentos.livre-status-off .livre-del{grid-column:4;grid-row:1 !important}
+  .livre-group-head{margin-left:8px;margin-right:8px}
   .livre-group-info{flex-direction:column;align-items:flex-start;gap:1px}
   .livre-group-head small{white-space:normal}
 }
@@ -6894,15 +6863,54 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
     return '';
   }
 
-  function renderGrupoSelectLivre(tipo,x){
+  function renderIconLivre(tipo,x){
     const grupos=gruposLivre(tipo);
-    if(!grupos)return '';
+    const icon=iconLivre(tipo,x);
+    if(!grupos){
+      return `<div class="livre-icon">${icon}</div>`;
+    }
     return `
-      <label class="livre-group-field" title="Categoria">
-        <span>Grupo</span>
-        <select class="livre-group-select" aria-label="Categoria" onchange="updateLivreItem('${tipo}','${x.id}','grupo',this.value)">
+      <div class="livre-icon livre-icon-select" title="Mudar categoria">
+        ${icon}
+        <select aria-label="Mudar categoria de ${escLivre(x.nome||'item')}"
+          onchange="updateLivreItem('${tipo}','${x.id}','grupo',this.value)">
           ${Object.entries(grupos).map(([k,g])=>`<option value="${k}" ${x.grupo===k?'selected':''}>${g.icon} ${g.label}</option>`).join('')}
         </select>
+      </div>`;
+  }
+
+  function dataCurtaLivre(v){
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(String(v||'')))return '';
+    const [,m,d]=String(v).match(/^(\d{4})-(\d{2})-(\d{2})$/)||[];
+    return d&&m?`${d}/${m}`:'';
+  }
+
+  function renderDataChipLivre(tipo,x,statusAtivo){
+    const pago=!!(statusAtivo && x.pago && x.pagoEm);
+    const valor=pago?x.pagoEm:(x.vencimento||'');
+    const campo=pago?'pagoEm':'vencimento';
+    const txt=dataCurtaLivre(valor) || 'Data';
+    let cls=pago?'ok':(!valor?'empty':'');
+    let titulo='';
+
+    if(pago){
+      titulo=`${labelDataPagoLivre(tipo)} ${formatDataLivre(x.pagoEm)}`;
+      if(x.vencimento)titulo+=` · ${labelDataPrevistaLivre(tipo)} ${formatDataLivre(x.vencimento)}`;
+    }else if(valor){
+      const diff=diffDiasLivre(valor);
+      if(diff<0){cls='bad';titulo=`${tipo==='receitas'?'Previsto atrasado':'Vencido'} em ${formatDataLivre(valor)}`;}
+      else if(diff===0){cls='warn';titulo=tipo==='receitas'?'Previsto para hoje':'Vence hoje';}
+      else if(diff<=3){cls='warn';titulo=`${tipo==='receitas'?'Previsto':'Vence'} em ${diff} dia${diff===1?'':'s'}`;}
+      else titulo=`${labelDataPrevistaLivre(tipo)} ${formatDataLivre(valor)}`;
+    }else{
+      titulo=`Definir ${labelDataPrevistaLivre(tipo).toLowerCase()}`;
+    }
+
+    return `
+      <label class="livre-date-chip ${cls}" title="${escLivre(titulo)}">
+        <i></i><span class="date-icon">${pago?'✓':'📅'}</span><b>${txt}</b>
+        <input type="date" value="${escLivre(valor)}" aria-label="${escLivre(titulo)}"
+          onchange="updateLivreItem('${tipo}','${x.id}','${campo}',this.value)">
       </label>`;
   }
 
@@ -6919,22 +6927,6 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
         <span>✓</span>
       </label>`:'';
 
-    const dataPago=statusAtivo && x.pago ? `
-      <label class="livre-mini-field livre-date-paid" title="${labelDataPagoLivre(tipo)}">
-        <span>${labelDataPagoLivre(tipo)}</span>
-        <input type="date" value="${escLivre(x.pagoEm||'')}"
-          aria-label="${labelDataPagoLivre(tipo)}"
-          onchange="updateLivreItem('${tipo}','${x.id}','pagoEm',this.value)">
-      </label>`:'';
-
-    const dataPrevista = `
-      <label class="livre-mini-field" title="${labelDataPrevistaLivre(tipo)}">
-        <span>${labelDataPrevistaLivre(tipo)}</span>
-        <input type="date" value="${escLivre(x.vencimento||'')}"
-          aria-label="${labelDataPrevistaLivre(tipo)}"
-          onchange="updateLivreItem('${tipo}','${x.id}','vencimento',this.value)">
-      </label>`;
-
     return `
       <div class="livre-row ${tipo} ${statusAtivo&&x.pago?'quitado':''}" data-livre-id="${escLivre(x.id)}"
         ondragover="livreDragOver(event,'${tipo}','${escLivre(x.id)}')"
@@ -6946,18 +6938,14 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
           ondragend="livreDragEnd(event)"
           title="Arraste para mudar a posição" aria-label="Arrastar item">⋮⋮</button>
 
-        <div class="livre-icon">${iconLivre(tipo,x)}</div>
+        ${renderIconLivre(tipo,x)}
 
         <div class="livre-main-cell">
           <input class="livre-name-input" type="text" value="${escLivre(x.nome)}" placeholder="Nome do item"
             oninput="updateLivreItem('${tipo}','${x.id}','nome',this.value)">
-          <div class="livre-meta-row">
-            ${renderGrupoSelectLivre(tipo,x)}
-            ${dataPrevista}
-            ${dataPago}
-            ${badgePrazoLivre(tipo,x,statusAtivo)}
-          </div>
         </div>
+
+        ${renderDataChipLivre(tipo,x,statusAtivo)}
 
         <div class="livre-money-wrap"><span>R$</span>
           <input type="number" min="0" step="0.01" value="${Number(x.valor)||0}"
@@ -6965,6 +6953,7 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
         </div>
 
         ${check}
+
         <button class="livre-del" onclick="deleteLivreItem('${tipo}','${x.id}')" title="Excluir">×</button>
       </div>`;
   }
