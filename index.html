@@ -6361,202 +6361,190 @@ body.dark .livre-row.quitado{
 
 
 <style>
-/* ===== MENSAL LIVRE V3 — layout clean, datas compactas e grupos visuais ===== */
-.livre-summary{
-  grid-template-columns:repeat(auto-fit,minmax(160px,1fr)) !important;
-}
+/* ===== MENSAL LIVRE V4 — clean e compacto ===== */
+.livre-summary{grid-template-columns:repeat(auto-fit,minmax(160px,1fr)) !important}
 .livre-card:nth-child(3){grid-column:auto !important}
 .livre-card.livre-wide-card{grid-column:1/-1 !important}
 .livre-card-head b.invest{color:var(--blue)}
 
+/* Linha do lançamento: nome/valor em cima, metadados lado a lado embaixo */
 .livre-row{
-  grid-template-columns:20px 38px minmax(0,1fr) 146px 36px 32px !important;
-  gap:10px;
+  display:grid !important;
+  grid-template-columns:20px 36px minmax(0,1fr) 118px 34px 30px !important;
+  grid-template-rows:auto auto;
+  column-gap:9px;
+  row-gap:5px;
   align-items:center !important;
-  padding:12px 14px;
+  padding:11px 12px !important;
 }
 #sec-livre-lancamentos.livre-status-off .livre-row{
-  grid-template-columns:20px 38px minmax(0,1fr) 146px 32px !important;
+  grid-template-columns:20px 36px minmax(0,1fr) 118px 30px !important;
 }
-.livre-row.quitado{background:rgba(15,166,147,.045)}
-body.dark .livre-row.quitado{background:rgba(45,212,191,.055)}
-.livre-row.investimentos.quitado{background:rgba(37,99,235,.05)}
-body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.06)}
+.livre-drag{grid-column:1;grid-row:1/3;align-self:center}
+.livre-icon{grid-column:2;grid-row:1/3;align-self:center}
+.livre-main-cell{grid-column:3;grid-row:1/3;min-width:0;display:flex;flex-direction:column;gap:5px}
+.livre-money-wrap{grid-column:4;grid-row:1;align-self:center;height:36px !important}
+.livre-paid-check{grid-column:5;grid-row:1/3;align-self:center}
+.livre-del{grid-column:6;grid-row:1/3;align-self:center}
+#sec-livre-lancamentos.livre-status-off .livre-del{grid-column:5}
 
-.livre-main-cell{min-width:0;display:flex;flex-direction:column;gap:8px}
+.livre-row.quitado{background:rgba(15,166,147,.035)}
+body.dark .livre-row.quitado{background:rgba(45,212,191,.045)}
+.livre-row.investimentos.quitado{background:rgba(37,99,235,.04)}
+body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
+
 .livre-name-input{
   width:100% !important;
-  height:34px !important;
+  height:30px !important;
   border:1px solid transparent !important;
-  border-radius:9px !important;
+  border-radius:8px !important;
   background:transparent !important;
   color:var(--tx) !important;
   font-family:Inter,sans-serif !important;
   font-size:13px !important;
   font-weight:700 !important;
-  padding:0 8px !important;
+  padding:0 6px !important;
   outline:none !important;
 }
-.livre-name-input:hover,.livre-name-input:focus{
-  border-color:var(--tbd) !important;
-  background:var(--s2) !important;
-}
+.livre-name-input:hover,.livre-name-input:focus{border-color:var(--tbd) !important;background:var(--s2) !important}
 
+/* Metadados compactos: grupo + data + alerta na mesma linha */
 .livre-meta-row{
-  display:flex;
-  align-items:center;
-  flex-wrap:wrap;
-  gap:8px;
+  display:flex !important;
+  align-items:center !important;
+  gap:6px !important;
+  flex-wrap:nowrap !important;
+  min-width:0;
+  overflow:visible;
 }
-.livre-mini-field,
-.livre-group-field{
-  display:inline-flex;
-  align-items:center;
-  gap:7px;
-  min-height:30px;
-  padding:0 10px;
-  border:1px solid var(--bd);
-  border-radius:999px;
-  background:var(--s2);
-  max-width:100%;
+.livre-group-field,.livre-mini-field{
+  display:flex !important;
+  align-items:center !important;
+  gap:4px !important;
+  min-height:27px !important;
+  height:27px !important;
+  padding:0 7px !important;
+  border:1px solid var(--bd) !important;
+  border-radius:999px !important;
+  background:var(--s2) !important;
+  flex:0 1 auto;
+  min-width:0 !important;
 }
-.livre-group-field{padding-right:4px}
-.livre-mini-field > span,
-.livre-group-field > span{
-  margin:0 !important;
-  font-size:9px !important;
-  line-height:1;
-  font-weight:800;
-  letter-spacing:.05em;
-  text-transform:uppercase;
-  color:var(--di) !important;
-  white-space:nowrap;
+.livre-group-field>span,.livre-mini-field>span{
+  display:none !important;
 }
-.livre-mini-field input,
-.livre-group-select,
-.livre-dizimo-date input{
-  height:28px !important;
-  min-width:104px;
+.livre-group-select{
+  width:auto !important;
+  max-width:118px !important;
+  min-width:84px !important;
+  height:25px !important;
   border:0 !important;
-  border-radius:0 !important;
+  background:transparent !important;
+  color:var(--mu) !important;
+  font:700 10.5px Inter,sans-serif !important;
+  padding:0 18px 0 0 !important;
+  outline:none !important;
+  cursor:pointer;
+}
+.livre-group-select option{background:var(--s1);color:var(--tx)}
+
+.livre-mini-field:has(input[type="date"])::before{
+  content:'📅';
+  font-size:10px;
+  opacity:.8;
+  flex-shrink:0;
+}
+.livre-date-paid:has(input[type="date"])::before{content:'✓';color:var(--green);font-weight:900;font-size:11px}
+.livre-mini-field input[type="date"]{
+  width:96px !important;
+  min-width:96px !important;
+  height:25px !important;
+  border:0 !important;
   background:transparent !important;
   color:var(--tx) !important;
+  font:700 10.5px Inter,sans-serif !important;
   padding:0 !important;
-  font:700 11px Inter,sans-serif !important;
   outline:none !important;
 }
-.livre-group-select{cursor:pointer;max-width:180px}
-.livre-group-select option{background:var(--s1);color:var(--tx)}
-.livre-date-paid{
-  border-color:rgba(22,163,74,.18) !important;
-  background:rgba(22,163,74,.055) !important;
-}
-.livre-date-paid input{min-width:110px}
+.livre-date-paid{border-color:rgba(22,163,74,.18) !important;background:rgba(22,163,74,.045) !important}
 
 .livre-due-badge{
   display:inline-flex !important;
   align-items:center;
-  gap:6px;
-  min-height:30px;
-  padding:0 10px;
+  justify-content:center;
+  min-height:27px;
+  height:27px;
+  padding:0 8px;
   border-radius:999px;
   border:1px solid var(--bd);
   background:var(--s2);
   color:var(--mu) !important;
-  font-size:10px !important;
+  font-size:9.5px !important;
   font-weight:800;
   white-space:nowrap;
+  flex:0 0 auto;
 }
-.livre-due-badge.ok{color:var(--green) !important;border-color:rgba(22,163,74,.25);background:rgba(22,163,74,.08)}
-.livre-due-badge.warn{color:var(--amber) !important;border-color:rgba(217,119,6,.28);background:rgba(217,119,6,.08)}
-.livre-due-badge.bad{color:var(--red) !important;border-color:rgba(220,38,38,.25);background:rgba(220,38,38,.07)}
+.livre-due-badge.ok{color:var(--green) !important;border-color:rgba(22,163,74,.25);background:rgba(22,163,74,.07)}
+.livre-due-badge.warn{color:var(--amber) !important;border-color:rgba(217,119,6,.25);background:rgba(217,119,6,.07)}
+.livre-due-badge.bad{color:var(--red) !important;border-color:rgba(220,38,38,.22);background:rgba(220,38,38,.06)}
 
+/* Grupos visualmente separados, mas discretos */
 .livre-group-block{
-  margin:10px 14px;
+  margin:10px 12px 12px;
   border:1px solid var(--bd);
-  border-radius:14px;
+  border-radius:13px;
   overflow:hidden;
   background:var(--s1);
-  box-shadow:0 6px 18px rgba(15,23,42,.03);
 }
-body.dark .livre-group-block{box-shadow:none}
 .livre-group-head{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  gap:12px;
-  padding:10px 12px;
-  background:linear-gradient(180deg,var(--s2),rgba(15,166,147,.03));
+  gap:10px;
+  padding:8px 11px;
+  background:var(--s2);
   border-bottom:1px solid var(--bd);
 }
-.livre-group-info{display:flex;flex-direction:column;gap:2px;min-width:0}
-.livre-group-head strong{
-  font-size:11px;
-  letter-spacing:.04em;
-  text-transform:uppercase;
-  color:var(--tx);
-}
-.livre-group-head small{
-  color:var(--di);
-  font-size:10px;
-  font-weight:600;
-}
-.livre-group-head b{
-  font-family:'Space Grotesk',sans-serif;
-  font-size:12px;
-  color:var(--teal);
-  white-space:nowrap;
-}
+.livre-group-info{display:flex;align-items:center;gap:8px;min-width:0}
+.livre-group-head strong{font-size:10px;letter-spacing:.045em;text-transform:uppercase;color:var(--tx);white-space:nowrap}
+.livre-group-head small{color:var(--di);font-size:9.5px;font-weight:600;white-space:nowrap}
+.livre-group-head b{font-family:'Space Grotesk',sans-serif;font-size:11px;color:var(--teal);white-space:nowrap}
 .livre-group-body .livre-row{border-bottom:1px solid var(--bd)}
 .livre-group-body .livre-row:last-child{border-bottom:0}
 
-.livre-item-meta-summary{
-  display:block;
-  margin-top:3px;
-  color:var(--di);
-  font-size:9px;
-  line-height:1.45;
-}
-
+.livre-item-meta-summary{display:block;margin-top:3px;color:var(--di);font-size:9px;line-height:1.45}
 .livre-dizimo-grid{grid-template-columns:110px 1fr 1fr 130px 105px !important}
 .livre-dizimo-date{display:flex;flex-direction:column;gap:4px}
-.livre-dizimo-date small{
-  font-size:9px;
-  font-weight:800;
-  letter-spacing:.05em;
-  text-transform:uppercase;
-  color:var(--di);
-}
+.livre-dizimo-date small{font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--di)}
 .livre-dizimo-date input{height:36px !important;background:var(--s1) !important}
 
 @media(max-width:900px){
   .livre-dizimo-grid{grid-template-columns:1fr 1fr !important}
   .livre-card.livre-wide-card{grid-column:auto !important}
-  .livre-row{grid-template-columns:20px 36px minmax(0,1fr) 136px 36px 32px !important}
+  .livre-row{grid-template-columns:18px 34px minmax(0,1fr) 108px 34px 28px !important}
+  .livre-group-select{max-width:100px !important;min-width:72px !important}
+  .livre-mini-field input[type="date"]{width:90px !important;min-width:90px !important}
 }
+
 @media(max-width:620px){
   .livre-row{
-    grid-template-columns:20px 34px minmax(0,1fr) 34px !important;
-    align-items:start !important;
+    grid-template-columns:18px 32px minmax(0,1fr) 34px !important;
+    grid-template-rows:auto auto auto;
   }
-  .livre-drag{grid-column:1;grid-row:1/3 !important}
-  .livre-icon{grid-column:2;grid-row:1 !important}
-  .livre-main-cell{grid-column:3/5 !important;grid-row:1 !important}
-  .livre-money-wrap{grid-column:2/4 !important;grid-row:2 !important}
-  .livre-paid-check{grid-column:4 !important;grid-row:2 !important}
-  .livre-del{grid-column:4 !important;grid-row:1 !important}
-  #sec-livre-lancamentos.livre-status-off .livre-row{
-    grid-template-columns:20px 34px minmax(0,1fr) 34px !important;
-  }
-  #sec-livre-lancamentos.livre-status-off .livre-main-cell{grid-column:3/5 !important;grid-row:1 !important}
-  #sec-livre-lancamentos.livre-status-off .livre-money-wrap{grid-column:2/4 !important;grid-row:2 !important}
-  #sec-livre-lancamentos.livre-status-off .livre-del{grid-column:4 !important;grid-row:1 !important}
-  .livre-mini-field,
-  .livre-group-field{flex:1 1 100%;justify-content:space-between}
-  .livre-mini-field input,
-  .livre-group-select{min-width:0;width:100%}
-  .livre-due-badge{width:100%;justify-content:center}
-  .livre-group-block{margin:10px 10px}
+  .livre-drag{grid-column:1;grid-row:1/4}
+  .livre-icon{grid-column:2;grid-row:1/4}
+  .livre-main-cell{grid-column:3/5;grid-row:1/3}
+  .livre-money-wrap{grid-column:3;grid-row:3;width:120px}
+  .livre-paid-check{grid-column:4;grid-row:3}
+  .livre-del{grid-column:4;grid-row:1}
+  #sec-livre-lancamentos.livre-status-off .livre-row{grid-template-columns:18px 32px minmax(0,1fr) 30px !important}
+  #sec-livre-lancamentos.livre-status-off .livre-main-cell{grid-column:3/5}
+  #sec-livre-lancamentos.livre-status-off .livre-money-wrap{grid-column:3}
+  #sec-livre-lancamentos.livre-status-off .livre-del{grid-column:4}
+  .livre-meta-row{flex-wrap:wrap !important}
+  .livre-group-select{max-width:120px !important}
+  .livre-group-info{flex-direction:column;align-items:flex-start;gap:1px}
+  .livre-group-head small{white-space:normal}
 }
 </style>
 
@@ -6910,9 +6898,9 @@ body.dark .livre-group-block{box-shadow:none}
     const grupos=gruposLivre(tipo);
     if(!grupos)return '';
     return `
-      <label class="livre-group-field">
-        <span>🗂️ Grupo</span>
-        <select class="livre-group-select" onchange="updateLivreItem('${tipo}','${x.id}','grupo',this.value)">
+      <label class="livre-group-field" title="Categoria">
+        <span>Grupo</span>
+        <select class="livre-group-select" aria-label="Categoria" onchange="updateLivreItem('${tipo}','${x.id}','grupo',this.value)">
           ${Object.entries(grupos).map(([k,g])=>`<option value="${k}" ${x.grupo===k?'selected':''}>${g.icon} ${g.label}</option>`).join('')}
         </select>
       </label>`;
@@ -6931,15 +6919,21 @@ body.dark .livre-group-block{box-shadow:none}
         <span>✓</span>
       </label>`:'';
 
-    const dataPrev=labelDataPrevistaLivre(tipo);
-    const dataPrevIcon=tipo==='receitas'?'🗓️ Prev.':tipo==='investimentos'?'📅 Aportar':'📅 Vence';
-    const dataPago=statusAtivo?`
-      <label class="livre-mini-field livre-date-paid">
-        <span>${tipo==='receitas'?'💸 Entrou':tipo==='investimentos'?'✅ Aporte':'✅ Pago'}</span>
+    const dataPago=statusAtivo && x.pago ? `
+      <label class="livre-mini-field livre-date-paid" title="${labelDataPagoLivre(tipo)}">
+        <span>${labelDataPagoLivre(tipo)}</span>
         <input type="date" value="${escLivre(x.pagoEm||'')}"
           aria-label="${labelDataPagoLivre(tipo)}"
           onchange="updateLivreItem('${tipo}','${x.id}','pagoEm',this.value)">
       </label>`:'';
+
+    const dataPrevista = `
+      <label class="livre-mini-field" title="${labelDataPrevistaLivre(tipo)}">
+        <span>${labelDataPrevistaLivre(tipo)}</span>
+        <input type="date" value="${escLivre(x.vencimento||'')}"
+          aria-label="${labelDataPrevistaLivre(tipo)}"
+          onchange="updateLivreItem('${tipo}','${x.id}','vencimento',this.value)">
+      </label>`;
 
     return `
       <div class="livre-row ${tipo} ${statusAtivo&&x.pago?'quitado':''}" data-livre-id="${escLivre(x.id)}"
@@ -6959,12 +6953,7 @@ body.dark .livre-group-block{box-shadow:none}
             oninput="updateLivreItem('${tipo}','${x.id}','nome',this.value)">
           <div class="livre-meta-row">
             ${renderGrupoSelectLivre(tipo,x)}
-            <label class="livre-mini-field">
-              <span>${dataPrevIcon}</span>
-              <input type="date" value="${escLivre(x.vencimento||'')}"
-                aria-label="${dataPrev}"
-                onchange="updateLivreItem('${tipo}','${x.id}','vencimento',this.value)">
-            </label>
+            ${dataPrevista}
             ${dataPago}
             ${badgePrazoLivre(tipo,x,statusAtivo)}
           </div>
@@ -6976,7 +6965,6 @@ body.dark .livre-group-block{box-shadow:none}
         </div>
 
         ${check}
-
         <button class="livre-del" onclick="deleteLivreItem('${tipo}','${x.id}')" title="Excluir">×</button>
       </div>`;
   }
@@ -7092,7 +7080,7 @@ body.dark .livre-group-block{box-shadow:none}
             <div class="livre-group-head">
               <div class="livre-group-info">
                 <strong>${g.icon} ${g.label}</strong>
-                <small>${itens.length} ${itens.length===1?'item':'itens'} neste grupo</small>
+                <small>${itens.length} ${itens.length===1?'item':'itens'}</small>
               </div>
               <b>${moneyLivre(subtotal)}</b>
             </div>
