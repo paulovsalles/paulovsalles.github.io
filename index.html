@@ -1830,12 +1830,11 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
           <span id="livre-hint-despesas">Use grupos, vencimento e data real do pagamento</span>
         </div>
         <div class="livre-head-actions">
-          <select class="livre-sort-select" id="livre-sort-despesas" onchange="ordenarLivre('despesas',this.value)" title="Ordenar despesas">
-            <option value="manual">↕ Manual</option>
-            <option value="grupo">🗂️ Agrupar por grupo</option>
+          <select class="livre-sort-select" id="livre-sort-despesas" onchange="ordenarLivre('despesas',this.value)" title="Despesas sempre agrupadas por categoria; escolha a ordem dentro dos grupos">
+            <option value="grupo" selected>🗂️ Agrupado em categorias</option>
             <option value="pendentes">○ Pendentes primeiro</option>
             <option value="concluidos">✓ Concluídos primeiro</option>
-            <option value="vencimento">📅 Vencimento</option>
+            <option value="vencimento">📅 Dia do vencimento</option>
             <option value="pagamento">📆 Data de pagamento</option>
             <option value="az">A → Z</option>
             <option value="za">Z → A</option>
@@ -1857,12 +1856,11 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
           <span id="livre-hint-investimentos">Aportes ficam separados das despesas de consumo e reduzem o saldo disponível</span>
         </div>
         <div class="livre-head-actions">
-          <select class="livre-sort-select" id="livre-sort-investimentos" onchange="ordenarLivre('investimentos',this.value)" title="Ordenar investimentos">
-            <option value="manual">↕ Manual</option>
-            <option value="grupo">🗂️ Agrupar por tipo</option>
+          <select class="livre-sort-select" id="livre-sort-investimentos" onchange="ordenarLivre('investimentos',this.value)" title="Investimentos sempre agrupados por categoria; escolha a ordem dentro dos grupos">
+            <option value="grupo" selected>🗂️ Agrupado em categorias</option>
             <option value="pendentes">○ Pendentes primeiro</option>
             <option value="concluidos">✓ Concluídos primeiro</option>
-            <option value="vencimento">📅 Data planejada</option>
+            <option value="vencimento">📅 Dia planejado</option>
             <option value="pagamento">📆 Data do aporte</option>
             <option value="az">A → Z</option>
             <option value="za">Z → A</option>
@@ -6517,6 +6515,82 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
   .livre-group-info{flex-direction:column;align-items:flex-start;gap:1px}
   .livre-group-head small{white-space:normal}
 }
+
+
+/* ===== MENSAL LIVRE V6 — dia apenas + categorias como divisores ===== */
+/* Mais espaço para a descrição; o vencimento ocupa só um campo curto de dia. */
+.livre-row{
+  grid-template-columns:14px 32px minmax(170px,1fr) 64px 96px 32px 26px !important;
+}
+#sec-livre-lancamentos.livre-status-off .livre-row{
+  grid-template-columns:14px 32px minmax(190px,1fr) 64px 96px 26px !important;
+}
+.livre-name-input{font-size:13px !important;padding-left:3px !important;padding-right:3px !important}
+
+/* Dia do vencimento: nada de calendário completo. */
+.livre-date-chip{
+  width:64px;
+  min-width:64px;
+  height:32px;
+  padding:0 7px;
+  gap:3px;
+  justify-content:flex-start;
+  overflow:visible;
+}
+.livre-date-chip .date-icon{font-size:10px;opacity:.8}
+.livre-date-chip .day-label{font:700 9px Inter,sans-serif;color:var(--di);white-space:nowrap}
+.livre-date-chip input[type="number"]{
+  position:static !important;
+  width:25px !important;
+  height:28px !important;
+  opacity:1 !important;
+  cursor:text !important;
+  border:0 !important;
+  background:transparent !important;
+  color:inherit !important;
+  padding:0 !important;
+  outline:0 !important;
+  font:800 11px 'Space Grotesk',sans-serif !important;
+  text-align:center;
+  -moz-appearance:textfield;
+}
+.livre-date-chip input[type="number"]::-webkit-inner-spin-button,
+.livre-date-chip input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.livre-date-chip.empty input{color:var(--di) !important}
+
+/* Categorias ficam como cabeçalhos/divisores, fora das linhas. */
+.livre-group-block{margin:0 !important;padding:0 !important;border:0 !important;background:transparent !important}
+.livre-group-head{
+  margin:0 !important;
+  padding:8px 14px !important;
+  border:0 !important;
+  border-top:1px solid var(--bd) !important;
+  border-bottom:1px solid var(--bd) !important;
+  border-radius:0 !important;
+  background:var(--s2) !important;
+}
+.livre-group-block:first-child .livre-group-head{border-top:0 !important}
+.livre-group-info{display:flex !important;align-items:center !important;gap:7px !important;min-width:0}
+.livre-group-head strong{font-size:10px !important;letter-spacing:.055em !important;color:var(--mu) !important}
+.livre-group-head small{font-size:9px !important;color:var(--di) !important}
+.livre-group-head b{font-size:11px !important;color:var(--teal) !important}
+.livre-group-body{border:0 !important}
+
+@media(max-width:900px){
+  .livre-row{grid-template-columns:14px 30px minmax(150px,1fr) 60px 90px 30px 24px !important}
+  #sec-livre-lancamentos.livre-status-off .livre-row{grid-template-columns:14px 30px minmax(165px,1fr) 60px 92px 24px !important}
+  .livre-date-chip{width:60px;min-width:60px;padding:0 5px}
+}
+@media(max-width:620px){
+  .livre-row{
+    grid-template-columns:18px 32px minmax(0,1fr) 30px !important;
+    grid-template-rows:auto auto;
+  }
+  .livre-main-cell{grid-column:3;grid-row:1 !important}
+  .livre-date-chip{grid-column:3;grid-row:2;width:64px;min-width:64px;justify-self:start}
+  .livre-money-wrap{grid-column:3;grid-row:2;width:108px;margin-left:72px}
+  .livre-group-head{padding-left:10px !important;padding-right:10px !important}
+}
 </style>
 
 <script>
@@ -6887,32 +6961,41 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
     return d&&m?`${d}/${m}`:'';
   }
 
-  function renderDataChipLivre(tipo,x,statusAtivo){
-    const pago=!!(statusAtivo && x.pago && x.pagoEm);
-    const valor=pago?x.pagoEm:(x.vencimento||'');
-    const campo=pago?'pagoEm':'vencimento';
-    const txt=dataCurtaLivre(valor) || 'Data';
-    let cls=pago?'ok':(!valor?'empty':'');
-    let titulo='';
+  function diaLivre(data){
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(String(data||'')))return '';
+    return String(Number(String(data).slice(8,10))||'');
+  }
 
-    if(pago){
-      titulo=`${labelDataPagoLivre(tipo)} ${formatDataLivre(x.pagoEm)}`;
-      if(x.vencimento)titulo+=` · ${labelDataPrevistaLivre(tipo)} ${formatDataLivre(x.vencimento)}`;
+  function dataDoDiaLivre(dia){
+    const n=Math.max(1,Math.min(31,Number(dia)||0));
+    if(!n)return '';
+    const ultimo=new Date(livreAnoAtual,livreMesAtual+1,0).getDate();
+    const d=Math.min(n,ultimo);
+    return `${livreAnoAtual}-${String(livreMesAtual+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  }
+
+  function renderDataChipLivre(tipo,x,statusAtivo){
+    const valor=x.vencimento||'';
+    const dia=diaLivre(valor);
+    let cls=!valor?'empty':'';
+    let titulo=valor?`${labelDataPrevistaLivre(tipo)}: dia ${dia}`:`Definir dia de ${labelDataPrevistaLivre(tipo).toLowerCase()}`;
+
+    if(statusAtivo && x.pago){
+      cls='ok';
+      titulo=`${textoConcluidoLivre(tipo)}${x.pagoEm?` em ${formatDataLivre(x.pagoEm)}`:''} · vencimento dia ${dia||'—'}`;
     }else if(valor){
       const diff=diffDiasLivre(valor);
-      if(diff<0){cls='bad';titulo=`${tipo==='receitas'?'Previsto atrasado':'Vencido'} em ${formatDataLivre(valor)}`;}
+      if(diff<0){cls='bad';titulo=`${tipo==='receitas'?'Previsto atrasado':'Vencido'} · dia ${dia}`;}
       else if(diff===0){cls='warn';titulo=tipo==='receitas'?'Previsto para hoje':'Vence hoje';}
-      else if(diff<=3){cls='warn';titulo=`${tipo==='receitas'?'Previsto':'Vence'} em ${diff} dia${diff===1?'':'s'}`;}
-      else titulo=`${labelDataPrevistaLivre(tipo)} ${formatDataLivre(valor)}`;
-    }else{
-      titulo=`Definir ${labelDataPrevistaLivre(tipo).toLowerCase()}`;
+      else if(diff<=3){cls='warn';titulo=`${tipo==='receitas'?'Previsto':'Vence'} em ${diff} dia${diff===1?'':'s'} · dia ${dia}`;}
     }
 
     return `
       <label class="livre-date-chip ${cls}" title="${escLivre(titulo)}">
-        <i></i><span class="date-icon">${pago?'✓':'📅'}</span><b>${txt}</b>
-        <input type="date" value="${escLivre(valor)}" aria-label="${escLivre(titulo)}"
-          onchange="updateLivreItem('${tipo}','${x.id}','${campo}',this.value)">
+        <span class="date-icon">📅</span><span class="day-label">Dia</span>
+        <input type="number" min="1" max="31" inputmode="numeric" value="${escLivre(dia)}" placeholder="--"
+          aria-label="Dia do vencimento"
+          onchange="updateLivreDia('${tipo}','${x.id}',this.value)">
       </label>`;
   }
 
@@ -6975,7 +7058,7 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
 
     const hints={
       receitas:ativo?'Marque ✓ quando o valor realmente entrar':'Controle de recebimento desativado',
-      despesas:ativo?'Use grupo, vencimento e data real do pagamento':'Controle de pagamento desativado',
+      despesas:ativo?'Agrupadas por categoria · informe somente o dia do vencimento':'Controle de pagamento desativado',
       investimentos:ativo?'Aportes ficam separados das despesas e têm data própria':'Controle de aporte desativado',
       doacoes:ativo?'Marque ✓ quando o valor for pago ou entregue':'Controle de pagamento desativado'
     };
@@ -7052,6 +7135,7 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
     const statusAtivo=d.statusAtivo!==false;
     const arr=d[tipo];
     const select=document.getElementById(`livre-sort-${tipo}`);
+    if(gruposLivre(tipo) && livreSortModes[tipo]==='manual')livreSortModes[tipo]='grupo';
     if(select)select.value=livreSortModes[tipo]||'manual';
 
     if(!arr.length){
@@ -7060,7 +7144,7 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
     }
 
     const grupos=gruposLivre(tipo);
-    if(livreSortModes[tipo]==='grupo' && grupos){
+    if(grupos){
       let html='';
       Object.entries(grupos).forEach(([chave,g])=>{
         const itens=arr.filter(x=>x.grupo===chave);
@@ -7116,7 +7200,7 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
     const partes=[];
     const grupos=gruposLivre(tipo);
     if(grupos && grupos[x.grupo])partes.push(grupos[x.grupo].label);
-    if(x.vencimento)partes.push(`${labelDataPrevistaLivre(tipo)} ${formatDataLivre(x.vencimento)}`);
+    if(x.vencimento)partes.push(`${labelDataPrevistaLivre(tipo)} dia ${diaLivre(x.vencimento)}`);
     if(x.pagoEm)partes.push(`${labelDataPagoLivre(tipo)} ${formatDataLivre(x.pagoEm)}`);
     return partes.length?`<small class="livre-item-meta-summary">${partes.map(escLivre).join(' · ')}</small>`:'';
   }
@@ -7475,6 +7559,21 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
       const ins=box?.querySelectorAll('.livre-name-input');
       ins?.[ins.length-1]?.select();
     },30);
+  };
+
+  window.updateLivreDia=function(tipo,id,valor){
+    const x=getLivre()[tipo]?.find(i=>String(i.id)===String(id));
+    if(!x)return;
+    const raw=String(valor??'').trim();
+    if(!raw){
+      x.vencimento='';
+    }else{
+      const dia=Math.max(1,Math.min(31,parseInt(raw,10)||1));
+      x.vencimento=dataDoDiaLivre(dia);
+    }
+    renderListLivre(tipo);
+    refreshLivreTotals();
+    autoSaveLivre();
   };
 
   window.updateLivreItem=function(tipo,id,campo,valor){
