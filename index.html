@@ -9766,3 +9766,257 @@ body[data-pf-mode="saude"] .page-section:not([id^="sec-saude-"]){display:none!im
   document.addEventListener('DOMContentLoaded',()=>{injectNav();injectSection();ensureNavigation();renderWishlist();});
 })();
 </script>
+
+
+<!-- PATCH FINAL — melhora visual do campo "Dia" e botões de exclusão -->
+<style id="patch-final-dia-e-excluir-painelfin">
+/* Lançamentos livres: linha mais estável e com o X sempre dentro do card */
+.livre-row{
+  position:relative !important;
+  display:grid !important;
+  grid-template-columns:20px 36px minmax(0,1fr) 82px 104px 34px !important;
+  gap:8px !important;
+  align-items:center !important;
+  padding:10px 48px 10px 12px !important;
+  min-height:58px !important;
+  overflow:visible !important;
+}
+#sec-livre-lancamentos.livre-status-off .livre-row{
+  grid-template-columns:20px 36px minmax(0,1fr) 82px 104px !important;
+}
+.livre-drag{
+  width:20px !important;
+  height:34px !important;
+  color:var(--di) !important;
+}
+.livre-icon{
+  width:34px !important;
+  height:34px !important;
+  border-radius:10px !important;
+  flex-shrink:0 !important;
+}
+.livre-main-cell{
+  min-width:0 !important;
+}
+.livre-name-input{
+  width:100% !important;
+  min-width:0 !important;
+  height:36px !important;
+  font-size:13px !important;
+  padding:0 6px !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+}
+.livre-money-wrap{
+  width:104px !important;
+  min-width:104px !important;
+  height:36px !important;
+  border-radius:12px !important;
+}
+.livre-money-wrap input{
+  height:34px !important;
+  font-size:14px !important;
+  padding-right:10px !important;
+}
+
+/* Campo de dia simples: visual de "pill", sem parecer um calendário quebrado */
+.livre-date-chip{
+  width:82px !important;
+  min-width:82px !important;
+  height:36px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  gap:5px !important;
+  padding:0 8px !important;
+  border-radius:999px !important;
+  border:1px solid var(--bd2) !important;
+  background:linear-gradient(180deg,var(--s1),var(--s2)) !important;
+  color:var(--mu) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35) !important;
+  overflow:hidden !important;
+}
+.livre-date-chip:hover,
+.livre-date-chip:focus-within{
+  border-color:var(--tbd) !important;
+  background:var(--tbg) !important;
+  color:var(--teal) !important;
+}
+.livre-date-chip .date-icon{
+  font-size:12px !important;
+  line-height:1 !important;
+  opacity:.85 !important;
+  flex:0 0 auto !important;
+}
+.livre-date-chip .day-label{
+  font:800 10px Inter,sans-serif !important;
+  color:var(--di) !important;
+  text-transform:lowercase !important;
+  letter-spacing:.01em !important;
+  flex:0 0 auto !important;
+}
+.livre-date-chip input[type="number"]{
+  position:static !important;
+  opacity:1 !important;
+  width:24px !important;
+  min-width:24px !important;
+  max-width:24px !important;
+  height:26px !important;
+  padding:0 !important;
+  border:0 !important;
+  border-radius:7px !important;
+  background:transparent !important;
+  color:var(--tx) !important;
+  cursor:text !important;
+  outline:0 !important;
+  text-align:center !important;
+  font:900 12px 'Space Grotesk',sans-serif !important;
+  -moz-appearance:textfield !important;
+}
+.livre-date-chip input[type="number"]::placeholder{
+  color:var(--di) !important;
+}
+.livre-date-chip input[type="number"]:focus{
+  background:var(--s1) !important;
+  color:var(--teal) !important;
+  box-shadow:0 0 0 2px var(--tbd) !important;
+}
+.livre-date-chip input[type="number"]::-webkit-inner-spin-button,
+.livre-date-chip input[type="number"]::-webkit-outer-spin-button{
+  -webkit-appearance:none !important;
+  margin:0 !important;
+}
+.livre-date-chip.warn{
+  color:var(--amber) !important;
+  border-color:rgba(217,119,6,.35) !important;
+  background:rgba(217,119,6,.08) !important;
+}
+.livre-date-chip.bad{
+  color:var(--red) !important;
+  border-color:rgba(220,38,38,.30) !important;
+  background:rgba(220,38,38,.07) !important;
+}
+.livre-date-chip.ok{
+  color:var(--green) !important;
+  border-color:rgba(22,163,74,.28) !important;
+  background:rgba(22,163,74,.07) !important;
+}
+
+/* X de excluir: sempre redondo, discreto e dentro da linha */
+.livre-del,
+.mes-del-btn,
+.expense-item .del-btn,
+.mes-item > button[onclick^="delMesItem"],
+button[onclick^="deleteLivreItem"]{
+  width:32px !important;
+  height:32px !important;
+  min-width:32px !important;
+  border:1px solid var(--bd) !important;
+  border-radius:999px !important;
+  background:var(--s1) !important;
+  color:var(--di) !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  font-size:18px !important;
+  font-weight:800 !important;
+  line-height:1 !important;
+  padding:0 !important;
+  cursor:pointer !important;
+  box-shadow:0 2px 8px rgba(0,0,0,.05) !important;
+  transition:background .15s,border-color .15s,color .15s,transform .15s !important;
+}
+.livre-del,
+button[onclick^="deleteLivreItem"]{
+  position:absolute !important;
+  right:10px !important;
+  top:50% !important;
+  transform:translateY(-50%) !important;
+  z-index:3 !important;
+}
+.livre-del:hover,
+.mes-del-btn:hover,
+.expense-item .del-btn:hover,
+.mes-item > button[onclick^="delMesItem"]:hover,
+button[onclick^="deleteLivreItem"]:hover{
+  background:rgba(220,38,38,.10) !important;
+  border-color:rgba(220,38,38,.28) !important;
+  color:var(--red) !important;
+  transform:translateY(-50%) scale(1.04) !important;
+}
+
+/* Despesas do geral: não deixa o X empurrar/cair fora */
+.expense-item{
+  position:relative !important;
+  padding-right:48px !important;
+  overflow:visible !important;
+}
+.expense-item .del-btn{
+  position:absolute !important;
+  right:9px !important;
+  top:50% !important;
+  transform:translateY(-50%) !important;
+}
+.expense-item .del-btn:hover{
+  transform:translateY(-50%) scale(1.04) !important;
+}
+
+/* Lançamentos mensais vinculados: mesmo padrão do botão de apagar */
+.mes-item{
+  position:relative !important;
+  padding-right:46px !important;
+  overflow:visible !important;
+}
+.mes-del-btn,
+.mes-item > button[onclick^="delMesItem"]{
+  position:absolute !important;
+  right:8px !important;
+  top:50% !important;
+  transform:translateY(-50%) !important;
+  z-index:3 !important;
+}
+
+/* Responsivo: no celular o dia e valor ficam na segunda linha, sem estourar */
+@media(max-width:620px){
+  .livre-row,
+  #sec-livre-lancamentos.livre-status-off .livre-row{
+    grid-template-columns:18px 32px minmax(0,1fr) 34px !important;
+    grid-template-rows:auto auto !important;
+    gap:7px !important;
+    padding:10px 46px 10px 10px !important;
+  }
+  .livre-drag{grid-column:1 !important;grid-row:1/3 !important}
+  .livre-icon{grid-column:2 !important;grid-row:1/3 !important}
+  .livre-main-cell{grid-column:3 !important;grid-row:1 !important}
+  .livre-date-chip{
+    grid-column:3 !important;
+    grid-row:2 !important;
+    width:78px !important;
+    min-width:78px !important;
+    justify-self:start !important;
+  }
+  .livre-money-wrap{
+    grid-column:3 !important;
+    grid-row:2 !important;
+    width:106px !important;
+    min-width:106px !important;
+    margin-left:86px !important;
+  }
+  .livre-paid-check{
+    grid-column:4 !important;
+    grid-row:2 !important;
+    width:32px !important;
+    height:32px !important;
+  }
+  .livre-del,
+  button[onclick^="deleteLivreItem"]{
+    right:8px !important;
+    top:10px !important;
+    transform:none !important;
+  }
+  .livre-del:hover,
+  button[onclick^="deleteLivreItem"]:hover{
+    transform:scale(1.04) !important;
+  }
+}
+</style>
