@@ -9065,7 +9065,7 @@ body[data-pf-mode="saude"] .page-section:not([id^="sec-saude-"]){display:none!im
 })();
 </script>
 
-</body></html>
+
 
 <!-- PATCH V11: mobile responsivo SEM alterar a versão web/desktop -->
 <style id="pf-v11-mobile-only">
@@ -10020,3 +10020,426 @@ button[onclick^="deleteLivreItem"]:hover{
   }
 }
 </style>
+<!-- ═══════════════════════════════════════════════════════════════
+     PATCH V12 — CARTÕES DE CRÉDITO / VISÃO DE PARCELAS POR MÊS
+     Mantém o PainelFin existente e integra os dados ao Firebase
+════════════════════════════════════════════════════════════════ -->
+<style id="pf-v12-cartoes-style">
+/* ─── CARTÕES: visão tipo planilha ─── */
+#sec-cartoes{
+  width:min(1320px,calc(100vw - 270px));
+  max-width:none;
+}
+.cc-toolbar,.cc-form-card,.cc-sheet-card,.cc-month-overview{
+  background:var(--s1);border:1px solid var(--bd);border-radius:14px;
+}
+.cc-toolbar{padding:12px 14px;margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.cc-month-nav{display:flex;align-items:center;gap:7px;min-width:245px}
+.cc-month-label{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:800;min-width:112px;text-align:center}
+.cc-toolbar-spacer{flex:1}
+.cc-filter{height:36px;border:1px solid var(--bd);background:var(--s2);color:var(--tx);border-radius:9px;padding:0 10px;font-family:'Inter',sans-serif;font-size:12px;outline:none}
+.cc-search{min-width:210px}
+.cc-filter:focus{border-color:var(--tbd)}
+.cc-form-card{padding:14px 16px;margin-bottom:12px}
+.cc-form-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:11px}
+.cc-form-title{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:800;color:var(--tx)}
+.cc-form-sub{font-size:11px;color:var(--mu);margin-top:2px}
+.cc-form-grid{display:grid;grid-template-columns:1fr 1.6fr 115px 90px 90px 125px 145px auto;gap:9px;align-items:end}
+.cc-field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.cc-field label{font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--di)}
+.cc-input,.cc-select{height:38px;width:100%;border:1px solid var(--bd);background:var(--s2);color:var(--tx);border-radius:9px;padding:0 10px;font-family:'Inter',sans-serif;font-size:12px;outline:none;min-width:0}
+.cc-input:focus,.cc-select:focus{border-color:var(--tbd)}
+.cc-form-note{margin-top:10px;font-size:11px;color:var(--mu);line-height:1.45;background:var(--tbg);border:1px solid var(--tbd);border-radius:9px;padding:8px 10px}
+.cc-month-overview{padding:12px 14px;margin-bottom:12px;overflow:hidden}
+.cc-overview-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+.cc-overview-title{font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:800}
+.cc-overview-grid{display:grid;grid-template-columns:repeat(var(--cc-months,8),minmax(112px,1fr));gap:7px;overflow-x:auto;padding-bottom:2px}
+.cc-month-mini{min-width:112px;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:9px 10px;cursor:pointer;transition:.15s}
+.cc-month-mini:hover,.cc-month-mini.active{border-color:var(--tbd);background:var(--tbg)}
+.cc-month-mini-name{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--mu)}
+.cc-month-mini-value{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:800;color:var(--tx);margin-top:2px}
+.cc-month-mini-bar{height:3px;background:var(--bd);border-radius:3px;margin-top:6px;overflow:hidden}
+.cc-month-mini-fill{height:3px;background:var(--teal);border-radius:3px}
+.cc-sheet-card{overflow:hidden;margin-bottom:14px}
+.cc-sheet-head{padding:11px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cc-sheet-title{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:800}
+.cc-sheet-meta{font-size:11px;color:var(--mu)}
+.cc-table-wrap{overflow:auto;max-width:100%;position:relative}
+.cc-table{border-collapse:separate;border-spacing:0;min-width:1480px;width:max-content;background:var(--s1)}
+.cc-table th,.cc-table td{height:43px;border-right:1px solid var(--bd);border-bottom:1px solid var(--bd);padding:5px 7px;white-space:nowrap;vertical-align:middle}
+.cc-table th{position:sticky;top:0;z-index:4;background:var(--s2);font-size:9.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--mu);text-align:center}
+.cc-table td{font-size:12px;color:var(--tx);background:var(--s1)}
+.cc-table tbody tr:hover td{background:color-mix(in srgb,var(--s2) 68%,transparent)}
+.cc-table .cc-sticky-1{position:sticky;left:0;z-index:3;width:132px;min-width:132px;max-width:132px}
+.cc-table .cc-sticky-2{position:sticky;left:132px;z-index:3;width:225px;min-width:225px;max-width:225px}
+.cc-table th.cc-sticky-1,.cc-table th.cc-sticky-2{z-index:6;background:var(--s2)}
+.cc-table td.cc-sticky-1,.cc-table td.cc-sticky-2{background:var(--s1)}
+.cc-table tbody tr:hover td.cc-sticky-1,.cc-table tbody tr:hover td.cc-sticky-2{background:var(--s2)}
+.cc-cell-input,.cc-cell-select{height:30px;border:1px solid transparent;background:transparent;color:var(--tx);border-radius:7px;padding:0 6px;font-family:'Inter',sans-serif;font-size:11.5px;outline:none;width:100%}
+.cc-cell-input:hover,.cc-cell-select:hover{border-color:var(--bd);background:var(--s2)}
+.cc-cell-input:focus,.cc-cell-select:focus{border-color:var(--tbd);background:var(--s2)}
+.cc-card-input{font-weight:800;color:var(--teal)}
+.cc-desc-input{min-width:205px}
+.cc-number-mini{width:47px;text-align:center}
+.cc-money-mini{width:88px;text-align:right;font-family:'Space Grotesk',sans-serif;font-weight:800}
+.cc-ref-month{width:112px}
+.cc-installment-wrap{display:flex;align-items:center;justify-content:center;gap:2px}
+.cc-slash{color:var(--di);font-weight:800}
+.cc-pending{font-family:'Space Grotesk',sans-serif;font-weight:800;text-align:center;color:var(--amber);min-width:76px}
+.cc-month-th{min-width:105px}
+.cc-month-th.current{background:var(--tbg);color:var(--teal);box-shadow:inset 0 -2px 0 var(--teal)}
+.cc-month-cell{width:100%;min-width:91px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--tx);padding:4px 5px;cursor:pointer;text-align:center;font-family:'Space Grotesk',sans-serif;transition:.12s}
+.cc-month-cell:hover{border-color:var(--tbd);background:var(--tbg)}
+.cc-month-cell .v{display:block;font-size:11.5px;font-weight:800}
+.cc-month-cell .p{display:block;font-size:9px;color:var(--di);margin-top:1px}
+.cc-month-cell.paid{background:rgba(22,163,74,.09);border-color:rgba(22,163,74,.20);color:var(--green)}
+.cc-month-cell.paid .p{color:var(--green)}
+.cc-empty-cell{color:var(--di);text-align:center;font-size:11px}
+.cc-balance{font-family:'Space Grotesk',sans-serif;font-weight:800;text-align:right;min-width:104px;color:var(--red)}
+.cc-recurring{color:var(--purple)}
+.cc-del-btn{width:30px;height:30px;border:1px solid var(--bd);border-radius:999px;background:var(--s2);color:var(--di);font-size:17px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.cc-del-btn:hover{color:var(--red);border-color:rgba(220,38,38,.35);background:rgba(220,38,38,.08)}
+.cc-total-row td{position:sticky;bottom:0;z-index:2;background:var(--s2)!important;font-family:'Space Grotesk',sans-serif;font-weight:900;color:var(--tx)}
+.cc-total-row td.cc-sticky-1,.cc-total-row td.cc-sticky-2{z-index:5;background:var(--s2)!important}
+.cc-total-month{text-align:center;color:var(--teal)!important}
+.cc-empty{padding:28px;text-align:center;color:var(--mu);font-size:13px}
+.cc-help-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:10.5px;color:var(--mu)}
+.cc-help-chip{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--bd);background:var(--s2);border-radius:999px;padding:4px 8px}
+.cc-help-dot{width:7px;height:7px;border-radius:50%;background:var(--teal)}
+.cc-help-dot.paid{background:var(--green)}
+.cc-help-dot.open{background:var(--amber)}
+@media(max-width:1100px){
+  #sec-cartoes{width:calc(100vw - 90px)}
+  .cc-form-grid{grid-template-columns:1fr 1fr 1fr 1fr}
+  .cc-form-grid .btn{grid-column:1/-1}
+}
+@media(max-width:768px){
+  #sec-cartoes{width:100%;max-width:100%}
+  .cc-toolbar{align-items:stretch}.cc-toolbar-spacer{display:none}.cc-month-nav{min-width:0;width:100%;justify-content:center}
+  .cc-filter,.cc-search{width:100%;min-width:0}
+  .cc-form-grid{grid-template-columns:1fr 1fr}
+  .cc-overview-grid{grid-template-columns:repeat(var(--cc-months,6),112px)}
+  .cc-table{min-width:1420px}
+}
+@media(max-width:520px){.cc-form-grid{grid-template-columns:1fr}.cc-form-grid .btn{grid-column:auto}}
+</style>
+
+<script id="pf-v12-cartoes-script">
+(()=>{
+  'use strict';
+  if(window.__PF_CARTOES_V12__) return;
+  window.__PF_CARTOES_V12__=true;
+
+  const TODAY=new Date();
+  const todayKey=()=>`${TODAY.getFullYear()}-${String(TODAY.getMonth()+1).padStart(2,'0')}`;
+  const monthKey=(y,m)=>`${y}-${String(m+1).padStart(2,'0')}`;
+  const parseMonth=k=>{const [y,m]=String(k||todayKey()).split('-').map(Number);return {y:y||TODAY.getFullYear(),m:Math.max(0,Math.min(11,(m||1)-1))};};
+  const addMonths=(key,n)=>{const {y,m}=parseMonth(key);const d=new Date(y,m+n,1);return monthKey(d.getFullYear(),d.getMonth());};
+  const monthDiff=(a,b)=>{const A=parseMonth(a),B=parseMonth(b);return (B.y-A.y)*12+(B.m-A.m)};
+  const monthLabel=(k,long=false)=>{const {y,m}=parseMonth(k);return new Date(y,m,1).toLocaleDateString('pt-BR',long?{month:'long',year:'numeric'}:{month:'short',year:'2-digit'}).replace('.','')};
+  const num=v=>Math.max(0,Number(String(v??'').replace(',','.'))||0);
+  const int=v=>Math.max(0,parseInt(v,10)||0);
+  const money=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(num(v));
+  const esc=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;');
+  const idSafe=v=>String(v??'').replace(/[^a-zA-Z0-9_-]/g,'');
+
+  let creditCardsData={items:[],nextId:1,viewMonth:todayKey(),monthsVisible:8};
+  let saveTimer=null;
+  function scheduleSave(){
+    clearTimeout(saveTimer);
+    saveTimer=setTimeout(()=>{
+      if(typeof window.agendarAutoSave==='function') window.agendarAutoSave(200);
+      else if(typeof window.salvarFirestore==='function') window.salvarFirestore();
+    },650);
+  }
+  function toast(msg,err=false){ if(typeof window.showToast==='function') window.showToast(msg,err); }
+
+  function normalize(raw){
+    const src=raw&&typeof raw==='object'?raw:{};
+    const items=Array.isArray(src.items)?src.items:[];
+    creditCardsData={
+      items:items.map((x,i)=>({
+        id:String(x.id||`cc${i+1}`),
+        card:String(x.card||'Cartão'),
+        desc:String(x.desc||'Compra'),
+        type:x.type==='recurring'?'recurring':'installment',
+        current:Math.max(1,int(x.current)||1),
+        total:Math.max(1,int(x.total)||1),
+        value:num(x.value),
+        refMonth:/^\d{4}-\d{2}$/.test(String(x.refMonth||''))?String(x.refMonth):todayKey(),
+        endMonth:/^\d{4}-\d{2}$/.test(String(x.endMonth||''))?String(x.endMonth):'',
+        paidMonths:x.paidMonths&&typeof x.paidMonths==='object'?{...x.paidMonths}:{},
+        createdAt:x.createdAt||new Date().toISOString()
+      })),
+      nextId:Math.max(1,int(src.nextId)||items.length+1),
+      viewMonth:/^\d{4}-\d{2}$/.test(String(src.viewMonth||''))?String(src.viewMonth):todayKey(),
+      monthsVisible:[6,8,12].includes(int(src.monthsVisible))?int(src.monthsVisible):8
+    };
+    creditCardsData.items.forEach(i=>{if(i.type==='installment'&&i.total<i.current)i.total=i.current;});
+  }
+
+  function itemProjection(item,month){
+    if(item.type==='recurring'){
+      const start=item.refMonth||todayKey();
+      if(monthDiff(start,month)<0) return null;
+      if(item.endMonth&&monthDiff(month,item.endMonth)<0) return null;
+      return {value:num(item.value),label:'rec.',installment:null};
+    }
+    const cur=Math.max(1,int(item.current)||1),tot=Math.max(cur,int(item.total)||cur);
+    const inst=cur+monthDiff(item.refMonth||todayKey(),month);
+    if(inst<1||inst>tot) return null;
+    return {value:num(item.value),label:`${inst}/${tot}`,installment:inst};
+  }
+  function pendingCount(item,from=todayKey()){
+    if(item.type==='recurring') return null;
+    const cur=Math.max(1,int(item.current)||1),tot=Math.max(cur,int(item.total)||cur);
+    const inst=cur+monthDiff(item.refMonth||todayKey(),from);
+    if(inst<1) return tot;
+    if(inst>tot) return 0;
+    return tot-inst+1;
+  }
+  function futureBalance(item,from=todayKey()){
+    if(item.type==='recurring') return null;
+    let sum=0;
+    for(let i=0;i<120;i++){
+      const m=addMonths(from,i),p=itemProjection(item,m);
+      if(p&&!item.paidMonths?.[m]) sum+=p.value;
+      if(i>0&&!p&&pendingCount(item,m)===0) break;
+    }
+    return sum;
+  }
+  function cards(){return [...new Set(creditCardsData.items.map(i=>i.card.trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));}
+  function monthRange(){return Array.from({length:creditCardsData.monthsVisible},(_,i)=>addMonths(creditCardsData.viewMonth,i));}
+  function filteredItems(){
+    const card=document.getElementById('cc-filter-card')?.value||'';
+    const q=(document.getElementById('cc-search')?.value||'').trim().toLowerCase();
+    return creditCardsData.items.filter(i=>(!card||i.card===card)&&(!q||`${i.card} ${i.desc}`.toLowerCase().includes(q)));
+  }
+  function monthTotals(items,month){
+    return items.reduce((a,i)=>{const p=itemProjection(i,month);if(!p)return a;a.total+=p.value;if(i.paidMonths?.[month])a.paid+=p.value;return a;},{total:0,paid:0});
+  }
+
+  function injectNav(){
+    const nav=document.getElementById('nav-geral');
+    if(!nav||document.getElementById('nav-cartoes')) return;
+    const btn=document.createElement('button');
+    btn.className='nav-item';btn.id='nav-cartoes';btn.setAttribute('onclick',"goTo('cartoes')");
+    btn.innerHTML='<span class="nav-icon">💳</span><span>Cartões</span><span class="nav-status" id="dot-cartoes"></span>';
+    const div=document.getElementById('nav-dividas');
+    const desp=document.getElementById('nav-despesas');
+    if(div) nav.insertBefore(btn,div); else if(desp) desp.insertAdjacentElement('afterend',btn); else nav.appendChild(btn);
+  }
+  function injectSection(){
+    if(document.getElementById('sec-cartoes')) return;
+    const content=document.querySelector('.content');if(!content)return;
+    const sec=document.createElement('div');sec.className='page-section';sec.id='sec-cartoes';sec.style.display='none';
+    sec.innerHTML=`
+      <div class="section-header">
+        <div class="section-eyebrow">cartões de crédito</div>
+        <div class="section-title">Parcelas e faturas por mês</div>
+        <div class="section-desc">Uma visão tipo planilha para enxergar o que cai em cada fatura, quantas parcelas ainda faltam e quanto do cartão já está comprometido nos próximos meses.</div>
+      </div>
+      <div class="stats-grid" id="cc-stats"></div>
+      <div class="cc-toolbar">
+        <div class="cc-month-nav">
+          <button class="mes-nav" onclick="navCreditMonth(-1)" title="Mês anterior">‹</button>
+          <div class="cc-month-label" id="cc-view-label">—</div>
+          <button class="mes-nav" onclick="navCreditMonth(1)" title="Próximo mês">›</button>
+          <button class="btn btn-sm" onclick="creditToday()">Hoje</button>
+        </div>
+        <div class="cc-toolbar-spacer"></div>
+        <select class="cc-filter" id="cc-filter-card" onchange="renderCreditCards()"><option value="">Todos os cartões</option></select>
+        <input class="cc-filter cc-search" id="cc-search" placeholder="Buscar compra..." oninput="renderCreditCards()">
+        <select class="cc-filter" id="cc-month-count" onchange="setCreditMonths(this.value)">
+          <option value="6">6 meses</option><option value="8" selected>8 meses</option><option value="12">12 meses</option>
+        </select>
+      </div>
+      <div class="cc-form-card">
+        <div class="cc-form-head"><div><div class="cc-form-title">＋ Adicionar compra ou cobrança</div><div class="cc-form-sub">Informe a parcela que cai no mês de referência. O PainelFin projeta automaticamente as anteriores e as próximas.</div></div><button class="btn btn-sm" onclick="clearCreditCards()">Limpar cartões</button></div>
+        <div class="cc-form-grid">
+          <div class="cc-field"><label>Cartão</label><input class="cc-input" id="cc-new-card" list="cc-card-list" placeholder="Sicoob"></div>
+          <div class="cc-field"><label>Descrição</label><input class="cc-input" id="cc-new-desc" placeholder="ex: Prime, pneus, notebook"></div>
+          <div class="cc-field"><label>Tipo</label><select class="cc-select" id="cc-new-type" onchange="creditTypeUI()"><option value="installment">Parcelado</option><option value="recurring">Recorrente</option></select></div>
+          <div class="cc-field cc-installment-only"><label>Parcela atual</label><input class="cc-input" id="cc-new-current" type="number" min="1" step="1" value="1"></div>
+          <div class="cc-field cc-installment-only"><label>Total parcelas</label><input class="cc-input" id="cc-new-total" type="number" min="1" step="1" value="1"></div>
+          <div class="cc-field"><label>Valor parcela</label><input class="cc-input" id="cc-new-value" type="number" min="0" step="0.01" placeholder="0,00"></div>
+          <div class="cc-field"><label>Mês de referência</label><input class="cc-input" id="cc-new-ref" type="month" value="${todayKey()}"></div>
+          <button class="btn btn-primary" style="height:38px" onclick="addCreditCardItem()">Adicionar</button>
+        </div>
+        <datalist id="cc-card-list"></datalist>
+        <div class="cc-form-note"><strong>Exemplo:</strong> se em nov/26 você está na parcela 9 de 12, coloque <strong>9</strong>, <strong>12</strong> e <strong>nov/26</strong>. A tabela mostrará automaticamente 10/12 em dez, 11/12 em jan e 12/12 em fev. Em cobranças recorrentes, o valor continua mês a mês.</div>
+      </div>
+      <div class="cc-month-overview">
+        <div class="cc-overview-head"><div class="cc-overview-title">Visão rápida das próximas faturas</div><div class="cc-sheet-meta">clique em um mês para trazê-lo ao início da planilha</div></div>
+        <div class="cc-overview-grid" id="cc-month-overview"></div>
+      </div>
+      <div class="cc-sheet-card">
+        <div class="cc-sheet-head">
+          <div><div class="cc-sheet-title">Planilha de parcelas</div><div class="cc-sheet-meta" id="cc-sheet-meta">—</div></div>
+          <div style="display:flex;gap:7px;align-items:center"><button class="btn btn-sm" onclick="exportCreditCardsCSV()">Exportar CSV</button></div>
+        </div>
+        <div class="cc-table-wrap" id="cc-table-wrap"><div class="cc-empty">Adicione a primeira compra para montar a projeção das faturas.</div></div>
+      </div>
+      <div class="cc-help-row"><span class="cc-help-chip"><span class="cc-help-dot"></span> valor previsto na fatura</span><span class="cc-help-chip"><span class="cc-help-dot paid"></span> clique na célula para marcar como pago</span><span class="cc-help-chip"><span class="cc-help-dot open"></span> “saldo futuro” mostra o parcelado ainda não pago</span></div>`;
+    const before=document.getElementById('sec-dividas');if(before)content.insertBefore(sec,before);else content.appendChild(sec);
+  }
+
+  function renderFilters(){
+    const select=document.getElementById('cc-filter-card');if(!select)return;
+    const cur=select.value;
+    select.innerHTML='<option value="">Todos os cartões</option>'+cards().map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+    if(cards().includes(cur))select.value=cur;
+    const dl=document.getElementById('cc-card-list');if(dl)dl.innerHTML=cards().map(c=>`<option value="${esc(c)}"></option>`).join('');
+    const count=document.getElementById('cc-month-count');if(count)count.value=String(creditCardsData.monthsVisible);
+  }
+
+  function rowHtml(item,months){
+    const pending=pendingCount(item,creditCardsData.viewMonth),bal=futureBalance(item,creditCardsData.viewMonth);
+    return `<tr data-cc-id="${esc(item.id)}">
+      <td class="cc-sticky-1"><input class="cc-cell-input cc-card-input" list="cc-card-list" value="${esc(item.card)}" onchange="updateCreditCardItem('${idSafe(item.id)}','card',this.value)"></td>
+      <td class="cc-sticky-2"><input class="cc-cell-input cc-desc-input" value="${esc(item.desc)}" onchange="updateCreditCardItem('${idSafe(item.id)}','desc',this.value)"></td>
+      <td><select class="cc-cell-select" onchange="updateCreditCardItem('${idSafe(item.id)}','type',this.value)"><option value="installment" ${item.type==='installment'?'selected':''}>Parcelado</option><option value="recurring" ${item.type==='recurring'?'selected':''}>Recorrente</option></select></td>
+      <td>${item.type==='recurring'?'<div class="cc-pending cc-recurring">recorrente</div>':`<div class="cc-installment-wrap"><input class="cc-cell-input cc-number-mini" type="number" min="1" value="${item.current}" onchange="updateCreditCardItem('${idSafe(item.id)}','current',this.value)"><span class="cc-slash">/</span><input class="cc-cell-input cc-number-mini" type="number" min="1" value="${item.total}" onchange="updateCreditCardItem('${idSafe(item.id)}','total',this.value)"></div>`}</td>
+      <td><div class="cc-pending ${item.type==='recurring'?'cc-recurring':''}">${pending===null?'∞':pending}</div></td>
+      <td><input class="cc-cell-input cc-money-mini" type="number" min="0" step="0.01" value="${item.value||''}" onchange="updateCreditCardItem('${idSafe(item.id)}','value',this.value)"></td>
+      <td><input class="cc-cell-input cc-ref-month" type="month" value="${esc(item.refMonth)}" onchange="updateCreditCardItem('${idSafe(item.id)}','refMonth',this.value)"></td>
+      ${months.map(m=>{const p=itemProjection(item,m);if(!p)return '<td class="cc-empty-cell">—</td>';const paid=!!item.paidMonths?.[m];return `<td><button class="cc-month-cell ${paid?'paid':''}" onclick="toggleCreditPaid('${idSafe(item.id)}','${m}')" title="${paid?'Marcado como pago — clique para desfazer':'Em aberto — clique para marcar como pago'}"><span class="v">${paid?'✓ ':''}${money(p.value)}</span><span class="p">${esc(p.label)} · ${paid?'pago':'em aberto'}</span></button></td>`}).join('')}
+      <td><div class="cc-balance ${bal===null?'cc-recurring':''}">${bal===null?'Recorrente':money(bal)}</div></td>
+      <td style="text-align:center"><button class="cc-del-btn" onclick="deleteCreditCardItem('${idSafe(item.id)}')" title="Excluir">×</button></td>
+    </tr>`;
+  }
+
+  window.renderCreditCards=function(){
+    injectNav();injectSection();renderFilters();
+    const months=monthRange(),items=filteredItems();
+    const view=creditCardsData.viewMonth;
+    const title=document.getElementById('cc-view-label');if(title)title.textContent=monthLabel(view,true);
+    const totals=monthTotals(items,view),open=Math.max(0,totals.total-totals.paid);
+    const parcelBalance=items.reduce((s,i)=>{const b=futureBalance(i,view);return s+(b===null?0:b)},0);
+    const pending=items.reduce((s,i)=>s+(pendingCount(i,view)||0),0);
+    const recurringCount=items.filter(i=>i.type==='recurring'&&itemProjection(i,view)).length;
+    const stats=document.getElementById('cc-stats');if(stats)stats.innerHTML=`
+      <div class="stat-card"><div class="stat-label">Fatura · ${esc(monthLabel(view))}</div><div class="stat-value" style="color:var(--tx)">${money(totals.total)}</div><div class="stat-sub">${items.length} lançamento(s) na visão</div></div>
+      <div class="stat-card"><div class="stat-label">Marcado como pago</div><div class="stat-value" style="color:var(--green)">${money(totals.paid)}</div><div class="stat-sub">neste mês</div></div>
+      <div class="stat-card"><div class="stat-label">Em aberto</div><div class="stat-value" style="color:${open>0?'var(--amber)':'var(--green)'}">${money(open)}</div><div class="stat-sub">neste mês</div></div>
+      <div class="stat-card"><div class="stat-label">Saldo parcelado futuro</div><div class="stat-value" style="color:var(--red)">${money(parcelBalance)}</div><div class="stat-sub">sem cobranças recorrentes</div></div>
+      <div class="stat-card"><div class="stat-label">Parcelas restantes</div><div class="stat-value" style="color:var(--teal)">${pending}</div><div class="stat-sub">+ ${recurringCount} recorrente(s)</div></div>`;
+
+    const overview=document.getElementById('cc-month-overview');if(overview){
+      const vals=months.map(m=>monthTotals(items,m).total),max=Math.max(1,...vals);
+      overview.style.setProperty('--cc-months',String(months.length));
+      overview.innerHTML=months.map((m,i)=>`<button class="cc-month-mini ${i===0?'active':''}" onclick="setCreditViewMonth('${m}')"><div class="cc-month-mini-name">${esc(monthLabel(m))}</div><div class="cc-month-mini-value">${money(vals[i])}</div><div class="cc-month-mini-bar"><div class="cc-month-mini-fill" style="width:${(vals[i]/max*100).toFixed(1)}%"></div></div></button>`).join('');
+    }
+
+    const wrap=document.getElementById('cc-table-wrap');
+    const meta=document.getElementById('cc-sheet-meta');
+    if(meta)meta.textContent=`${items.length} linha(s) · ${months.length} meses visíveis · células verdes = pagas`;
+    if(!wrap)return;
+    if(!items.length){wrap.innerHTML='<div class="cc-empty">💳 Nenhum lançamento nessa visualização.<br><span style="font-size:11px">Adicione uma compra acima ou altere os filtros.</span></div>';return;}
+    const totalRow=months.map(m=>`<td class="cc-total-month">${money(monthTotals(items,m).total)}</td>`).join('');
+    wrap.innerHTML=`<table class="cc-table"><thead><tr>
+      <th class="cc-sticky-1">Cartão</th><th class="cc-sticky-2">Descrição</th><th>Tipo</th><th>Parcela</th><th>Pendentes</th><th>Valor parcela</th><th>Mês ref.</th>
+      ${months.map(m=>`<th class="cc-month-th ${m===todayKey()?'current':''}">${esc(monthLabel(m))}</th>`).join('')}
+      <th>Saldo futuro</th><th></th></tr></thead><tbody>
+      ${items.map(i=>rowHtml(i,months)).join('')}
+      <tr class="cc-total-row"><td class="cc-sticky-1">TOTAL</td><td class="cc-sticky-2">Faturas projetadas</td><td colspan="5"></td>${totalRow}<td class="cc-balance">${money(parcelBalance)}</td><td></td></tr>
+      </tbody></table>`;
+    const dot=document.getElementById('dot-cartoes');if(dot)dot.className='nav-status '+(creditCardsData.items.length?'done':'');
+  };
+
+  window.creditTypeUI=function(){
+    const recurring=document.getElementById('cc-new-type')?.value==='recurring';
+    document.querySelectorAll('.cc-installment-only').forEach(el=>el.style.opacity=recurring?'.38':'1');
+    document.querySelectorAll('.cc-installment-only input').forEach(el=>el.disabled=recurring);
+  };
+  window.addCreditCardItem=function(){
+    const card=(document.getElementById('cc-new-card')?.value||'').trim();
+    const desc=(document.getElementById('cc-new-desc')?.value||'').trim();
+    const type=document.getElementById('cc-new-type')?.value==='recurring'?'recurring':'installment';
+    let current=Math.max(1,int(document.getElementById('cc-new-current')?.value)||1);
+    let total=Math.max(1,int(document.getElementById('cc-new-total')?.value)||1);
+    const value=num(document.getElementById('cc-new-value')?.value);
+    const refMonth=document.getElementById('cc-new-ref')?.value||todayKey();
+    if(!card){toast('Digite o nome do cartão.',true);document.getElementById('cc-new-card')?.focus();return;}
+    if(!desc){toast('Digite a descrição da compra.',true);document.getElementById('cc-new-desc')?.focus();return;}
+    if(value<=0){toast('Informe o valor da parcela.',true);document.getElementById('cc-new-value')?.focus();return;}
+    if(total<current) total=current;
+    const id='cc'+creditCardsData.nextId++;
+    creditCardsData.items.push({id,card,desc,type,current:type==='recurring'?1:current,total:type==='recurring'?1:total,value,refMonth,endMonth:'',paidMonths:{},createdAt:new Date().toISOString()});
+    document.getElementById('cc-new-desc').value='';document.getElementById('cc-new-value').value='';
+    if(type==='installment'){document.getElementById('cc-new-current').value='1';document.getElementById('cc-new-total').value='1';}
+    renderCreditCards();scheduleSave();toast('💳 Lançamento adicionado.');
+  };
+  window.updateCreditCardItem=function(id,field,value){
+    const item=creditCardsData.items.find(i=>idSafe(i.id)===String(id));if(!item)return;
+    if(['current','total'].includes(field)){item[field]=Math.max(1,int(value)||1);if(item.total<item.current)item.total=item.current;}
+    else if(field==='value')item.value=num(value);
+    else if(field==='type'){item.type=value==='recurring'?'recurring':'installment';}
+    else if(field==='refMonth'&&/^\d{4}-\d{2}$/.test(value))item.refMonth=value;
+    else item[field]=String(value||'').trim();
+    renderCreditCards();scheduleSave();
+  };
+  window.deleteCreditCardItem=function(id){
+    const item=creditCardsData.items.find(i=>idSafe(i.id)===String(id));if(!item)return;
+    if(!confirm(`Excluir “${item.desc}” do cartão ${item.card}?`))return;
+    creditCardsData.items=creditCardsData.items.filter(i=>idSafe(i.id)!==String(id));renderCreditCards();scheduleSave();
+  };
+  window.toggleCreditPaid=function(id,month){
+    const item=creditCardsData.items.find(i=>idSafe(i.id)===String(id));if(!item||!itemProjection(item,month))return;
+    item.paidMonths=item.paidMonths||{};
+    if(item.paidMonths[month])delete item.paidMonths[month];else item.paidMonths[month]=true;
+    renderCreditCards();scheduleSave();
+  };
+  window.navCreditMonth=function(delta){creditCardsData.viewMonth=addMonths(creditCardsData.viewMonth,Number(delta)||0);renderCreditCards();};
+  window.creditToday=function(){creditCardsData.viewMonth=todayKey();renderCreditCards();};
+  window.setCreditViewMonth=function(m){if(/^\d{4}-\d{2}$/.test(m)){creditCardsData.viewMonth=m;renderCreditCards();}};
+  window.setCreditMonths=function(v){const n=int(v);creditCardsData.monthsVisible=[6,8,12].includes(n)?n:8;renderCreditCards();scheduleSave();};
+  window.clearCreditCards=function(){if(!creditCardsData.items.length)return;if(!confirm('Apagar todos os lançamentos de cartões?'))return;creditCardsData.items=[];creditCardsData.nextId=1;renderCreditCards();scheduleSave();toast('Lançamentos de cartões limpos.');};
+
+  window.exportCreditCardsCSV=function(){
+    const items=filteredItems(),months=monthRange();
+    if(!items.length){toast('Não há lançamentos para exportar.',true);return;}
+    const sep=';';
+    const q=v=>'"'+String(v??'').replaceAll('"','""')+'"';
+    const header=['Cartão','Descrição','Tipo','Parcela atual','Total parcelas','Pendentes','Valor parcela','Mês referência',...months.map(monthLabel),'Saldo futuro'];
+    const lines=[header.map(q).join(sep)];
+    items.forEach(i=>{
+      const row=[i.card,i.desc,i.type==='recurring'?'Recorrente':'Parcelado',i.type==='recurring'?'':i.current,i.type==='recurring'?'':i.total,pendingCount(i,creditCardsData.viewMonth)??'Recorrente',num(i.value).toFixed(2).replace('.',','),i.refMonth,
+        ...months.map(m=>{const p=itemProjection(i,m);return p?num(p.value).toFixed(2).replace('.',','):''}),
+        futureBalance(i,creditCardsData.viewMonth)===null?'Recorrente':num(futureBalance(i,creditCardsData.viewMonth)).toFixed(2).replace('.',',')];
+      lines.push(row.map(q).join(sep));
+    });
+    const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`painelfin_cartoes_${creditCardsData.viewMonth}.csv`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);toast('📥 CSV de cartões exportado.');
+  };
+
+  // Persistência: acrescenta o módulo de cartões ao mesmo objeto já salvo no Firebase.
+  const collectPrev=window.coletarDados;
+  if(typeof collectPrev==='function') window.coletarDados=function(){const base=collectPrev.apply(this,arguments)||{};return {...base,creditCardsData};};
+  const applyPrev=window.applyData;
+  if(typeof applyPrev==='function') window.applyData=function(d){applyPrev.apply(this,arguments);normalize(d?.creditCardsData);renderCreditCards();};
+
+  // Navegação: adiciona a nova guia sem alterar as outras áreas do site.
+  const goPrev=window.goTo;
+  window.goTo=function(id){
+    injectNav();injectSection();
+    const sec=document.getElementById('sec-cartoes');
+    if(id==='cartoes'){
+      document.body.dataset.pfMode='geral';
+      document.querySelectorAll('.page-section').forEach(el=>{el.style.display='none';el.classList.remove('active')});
+      if(sec){sec.style.display='block';sec.classList.add('active')}
+      document.querySelectorAll('#nav-geral .nav-item').forEach(n=>n.classList.remove('active'));
+      document.getElementById('nav-cartoes')?.classList.add('active');
+      const title=document.getElementById('topbar-title');if(title)title.textContent='Cartões de crédito';
+      renderCreditCards();window.scrollTo(0,0);return;
+    }
+    if(sec){sec.style.display='none';sec.classList.remove('active')}
+    return typeof goPrev==='function'?goPrev.apply(this,arguments):undefined;
+  };
+
+  normalize(creditCardsData);injectNav();injectSection();renderCreditCards();creditTypeUI();
+  document.addEventListener('DOMContentLoaded',()=>{injectNav();injectSection();renderCreditCards();creditTypeUI();});
+})();
+</script>
+
+</body>
+</html>
