@@ -10040,6 +10040,14 @@ button[onclick^="deleteLivreItem"]:hover{
 .cc-filter{height:36px;border:1px solid var(--bd);background:var(--s2);color:var(--tx);border-radius:9px;padding:0 10px;font-family:'Inter',sans-serif;font-size:12px;outline:none}
 .cc-search{min-width:210px}
 .cc-filter:focus{border-color:var(--tbd)}
+.cc-filter-panel{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:13px 14px;margin-bottom:12px}
+.cc-filter-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;flex-wrap:wrap}
+.cc-filter-title{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:800;color:var(--tx)}
+.cc-filter-sub{font-size:11px;color:var(--mu);margin-top:2px}
+.cc-filter-summary{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;border:1px solid var(--tbd);background:var(--tbg);color:var(--teal);font-size:11px;font-weight:700;max-width:100%;flex-wrap:wrap}
+.cc-filter-grid{display:grid;grid-template-columns:1.1fr 1fr 1fr 1.25fr .85fr .85fr 1fr auto;gap:9px;align-items:end}
+.cc-clear-btn{height:36px;white-space:nowrap}
+.cc-filter-empty{color:var(--di)}
 .cc-form-card{padding:14px 16px;margin-bottom:12px}
 .cc-form-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:11px}
 .cc-form-title{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:800;color:var(--tx)}
@@ -10112,16 +10120,19 @@ button[onclick^="deleteLivreItem"]:hover{
   #sec-cartoes{width:calc(100vw - 90px)}
   .cc-form-grid{grid-template-columns:1fr 1fr 1fr 1fr}
   .cc-form-grid .btn{grid-column:1/-1}
+  .cc-filter-grid{grid-template-columns:1fr 1fr 1fr 1fr}
+  .cc-clear-btn{grid-column:1/-1}
 }
 @media(max-width:768px){
   #sec-cartoes{width:100%;max-width:100%}
   .cc-toolbar{align-items:stretch}.cc-toolbar-spacer{display:none}.cc-month-nav{min-width:0;width:100%;justify-content:center}
   .cc-filter,.cc-search{width:100%;min-width:0}
   .cc-form-grid{grid-template-columns:1fr 1fr}
+  .cc-filter-grid{grid-template-columns:1fr 1fr}
   .cc-overview-grid{grid-template-columns:repeat(var(--cc-months,6),112px)}
   .cc-table{min-width:1420px}
 }
-@media(max-width:520px){.cc-form-grid{grid-template-columns:1fr}.cc-form-grid .btn{grid-column:auto}}
+@media(max-width:520px){.cc-form-grid,.cc-filter-grid{grid-template-columns:1fr}.cc-form-grid .btn{grid-column:auto}.cc-filter-summary{width:100%}}
 </style>
 
 <script id="pf-v12-cartoes-script">
@@ -10211,9 +10222,26 @@ button[onclick^="deleteLivreItem"]:hover{
   function cards(){return [...new Set(creditCardsData.items.map(i=>i.card.trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));}
   function monthRange(){return Array.from({length:creditCardsData.monthsVisible},(_,i)=>addMonths(creditCardsData.viewMonth,i));}
   function filteredItems(){
-    const card=document.getElementById('cc-filter-card')?.value||'';
-    const q=(document.getElementById('cc-search')?.value||'').trim().toLowerCase();
-    return creditCardsData.items.filter(i=>(!card||i.card===card)&&(!q||`${i.card} ${i.desc}`.toLowerCase().includes(q)));
+    const f=getCreditFilters(), view=creditCardsData.viewMonth;
+    const arr=creditCardsData.items.filter(i=>{
+      if(f.card && i.card!==f.card) return false;
+      if(f.type && i.type!==f.type) return false;
+      if(f.q && !(`${i.card} ${i.desc}`.toLowerCase().includes(f.q))) return false;
+      if(f.hasMin && num(i.value)<f.min) return false;
+      if(f.hasMax && num(i.value)>f.max) return false;
+      if(!itemMatchesStatus(i,f.status,view)) return false;
+      return true;
+    });
+    arr.sort((a,b)=>{
+      if(f.sort==='value-asc') return num(a.value)-num(b.value);
+      if(f.sort==='value-desc') return num(b.value)-num(a.value);
+      if(f.sort==='card-asc') return a.card.localeCompare(b.card,'pt-BR') || a.desc.localeCompare(b.desc,'pt-BR');
+      if(f.sort==='desc-asc') return a.desc.localeCompare(b.desc,'pt-BR') || a.card.localeCompare(b.card,'pt-BR');
+      if(f.sort==='pending-desc') return (pendingCount(b,view)||0) - (pendingCount(a,view)||0);
+      if(f.sort==='balance-desc') return (futureBalance(b,view)||0) - (futureBalance(a,view)||0);
+      return 0;
+    });
+    return arr;
   }
   function monthTotals(items,month){
     return items.reduce((a,i)=>{const p=itemProjection(i,month);if(!p)return a;a.total+=p.value;if(i.paidMonths?.[month])a.paid+=p.value;return a;},{total:0,paid:0});
@@ -10248,11 +10276,28 @@ button[onclick^="deleteLivreItem"]:hover{
           <button class="btn btn-sm" onclick="creditToday()">Hoje</button>
         </div>
         <div class="cc-toolbar-spacer"></div>
-        <select class="cc-filter" id="cc-filter-card" onchange="renderCreditCards()"><option value="">Todos os cartões</option></select>
-        <input class="cc-filter cc-search" id="cc-search" placeholder="Buscar compra..." oninput="renderCreditCards()">
         <select class="cc-filter" id="cc-month-count" onchange="setCreditMonths(this.value)">
           <option value="6">6 meses</option><option value="8" selected>8 meses</option><option value="12">12 meses</option>
         </select>
+      </div>
+      <div class="cc-filter-panel">
+        <div class="cc-filter-head">
+          <div>
+            <div class="cc-filter-title">Filtros da planilha</div>
+            <div class="cc-filter-sub">Filtre por cartão, tipo, faixa de valor, situação no mês e ordenação.</div>
+          </div>
+          <div class="cc-filter-summary" id="cc-filter-summary">Sem filtros ativos</div>
+        </div>
+        <div class="cc-filter-grid">
+          <div class="cc-field"><label>Cartão</label><select class="cc-filter" id="cc-filter-card" onchange="renderCreditCards()"><option value="">Todos os cartões</option></select></div>
+          <div class="cc-field"><label>Tipo</label><select class="cc-filter" id="cc-filter-type" onchange="renderCreditCards()"><option value="">Todos</option><option value="installment">Parcelado</option><option value="recurring">Recorrente</option></select></div>
+          <div class="cc-field"><label>Status no mês</label><select class="cc-filter" id="cc-filter-status" onchange="renderCreditCards()"><option value="">Todos</option><option value="due">Cai no mês</option><option value="open">Em aberto</option><option value="paid">Pago</option><option value="future">Com saldo futuro</option></select></div>
+          <div class="cc-field"><label>Buscar</label><input class="cc-filter cc-search" id="cc-search" placeholder="Buscar compra..." oninput="renderCreditCards()"></div>
+          <div class="cc-field"><label>Valor mín.</label><input class="cc-filter" id="cc-filter-min" type="number" min="0" step="0.01" placeholder="0,00" oninput="renderCreditCards()"></div>
+          <div class="cc-field"><label>Valor máx.</label><input class="cc-filter" id="cc-filter-max" type="number" min="0" step="0.01" placeholder="999,99" oninput="renderCreditCards()"></div>
+          <div class="cc-field"><label>Ordenar por</label><select class="cc-filter" id="cc-filter-sort" onchange="renderCreditCards()"><option value="value-desc">Maior valor</option><option value="value-asc">Menor valor</option><option value="balance-desc">Maior saldo futuro</option><option value="pending-desc">Mais pendentes</option><option value="card-asc">Cartão (A → Z)</option><option value="desc-asc">Descrição (A → Z)</option></select></div>
+          <button class="btn cc-clear-btn" onclick="clearCreditFilters()">Limpar filtros</button>
+        </div>
       </div>
       <div class="cc-form-card">
         <div class="cc-form-head"><div><div class="cc-form-title">＋ Adicionar compra ou cobrança</div><div class="cc-form-sub">Informe a parcela que cai no mês de referência. O PainelFin projeta automaticamente as anteriores e as próximas.</div></div><button class="btn btn-sm" onclick="clearCreditCards()">Limpar cartões</button></div>
@@ -10285,12 +10330,55 @@ button[onclick^="deleteLivreItem"]:hover{
   }
 
   function renderFilters(){
-    const select=document.getElementById('cc-filter-card');if(!select)return;
-    const cur=select.value;
-    select.innerHTML='<option value="">Todos os cartões</option>'+cards().map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
-    if(cards().includes(cur))select.value=cur;
+    const select=document.getElementById('cc-filter-card');if(select){
+      const cur=select.value;
+      select.innerHTML='<option value="">Todos os cartões</option>'+cards().map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+      if(cards().includes(cur))select.value=cur;
+    }
     const dl=document.getElementById('cc-card-list');if(dl)dl.innerHTML=cards().map(c=>`<option value="${esc(c)}"></option>`).join('');
     const count=document.getElementById('cc-month-count');if(count)count.value=String(creditCardsData.monthsVisible);
+  }
+
+  function getCreditFilters(){
+    return {
+      card:document.getElementById('cc-filter-card')?.value||'',
+      type:document.getElementById('cc-filter-type')?.value||'',
+      status:document.getElementById('cc-filter-status')?.value||'',
+      q:(document.getElementById('cc-search')?.value||'').trim().toLowerCase(),
+      min:num(document.getElementById('cc-filter-min')?.value),
+      max:num(document.getElementById('cc-filter-max')?.value),
+      hasMin:String(document.getElementById('cc-filter-min')?.value||'').trim()!=='',
+      hasMax:String(document.getElementById('cc-filter-max')?.value||'').trim()!=='',
+      sort:document.getElementById('cc-filter-sort')?.value||'value-desc'
+    };
+  }
+  function itemMatchesStatus(item,status,view){
+    if(!status) return true;
+    const proj=itemProjection(item,view);
+    const paid=!!item.paidMonths?.[view];
+    const balance=futureBalance(item,view);
+    if(status==='due') return !!proj;
+    if(status==='open') return !!proj && !paid;
+    if(status==='paid') return !!proj && paid;
+    if(status==='future') return balance===null ? !!itemProjection(item,view) : balance>0;
+    return true;
+  }
+  function updateCreditFilterSummary(totalShown){
+    const box=document.getElementById('cc-filter-summary'); if(!box) return;
+    const f=getCreditFilters(), parts=[];
+    if(f.card) parts.push('💳 '+f.card);
+    if(f.type) parts.push(f.type==='recurring'?'♾️ Recorrente':'🧾 Parcelado');
+    if(f.status){
+      const labels={due:'📅 Cai no mês',open:'🟠 Em aberto',paid:'🟢 Pago',future:'📦 Com saldo futuro'};
+      parts.push(labels[f.status]||f.status);
+    }
+    if(f.q) parts.push('🔎 '+f.q);
+    if(f.hasMin||f.hasMax){
+      const min=f.hasMin?money(f.min):'sem mín.';
+      const max=f.hasMax?money(f.max):'sem máx.';
+      parts.push('💰 '+min+' → '+max);
+    }
+    box.innerHTML = parts.length ? `${parts.join(' · ')} <span class="cc-filter-empty">•</span> ${totalShown} linha(s)` : `Sem filtros ativos <span class="cc-filter-empty">•</span> ${totalShown} linha(s)`;
   }
 
   function rowHtml(item,months){
@@ -10312,6 +10400,7 @@ button[onclick^="deleteLivreItem"]:hover{
   window.renderCreditCards=function(){
     injectNav();injectSection();renderFilters();
     const months=monthRange(),items=filteredItems();
+    updateCreditFilterSummary(items.length);
     const view=creditCardsData.viewMonth;
     const title=document.getElementById('cc-view-label');if(title)title.textContent=monthLabel(view,true);
     const totals=monthTotals(items,view),open=Math.max(0,totals.total-totals.paid);
@@ -10394,6 +10483,19 @@ button[onclick^="deleteLivreItem"]:hover{
   window.creditToday=function(){creditCardsData.viewMonth=todayKey();renderCreditCards();};
   window.setCreditViewMonth=function(m){if(/^\d{4}-\d{2}$/.test(m)){creditCardsData.viewMonth=m;renderCreditCards();}};
   window.setCreditMonths=function(v){const n=int(v);creditCardsData.monthsVisible=[6,8,12].includes(n)?n:8;renderCreditCards();scheduleSave();};
+  window.clearCreditFilters=function(){
+    const defaults={
+      'cc-filter-card':'',
+      'cc-filter-type':'',
+      'cc-filter-status':'',
+      'cc-search':'',
+      'cc-filter-min':'',
+      'cc-filter-max':'',
+      'cc-filter-sort':'value-desc'
+    };
+    Object.entries(defaults).forEach(([id,val])=>{const el=document.getElementById(id);if(el)el.value=val;});
+    renderCreditCards();
+  };
   window.clearCreditCards=function(){if(!creditCardsData.items.length)return;if(!confirm('Apagar todos os lançamentos de cartões?'))return;creditCardsData.items=[];creditCardsData.nextId=1;renderCreditCards();scheduleSave();toast('Lançamentos de cartões limpos.');};
 
   window.exportCreditCardsCSV=function(){
