@@ -1500,15 +1500,13 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
       </div>
     </div>
     <div class="form-grid" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr));margin-bottom:12px" id="missionarios-grid">
-    <div style="display:flex;align-items:center;gap:7px;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:7px 11px">
-      <span style="font-size:14px">✉️</span>
-      <input type="text" value="Murilo e Brenda" placeholder="Nome" style="background:transparent;border:none;outline:none;color:var(--tx);font-size:13px;flex:1;font-family:&#39;Inter&#39;,sans-serif" onchange="updateMiss(&#39;m1&#39;,&#39;nome&#39;,this.value)">
-      <div style="display:flex;align-items:center;background:var(--s3);border:1px solid var(--bd);border-radius:7px;overflow:hidden;flex-shrink:0">
-        <span style="padding:0 7px;font-size:11px;color:var(--di)">R$</span>
-        <input type="number" value="150" placeholder="0" style="background:transparent;border:none;outline:none;color:var(--blue);font-family:&#39;Space Grotesk&#39;,sans-serif;font-weight:600;font-size:13px;width:80px;padding:5px 7px 5px 0;text-align:right;-moz-appearance:textfield" oninput="updateMiss(&#39;m1&#39;,&#39;val&#39;,this.value)">
-      </div>
-      <button onclick="delMiss(&#39;m1&#39;)" style="background:none;border:none;cursor:pointer;color:var(--di);font-size:16px;padding:2px 4px;border-radius:5px;transition:color .15s" onmouseover="this.style.color=&#39;var(--red)&#39;" onmouseout="this.style.color=&#39;var(--di)&#39;">×</button>
-    </div></div>
+    <div class="missionario-item">
+      <span class="missionario-icon">✉️</span>
+      <input class="missionario-name" type="text" value="Murilo e Brenda" placeholder="Nome" onchange="updateMiss('m1','nome',this.value)">
+      <div class="missionario-value"><span class="missionario-prefix">R$</span><input type="number" value="150" placeholder="0" oninput="updateMiss('m1','val',this.value)"></div>
+      <button class="missionario-del" onclick="delMiss('m1')" title="Remover missionário" aria-label="Remover missionário">×</button>
+    </div>
+  </div>
     <button class="add-expense-btn" onclick="addMissionario()" style="max-width:220px">
       <span style="font-size:16px">+</span> Adicionar missionário
     </button>
@@ -2091,23 +2089,18 @@ function renderMissionarios() {
   const grid = document.getElementById('missionarios-grid');
   if (!grid) return;
   grid.innerHTML = state.missionarios.map(m => `
-    <div style="display:flex;align-items:center;gap:7px;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:7px 11px">
-      <span style="font-size:14px">✉️</span>
-      <input type="text" value="${m.nome}" placeholder="Nome"
-        style="background:transparent;border:none;outline:none;color:var(--tx);font-size:13px;flex:1;font-family:'Inter',sans-serif"
+    <div class="missionario-item">
+      <span class="missionario-icon">✉️</span>
+      <input class="missionario-name" type="text" value="${m.nome}" placeholder="Nome"
         onchange="updateMiss('${m.id}','nome',this.value)">
-      <div style="display:flex;align-items:center;background:var(--s3);border:1px solid var(--bd);border-radius:7px;overflow:hidden;flex-shrink:0">
-        <span style="padding:0 7px;font-size:11px;color:var(--di)">R$</span>
+      <div class="missionario-value">
+        <span class="missionario-prefix">R$</span>
         <input type="number" value="${m.val||''}" placeholder="0"
-          style="background:transparent;border:none;outline:none;color:var(--blue);font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;width:80px;padding:5px 7px 5px 0;text-align:right;-moz-appearance:textfield"
           oninput="updateMiss('${m.id}','val',this.value)">
       </div>
-      <button onclick="delMiss('${m.id}')"
-        style="background:none;border:none;cursor:pointer;color:var(--di);font-size:16px;padding:2px 4px;border-radius:5px;transition:color .15s"
-        onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--di)'">×</button>
+      <button class="missionario-del" onclick="delMiss('${m.id}')" title="Remover missionário" aria-label="Remover missionário">×</button>
     </div>`).join('');
 }
-
 function updateMiss(id, field, val) {
   const m = state.missionarios.find(x=>x.id===id);
   if (!m) return;
@@ -10133,6 +10126,58 @@ button[onclick^="deleteLivreItem"]:hover{
   .cc-table{min-width:1420px}
 }
 @media(max-width:520px){.cc-form-grid,.cc-filter-grid{grid-template-columns:1fr}.cc-form-grid .btn{grid-column:auto}.cc-filter-summary{width:100%}}
+
+
+/* ─── DOAÇÕES: APOIO A MISSIONÁRIOS — layout corrigido ─── */
+#missionarios-grid{
+  display:grid !important;
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  gap:10px !important;
+  margin-bottom:12px !important;
+}
+.missionario-item{
+  display:grid;
+  grid-template-columns:28px minmax(0,1fr) 126px 30px;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+  min-height:48px;
+  padding:6px 8px;
+  background:var(--s2);
+  border:1px solid var(--bd);
+  border-radius:10px;
+  transition:border-color .15s,background .15s;
+}
+.missionario-item:focus-within{border-color:var(--tbd);background:var(--s1)}
+.missionario-icon{width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.missionario-name{
+  width:100%;min-width:0;height:34px;padding:0 4px;
+  background:transparent;border:0;outline:0;color:var(--tx);
+  font:500 13px 'Inter',sans-serif;
+}
+.missionario-name::placeholder{color:var(--di)}
+.missionario-value{
+  display:grid;grid-template-columns:34px minmax(0,1fr);align-items:center;
+  height:34px;min-width:0;background:var(--s3);border:1px solid var(--bd);
+  border-radius:8px;overflow:hidden;
+}
+.missionario-prefix{height:100%;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--di);border-right:1px solid var(--bd)}
+.missionario-value input{
+  width:100%;min-width:0;height:100%;padding:0 9px;background:transparent;border:0;outline:0;
+  color:var(--blue);font:700 13px 'Space Grotesk',sans-serif;text-align:right;-moz-appearance:textfield;
+}
+.missionario-value input::-webkit-inner-spin-button,.missionario-value input::-webkit-outer-spin-button{-webkit-appearance:none}
+.missionario-del{
+  width:30px;height:30px;display:flex;align-items:center;justify-content:center;
+  background:transparent;border:0;border-radius:7px;color:var(--di);font-size:17px;cursor:pointer;transition:all .15s;
+}
+.missionario-del:hover{color:var(--red);background:rgba(248,113,113,.1)}
+@media(max-width:900px){#missionarios-grid{grid-template-columns:1fr !important}}
+@media(max-width:520px){
+  .missionario-item{grid-template-columns:28px minmax(0,1fr) 30px}
+  .missionario-value{grid-column:2 / 3;width:100%}
+  .missionario-del{grid-column:3;grid-row:1 / span 2}
+}
 </style>
 
 <script id="pf-v12-cartoes-script">
