@@ -1500,13 +1500,15 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
       </div>
     </div>
     <div class="form-grid" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr));margin-bottom:12px" id="missionarios-grid">
-    <div class="missionario-item">
-      <span class="missionario-icon">✉️</span>
-      <input class="missionario-name" type="text" value="Murilo e Brenda" placeholder="Nome" onchange="updateMiss('m1','nome',this.value)">
-      <div class="missionario-value"><span class="missionario-prefix">R$</span><input type="number" value="150" placeholder="0" oninput="updateMiss('m1','val',this.value)"></div>
-      <button class="missionario-del" onclick="delMiss('m1')" title="Remover missionário" aria-label="Remover missionário">×</button>
-    </div>
-  </div>
+    <div style="display:flex;align-items:center;gap:7px;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:7px 11px">
+      <span style="font-size:14px">✉️</span>
+      <input type="text" value="Murilo e Brenda" placeholder="Nome" style="background:transparent;border:none;outline:none;color:var(--tx);font-size:13px;flex:1;font-family:&#39;Inter&#39;,sans-serif" onchange="updateMiss(&#39;m1&#39;,&#39;nome&#39;,this.value)">
+      <div style="display:flex;align-items:center;background:var(--s3);border:1px solid var(--bd);border-radius:7px;overflow:hidden;flex-shrink:0">
+        <span style="padding:0 7px;font-size:11px;color:var(--di)">R$</span>
+        <input type="number" value="150" placeholder="0" style="background:transparent;border:none;outline:none;color:var(--blue);font-family:&#39;Space Grotesk&#39;,sans-serif;font-weight:600;font-size:13px;width:80px;padding:5px 7px 5px 0;text-align:right;-moz-appearance:textfield" oninput="updateMiss(&#39;m1&#39;,&#39;val&#39;,this.value)">
+      </div>
+      <button onclick="delMiss(&#39;m1&#39;)" style="background:none;border:none;cursor:pointer;color:var(--di);font-size:16px;padding:2px 4px;border-radius:5px;transition:color .15s" onmouseover="this.style.color=&#39;var(--red)&#39;" onmouseout="this.style.color=&#39;var(--di)&#39;">×</button>
+    </div></div>
     <button class="add-expense-btn" onclick="addMissionario()" style="max-width:220px">
       <span style="font-size:16px">+</span> Adicionar missionário
     </button>
@@ -2089,18 +2091,23 @@ function renderMissionarios() {
   const grid = document.getElementById('missionarios-grid');
   if (!grid) return;
   grid.innerHTML = state.missionarios.map(m => `
-    <div class="missionario-item">
-      <span class="missionario-icon">✉️</span>
-      <input class="missionario-name" type="text" value="${m.nome}" placeholder="Nome"
+    <div style="display:flex;align-items:center;gap:7px;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:7px 11px">
+      <span style="font-size:14px">✉️</span>
+      <input type="text" value="${m.nome}" placeholder="Nome"
+        style="background:transparent;border:none;outline:none;color:var(--tx);font-size:13px;flex:1;font-family:'Inter',sans-serif"
         onchange="updateMiss('${m.id}','nome',this.value)">
-      <div class="missionario-value">
-        <span class="missionario-prefix">R$</span>
+      <div style="display:flex;align-items:center;background:var(--s3);border:1px solid var(--bd);border-radius:7px;overflow:hidden;flex-shrink:0">
+        <span style="padding:0 7px;font-size:11px;color:var(--di)">R$</span>
         <input type="number" value="${m.val||''}" placeholder="0"
+          style="background:transparent;border:none;outline:none;color:var(--blue);font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;width:80px;padding:5px 7px 5px 0;text-align:right;-moz-appearance:textfield"
           oninput="updateMiss('${m.id}','val',this.value)">
       </div>
-      <button class="missionario-del" onclick="delMiss('${m.id}')" title="Remover missionário" aria-label="Remover missionário">×</button>
+      <button onclick="delMiss('${m.id}')"
+        style="background:none;border:none;cursor:pointer;color:var(--di);font-size:16px;padding:2px 4px;border-radius:5px;transition:color .15s"
+        onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--di)'">×</button>
     </div>`).join('');
 }
+
 function updateMiss(id, field, val) {
   const m = state.missionarios.find(x=>x.id===id);
   if (!m) return;
@@ -10098,14 +10105,11 @@ button[onclick^="deleteLivreItem"]:hover{
 .cc-empty-cell{color:var(--di);text-align:center;font-size:11px}
 .cc-balance{font-family:'Space Grotesk',sans-serif;font-weight:800;text-align:right;min-width:104px;color:var(--red)}
 .cc-recurring{color:var(--purple)}
-.cc-del-btn{width:32px;height:32px;border:1px solid var(--bd);border-radius:999px;background:var(--s2);color:var(--di);font-size:15px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:.15s}
-.cc-del-btn:hover{color:var(--red);border-color:rgba(220,38,38,.35);background:rgba(220,38,38,.08);transform:scale(1.04)}
-/* A coluna de ação fica sempre visível: não é mais preciso rolar a planilha até o fim para apagar uma linha. */
-.cc-action-th,.cc-action-cell{position:sticky !important;right:0;min-width:64px;width:64px;max-width:64px;text-align:center !important;box-shadow:-7px 0 12px rgba(0,0,0,.05)}
-.cc-action-th{z-index:8 !important;background:var(--s2) !important;color:var(--red) !important}
-.cc-action-cell{z-index:5;background:var(--s1) !important}
-.cc-table tbody tr:hover .cc-action-cell{background:var(--s2) !important}
-.cc-total-row .cc-action-cell{z-index:7;background:var(--s2) !important}
+.cc-action-col{width:44px;min-width:44px;max-width:44px;text-align:center}
+.cc-table th.cc-action-col{color:transparent;background:var(--s2)}
+.cc-table td.cc-action-col{padding:0 4px;text-align:center}
+.cc-del-btn{width:22px;height:22px;border:none;border-radius:7px;background:transparent;color:var(--di);font-size:18px;line-height:1;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all .12s ease}
+.cc-del-btn:hover{color:var(--red);background:rgba(220,38,38,.08)}
 .cc-total-row td{position:sticky;bottom:0;z-index:2;background:var(--s2)!important;font-family:'Space Grotesk',sans-serif;font-weight:900;color:var(--tx)}
 .cc-total-row td.cc-sticky-1,.cc-total-row td.cc-sticky-2{z-index:5;background:var(--s2)!important}
 .cc-total-month{text-align:center;color:var(--teal)!important}
@@ -10132,58 +10136,11 @@ button[onclick^="deleteLivreItem"]:hover{
   .cc-table{min-width:1420px}
 }
 @media(max-width:520px){.cc-form-grid,.cc-filter-grid{grid-template-columns:1fr}.cc-form-grid .btn{grid-column:auto}.cc-filter-summary{width:100%}}
-
-
-/* ─── DOAÇÕES: APOIO A MISSIONÁRIOS — layout corrigido ─── */
-#missionarios-grid{
-  display:grid !important;
-  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
-  gap:10px !important;
-  margin-bottom:12px !important;
-}
-.missionario-item{
-  display:grid;
-  grid-template-columns:28px minmax(0,1fr) 126px 30px;
-  align-items:center;
-  gap:8px;
-  min-width:0;
-  min-height:48px;
-  padding:6px 8px;
-  background:var(--s2);
-  border:1px solid var(--bd);
-  border-radius:10px;
-  transition:border-color .15s,background .15s;
-}
-.missionario-item:focus-within{border-color:var(--tbd);background:var(--s1)}
-.missionario-icon{width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
-.missionario-name{
-  width:100%;min-width:0;height:34px;padding:0 4px;
-  background:transparent;border:0;outline:0;color:var(--tx);
-  font:500 13px 'Inter',sans-serif;
-}
-.missionario-name::placeholder{color:var(--di)}
-.missionario-value{
-  display:grid;grid-template-columns:34px minmax(0,1fr);align-items:center;
-  height:34px;min-width:0;background:var(--s3);border:1px solid var(--bd);
-  border-radius:8px;overflow:hidden;
-}
-.missionario-prefix{height:100%;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--di);border-right:1px solid var(--bd)}
-.missionario-value input{
-  width:100%;min-width:0;height:100%;padding:0 9px;background:transparent;border:0;outline:0;
-  color:var(--blue);font:700 13px 'Space Grotesk',sans-serif;text-align:right;-moz-appearance:textfield;
-}
-.missionario-value input::-webkit-inner-spin-button,.missionario-value input::-webkit-outer-spin-button{-webkit-appearance:none}
-.missionario-del{
-  width:30px;height:30px;display:flex;align-items:center;justify-content:center;
-  background:transparent;border:0;border-radius:7px;color:var(--di);font-size:17px;cursor:pointer;transition:all .15s;
-}
-.missionario-del:hover{color:var(--red);background:rgba(248,113,113,.1)}
-@media(max-width:900px){#missionarios-grid{grid-template-columns:1fr !important}}
-@media(max-width:520px){
-  .missionario-item{grid-template-columns:28px minmax(0,1fr) 30px}
-  .missionario-value{grid-column:2 / 3;width:100%}
-  .missionario-del{grid-column:3;grid-row:1 / span 2}
-}
+.cc-history-recovery{margin-bottom:12px;padding:12px 14px;border:1px solid rgba(217,119,6,.28);background:rgba(217,119,6,.07);border-radius:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.cc-history-recovery strong{display:block;font-family:'Space Grotesk',sans-serif;font-size:13px;color:var(--tx)}
+.cc-history-recovery span{display:block;font-size:11px;color:var(--mu);margin-top:2px;max-width:760px}
+.cc-history-recovery .btn{background:var(--amber);border-color:var(--amber);color:#fff;font-weight:800}
+.cc-review-note{margin:10px 0 0;padding:9px 11px;border-radius:9px;border:1px solid var(--bd);background:var(--s2);font-size:11px;color:var(--mu);line-height:1.5}
 </style>
 
 <script id="pf-v12-cartoes-script">
@@ -10361,6 +10318,10 @@ button[onclick^="deleteLivreItem"]:hover{
           <button class="btn cc-clear-btn" onclick="clearCreditFilters()">Limpar filtros</button>
         </div>
       </div>
+      <div class="cc-history-recovery" id="cc-history-recovery">
+        <div><strong>🛟 Recuperar os 32 lançamentos anteriores</strong><span>Reconstruí a lista a partir do print e dos dados que você tinha enviado antes. O botão substitui apenas a aba Cartões nesta tela; depois você confere e salva na nuvem.</span></div>
+        <button class="btn" onclick="recoverCreditCardsFromHistory()">Recuperar 32 lançamentos</button>
+      </div>
       <div class="cc-form-card">
         <div class="cc-form-head"><div><div class="cc-form-title">＋ Adicionar compra ou cobrança</div><div class="cc-form-sub">Informe a parcela que cai no mês de referência. O PainelFin projeta automaticamente as anteriores e as próximas.</div></div><button class="btn btn-sm" onclick="clearCreditCards()">Limpar cartões</button></div>
         <div class="cc-form-grid">
@@ -10392,7 +10353,7 @@ button[onclick^="deleteLivreItem"]:hover{
         </div>
         <div class="cc-table-wrap" id="cc-table-wrap"><div class="cc-empty">Adicione a primeira compra para montar a projeção das faturas.</div></div>
       </div>
-      <div class="cc-help-row"><span class="cc-help-chip"><span class="cc-help-dot"></span> valor previsto na fatura</span><span class="cc-help-chip"><span class="cc-help-dot paid"></span> clique na célula para marcar como pago</span><span class="cc-help-chip"><span class="cc-help-dot open"></span> “saldo futuro” mostra o parcelado ainda não pago</span><span class="cc-help-chip">🛟 cópia local de segurança por conta</span><span class="cc-help-chip">🗑️ coluna “Apagar” exclui somente a linha escolhida</span></div>`;
+      <div class="cc-help-row"><span class="cc-help-chip"><span class="cc-help-dot"></span> valor previsto na fatura</span><span class="cc-help-chip"><span class="cc-help-dot paid"></span> clique na célula para marcar como pago</span><span class="cc-help-chip"><span class="cc-help-dot open"></span> “saldo futuro” mostra o parcelado ainda não pago</span><span class="cc-help-chip">🛟 cópia local de segurança por conta</span></div>`;
     const before=document.getElementById('sec-dividas');if(before)content.insertBefore(sec,before);else content.appendChild(sec);
   }
 
@@ -10460,7 +10421,7 @@ button[onclick^="deleteLivreItem"]:hover{
       <td><input class="cc-cell-input cc-ref-month" type="month" value="${esc(item.refMonth)}" onchange="updateCreditCardItem('${idSafe(item.id)}','refMonth',this.value)"></td>
       ${months.map(m=>{const p=itemProjection(item,m);if(!p)return '<td class="cc-empty-cell">—</td>';const paid=!!item.paidMonths?.[m];return `<td><button class="cc-month-cell ${paid?'paid':''}" onclick="toggleCreditPaid('${idSafe(item.id)}','${m}')" title="${paid?'Marcado como pago — clique para desfazer':'Em aberto — clique para marcar como pago'}"><span class="v">${paid?'✓ ':''}${money(p.value)}</span><span class="p">${esc(p.label)} · ${paid?'pago':'em aberto'}</span></button></td>`}).join('')}
       <td><div class="cc-balance ${bal===null?'cc-recurring':''}">${bal===null?'Recorrente':money(bal)}</div></td>
-      <td class="cc-action-cell"><button class="cc-del-btn" onclick="deleteCreditCardItem('${idSafe(item.id)}')" title="Excluir somente este lançamento" aria-label="Excluir somente este lançamento">🗑</button></td>
+      <td class="cc-action-col"><button class="cc-del-btn" onclick="deleteCreditCardItem('${idSafe(item.id)}')" title="Excluir lançamento" aria-label="Excluir lançamento">×</button></td>
     </tr>`;
   }
 
@@ -10496,9 +10457,9 @@ button[onclick^="deleteLivreItem"]:hover{
     wrap.innerHTML=`<table class="cc-table"><thead><tr>
       <th class="cc-sticky-1">Cartão</th><th class="cc-sticky-2">Descrição</th><th>Tipo</th><th>Parcela</th><th>Pendentes</th><th>Valor parcela</th><th>Mês ref.</th>
       ${months.map(m=>`<th class="cc-month-th ${m===todayKey()?'current':''}">${esc(monthLabel(m))}</th>`).join('')}
-      <th>Saldo futuro</th><th class="cc-action-th">Apagar</th></tr></thead><tbody>
+      <th>Saldo futuro</th><th class="cc-action-col" aria-label="Ações"></th></tr></thead><tbody>
       ${items.map(i=>rowHtml(i,months)).join('')}
-      <tr class="cc-total-row"><td class="cc-sticky-1">TOTAL</td><td class="cc-sticky-2">Faturas projetadas</td><td colspan="5"></td>${totalRow}<td class="cc-balance">${money(parcelBalance)}</td><td class="cc-action-cell"></td></tr>
+      <tr class="cc-total-row"><td class="cc-sticky-1">TOTAL</td><td class="cc-sticky-2">Faturas projetadas</td><td colspan="5"></td>${totalRow}<td class="cc-balance">${money(parcelBalance)}</td><td class="cc-action-col"></td></tr>
       </tbody></table>`;
     const dot=document.getElementById('dot-cartoes');if(dot)dot.className='nav-status '+(creditCardsData.items.length?'done':'');
   };
@@ -10537,10 +10498,8 @@ button[onclick^="deleteLivreItem"]:hover{
   };
   window.deleteCreditCardItem=function(id){
     const item=creditCardsData.items.find(i=>idSafe(i.id)===String(id));if(!item)return;
-    if(!confirm(`Excluir somente “${item.desc}” do cartão ${item.card}?\n\nOs outros lançamentos serão mantidos.`))return;
-    creditCardsData.items=creditCardsData.items.filter(i=>idSafe(i.id)!==String(id));
-    renderCreditCards();scheduleSave();
-    toast(`🗑️ “${item.desc}” excluído. Os demais lançamentos foram mantidos.`);
+    if(!confirm(`Excluir “${item.desc}” do cartão ${item.card}?`))return;
+    creditCardsData.items=creditCardsData.items.filter(i=>idSafe(i.id)!==String(id));renderCreditCards();scheduleSave();
   };
   window.toggleCreditPaid=function(id,month){
     const item=creditCardsData.items.find(i=>idSafe(i.id)===String(id));if(!item||!itemProjection(item,month))return;
@@ -10564,6 +10523,21 @@ button[onclick^="deleteLivreItem"]:hover{
     };
     Object.entries(defaults).forEach(([id,val])=>{const el=document.getElementById(id);if(el)el.value=val;});
     renderCreditCards();
+  };
+  const RECOVERED_CARDS_HISTORY=[{"id":"rec1","card":"Sicoob","desc":"Picpay","type":"installment","current":9,"total":11,"value":516.26,"refMonth":"2026-10","endMonth":"","paidMonths":{},"createdAt":"2026-10-04T00:00:00.000Z","recoveryReview":false},{"id":"rec2","card":"Sicoob","desc":"Latam SP","type":"installment","current":2,"total":4,"value":484.5,"refMonth":"2026-10","endMonth":"","paidMonths":{},"createdAt":"2026-10-04T00:00:00.000Z","recoveryReview":false},{"id":"rec3","card":"Sicoob","desc":"Latam Floripa 1","type":"installment","current":1,"total":4,"value":307.32,"refMonth":"2026-10","endMonth":"","paidMonths":{},"createdAt":"2026-10-04T00:00:00.000Z","recoveryReview":false},{"id":"rec4","card":"Sicoob","desc":"Latam Floripa 2","type":"installment","current":1,"total":4,"value":261.9,"refMonth":"2026-10","endMonth":"","paidMonths":{},"createdAt":"2026-10-04T00:00:00.000Z","recoveryReview":false},{"id":"rec5","card":"Sicoob","desc":"Tablet","type":"installment","current":2,"total":12,"value":196.18,"refMonth":"2026-10","endMonth":"","paidMonths":{},"createdAt":"2026-10-04T00:00:00.000Z","recoveryReview":false},{"id":"rec6","card":"Sicoob","desc":"Alternador Etios","type":"installment","current":1,"total":2,"value":175.0,"refMonth":"2026-10","endMonth":"","paidMonths":{},"createdAt":"2026-10-04T00:00:00.000Z","recoveryReview":false},{"id":"rec7","card":"Sicoob","desc":"Localiza KWID","type":"installment","current":2,"total":3,"value":174.8,"refMonth":"2026-10","endMonth":"","paidMonths":{},"createdAt":"2026-10-04T00:00:00.000Z","recoveryReview":false},{"id":"rec8","card":"Sicoob","desc":"Capô","type":"installment","current":2,"total":10,"value":170.0,"refMonth":"2026-10","endMonth":"","paidMonths":{},"createdAt":"2026-10-04T00:00:00.000Z","recoveryReview":false},{"id":"rec9","card":"Sicoob","desc":"Bateria ETIOS","type":"installment","current":1,"total":4,"value":132.5,"refMonth":"2026-10","endMonth":"","paidMonths":{},"createdAt":"2026-10-04T00:00:00.000Z","recoveryReview":false},{"id":"rec10","card":"Sicoob","desc":"Airbnb Floripa","type":"installment","current":1,"total":6,"value":108.13,"refMonth":"2026-10","endMonth":"","paidMonths":{},"createdAt":"2026-10-04T00:00:00.000Z","recoveryReview":false},{"id":"rec11","card":"Sicoob","desc":"Rock in Rio!","type":"installment","current":2,"total":5,"value":87.0,"refMonth":"2026-10","endMonth":"","paidMonths":{},"createdAt":"2026-10-04T00:00:00.000Z","recoveryReview":false},{"id":"rec12","card":"Sicoob","desc":"Clubecar","type":"installment","current":9,"total":12,"value":86.27,"refMonth":"2026-10","endMonth":"","paidMonths":{},"createdAt":"2026-10-04T00:00:00.000Z","recoveryReview":false},{"id":"rec13","card":"Sicoob","desc":"Tiktok Shop","type":"installment","current":2,"total":4,"value":73.23,"refMonth":"2026-10","endMonth":"","paidMonths":{},"createdAt":"2026-10-04T00:00:00.000Z","recoveryReview":false},{"id":"rec14","card":"Sicoob","desc":"Shopee","type":"installment","current":1,"total":3,"value":72.52,"refMonth":"2026-10","endMonth":"","paidMonths":{},"createdAt":"2026-10-04T00:00:00.000Z","recoveryReview":false},{"id":"rec15","card":"Sicoob","desc":"Ticket","type":"installment","current":2,"total":6,"value":72.5,"refMonth":"2026-10","endMonth":"","paidMonths":{},"createdAt":"2026-10-04T00:00:00.000Z","recoveryReview":false},{"id":"rec16","card":"Sicoob","desc":"Amazon jogo de panelas","type":"installment","current":5,"total":10,"value":70.4,"refMonth":"2026-10","endMonth":"","paidMonths":{},"createdAt":"2026-10-04T00:00:00.000Z","recoveryReview":false},{"id":"rec17","card":"Sicoob","desc":"Tiktok Shop (mapa, pijama, blusas, rímel...)","type":"installment","current":1,"total":6,"value":65.68,"refMonth":"2026-10","endMonth":"","paidMonths":{},"createdAt":"2026-10-04T00:00:00.000Z","recoveryReview":false},{"id":"rec18","card":"Sicoob","desc":"Troca de Óleo","type":"installment","current":5,"total":6,"value":58.33,"refMonth":"2026-10","endMonth":"","paidMonths":{},"createdAt":"2026-10-04T00:00:00.000Z","recoveryReview":false},{"id":"rec19","card":"Sicoob","desc":"Gran Educação","type":"installment","current":4,"total":12,"value":54.9,"refMonth":"2026-10","endMonth":"","paidMonths":{},"createdAt":"2026-10-04T00:00:00.000Z","recoveryReview":false},{"id":"rec20","card":"Sicoob","desc":"Shopee parcelado","type":"installment","current":6,"total":7,"value":54.62,"refMonth":"2026-10","endMonth":"","paidMonths":{},"createdAt":"2026-10-04T00:00:00.000Z","recoveryReview":false},{"id":"rec21","card":"Sicoob","desc":"Seguro BIKE","type":"installment","current":6,"total":10,"value":52.6,"refMonth":"2026-10","endMonth":"","paidMonths":{},"createdAt":"2026-10-04T00:00:00.000Z","recoveryReview":false},{"id":"rec22","card":"Sicoob","desc":"Ricardinho Palio","type":"installment","current":9,"total":10,"value":47.8,"refMonth":"2026-10","endMonth":"","paidMonths":{},"createdAt":"2026-10-04T00:00:00.000Z","recoveryReview":false},{"id":"rec23","card":"Sicoob","desc":"Mercado Livre","type":"installment","current":1,"total":4,"value":38.7,"refMonth":"2026-10","endMonth":"","paidMonths":{},"createdAt":"2026-10-04T00:00:00.000Z","recoveryReview":false},{"id":"rec24","card":"Sicoob","desc":"Mercado Livre Yasmin e Brunin","type":"installment","current":1,"total":4,"value":33.61,"refMonth":"2026-10","endMonth":"","paidMonths":{},"createdAt":"2026-10-04T00:00:00.000Z","recoveryReview":false},{"id":"rec25","card":"Sicoob","desc":"Corrida","type":"installment","current":2,"total":3,"value":28.63,"refMonth":"2026-10","endMonth":"","paidMonths":{},"createdAt":"2026-10-04T00:00:00.000Z","recoveryReview":false},{"id":"rec26","card":"Sicoob","desc":"Escola do Breno","type":"installment","current":5,"total":12,"value":24.9,"refMonth":"2026-10","endMonth":"","paidMonths":{},"createdAt":"2026-10-04T00:00:00.000Z","recoveryReview":false},{"id":"rec27","card":"Sicoob","desc":"Prime","type":"installment","current":9,"total":12,"value":13.9,"refMonth":"2026-11","endMonth":"","paidMonths":{},"createdAt":"2026-10-04T00:00:00.000Z","recoveryReview":true},{"id":"rec28","card":"Sicoob","desc":"Sofá","type":"installment","current":6,"total":12,"value":255.44,"refMonth":"2026-10","endMonth":"","paidMonths":{},"createdAt":"2026-10-04T00:00:00.000Z","recoveryReview":true},{"id":"rec29","card":"Sicoob","desc":"Clube Tiro","type":"installment","current":1,"total":1,"value":99.67,"refMonth":"2026-10","endMonth":"","paidMonths":{},"createdAt":"2026-10-04T00:00:00.000Z","recoveryReview":true},{"id":"rec30","card":"Sicoob","desc":"Carrefour Pneus","type":"installment","current":3,"total":8,"value":84.98,"refMonth":"2026-10","endMonth":"","paidMonths":{},"createdAt":"2026-10-04T00:00:00.000Z","recoveryReview":true},{"id":"rec31","card":"Sicoob","desc":"TikTok","type":"installment","current":1,"total":1,"value":70.99,"refMonth":"2026-10","endMonth":"","paidMonths":{},"createdAt":"2026-10-04T00:00:00.000Z","recoveryReview":true},{"id":"rec32","card":"Sicoob","desc":"Bateria Pálio","type":"installment","current":1,"total":1,"value":55.0,"refMonth":"2026-10","endMonth":"","paidMonths":{},"createdAt":"2026-10-04T00:00:00.000Z","recoveryReview":true}];
+  window.recoverCreditCardsFromHistory=function(){
+    const existing=creditCardsData.items.length;
+    const msg=existing?`A aba Cartões tem ${existing} linha(s) agora.
+
+OK = substituir essas linhas pelos 32 lançamentos reconstruídos.
+Cancelar = não alterar nada.`:'Carregar os 32 lançamentos reconstruídos?';
+    if(!confirm(msg))return;
+    creditCardsData.items=RECOVERED_CARDS_HISTORY.map((x,i)=>({...x,id:'cc'+(i+1),paidMonths:{...x.paidMonths}}));
+    creditCardsData.nextId=33;creditCardsData.viewMonth='2026-10';creditCardsData.monthsVisible=8;
+    saveLocalBackup();renderCreditCards();
+    const box=document.getElementById('cc-history-recovery');
+    if(box)box.innerHTML=`<div><strong>✅ 32 lançamentos reconstruídos na tela</strong><span>Conferir principalmente: Prime, Sofá, Clube Tiro, Carrefour Pneus, TikTok e Bateria Pálio. Nesses seis, nome e valor foram recuperados, mas o contador de parcelas precisa de uma conferida rápida.</span><div class="cc-review-note"><b>Importante:</b> a reconstrução está guardada na cópia local deste navegador. Depois de conferir, use o botão de salvar do PainelFin para gravar na nuvem.</div></div>`;
+    toast('🛟 32 lançamentos recuperados na tela. Confira e salve.');
   };
   window.clearCreditCards=function(){if(!creditCardsData.items.length)return;if(!confirm('Apagar todos os lançamentos de cartões?'))return;creditCardsData.items=[];creditCardsData.nextId=1;renderCreditCards();scheduleSave();toast('Lançamentos de cartões limpos.');};
 
