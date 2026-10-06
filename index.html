@@ -10098,8 +10098,14 @@ button[onclick^="deleteLivreItem"]:hover{
 .cc-empty-cell{color:var(--di);text-align:center;font-size:11px}
 .cc-balance{font-family:'Space Grotesk',sans-serif;font-weight:800;text-align:right;min-width:104px;color:var(--red)}
 .cc-recurring{color:var(--purple)}
-.cc-del-btn{width:30px;height:30px;border:1px solid var(--bd);border-radius:999px;background:var(--s2);color:var(--di);font-size:17px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
-.cc-del-btn:hover{color:var(--red);border-color:rgba(220,38,38,.35);background:rgba(220,38,38,.08)}
+.cc-del-btn{width:32px;height:32px;border:1px solid var(--bd);border-radius:999px;background:var(--s2);color:var(--di);font-size:15px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:.15s}
+.cc-del-btn:hover{color:var(--red);border-color:rgba(220,38,38,.35);background:rgba(220,38,38,.08);transform:scale(1.04)}
+/* A coluna de ação fica sempre visível: não é mais preciso rolar a planilha até o fim para apagar uma linha. */
+.cc-action-th,.cc-action-cell{position:sticky !important;right:0;min-width:64px;width:64px;max-width:64px;text-align:center !important;box-shadow:-7px 0 12px rgba(0,0,0,.05)}
+.cc-action-th{z-index:8 !important;background:var(--s2) !important;color:var(--red) !important}
+.cc-action-cell{z-index:5;background:var(--s1) !important}
+.cc-table tbody tr:hover .cc-action-cell{background:var(--s2) !important}
+.cc-total-row .cc-action-cell{z-index:7;background:var(--s2) !important}
 .cc-total-row td{position:sticky;bottom:0;z-index:2;background:var(--s2)!important;font-family:'Space Grotesk',sans-serif;font-weight:900;color:var(--tx)}
 .cc-total-row td.cc-sticky-1,.cc-total-row td.cc-sticky-2{z-index:5;background:var(--s2)!important}
 .cc-total-month{text-align:center;color:var(--teal)!important}
@@ -10386,7 +10392,7 @@ button[onclick^="deleteLivreItem"]:hover{
         </div>
         <div class="cc-table-wrap" id="cc-table-wrap"><div class="cc-empty">Adicione a primeira compra para montar a projeção das faturas.</div></div>
       </div>
-      <div class="cc-help-row"><span class="cc-help-chip"><span class="cc-help-dot"></span> valor previsto na fatura</span><span class="cc-help-chip"><span class="cc-help-dot paid"></span> clique na célula para marcar como pago</span><span class="cc-help-chip"><span class="cc-help-dot open"></span> “saldo futuro” mostra o parcelado ainda não pago</span><span class="cc-help-chip">🛟 cópia local de segurança por conta</span></div>`;
+      <div class="cc-help-row"><span class="cc-help-chip"><span class="cc-help-dot"></span> valor previsto na fatura</span><span class="cc-help-chip"><span class="cc-help-dot paid"></span> clique na célula para marcar como pago</span><span class="cc-help-chip"><span class="cc-help-dot open"></span> “saldo futuro” mostra o parcelado ainda não pago</span><span class="cc-help-chip">🛟 cópia local de segurança por conta</span><span class="cc-help-chip">🗑️ coluna “Apagar” exclui somente a linha escolhida</span></div>`;
     const before=document.getElementById('sec-dividas');if(before)content.insertBefore(sec,before);else content.appendChild(sec);
   }
 
@@ -10454,7 +10460,7 @@ button[onclick^="deleteLivreItem"]:hover{
       <td><input class="cc-cell-input cc-ref-month" type="month" value="${esc(item.refMonth)}" onchange="updateCreditCardItem('${idSafe(item.id)}','refMonth',this.value)"></td>
       ${months.map(m=>{const p=itemProjection(item,m);if(!p)return '<td class="cc-empty-cell">—</td>';const paid=!!item.paidMonths?.[m];return `<td><button class="cc-month-cell ${paid?'paid':''}" onclick="toggleCreditPaid('${idSafe(item.id)}','${m}')" title="${paid?'Marcado como pago — clique para desfazer':'Em aberto — clique para marcar como pago'}"><span class="v">${paid?'✓ ':''}${money(p.value)}</span><span class="p">${esc(p.label)} · ${paid?'pago':'em aberto'}</span></button></td>`}).join('')}
       <td><div class="cc-balance ${bal===null?'cc-recurring':''}">${bal===null?'Recorrente':money(bal)}</div></td>
-      <td style="text-align:center"><button class="cc-del-btn" onclick="deleteCreditCardItem('${idSafe(item.id)}')" title="Excluir">×</button></td>
+      <td class="cc-action-cell"><button class="cc-del-btn" onclick="deleteCreditCardItem('${idSafe(item.id)}')" title="Excluir somente este lançamento" aria-label="Excluir somente este lançamento">🗑</button></td>
     </tr>`;
   }
 
@@ -10490,9 +10496,9 @@ button[onclick^="deleteLivreItem"]:hover{
     wrap.innerHTML=`<table class="cc-table"><thead><tr>
       <th class="cc-sticky-1">Cartão</th><th class="cc-sticky-2">Descrição</th><th>Tipo</th><th>Parcela</th><th>Pendentes</th><th>Valor parcela</th><th>Mês ref.</th>
       ${months.map(m=>`<th class="cc-month-th ${m===todayKey()?'current':''}">${esc(monthLabel(m))}</th>`).join('')}
-      <th>Saldo futuro</th><th></th></tr></thead><tbody>
+      <th>Saldo futuro</th><th class="cc-action-th">Apagar</th></tr></thead><tbody>
       ${items.map(i=>rowHtml(i,months)).join('')}
-      <tr class="cc-total-row"><td class="cc-sticky-1">TOTAL</td><td class="cc-sticky-2">Faturas projetadas</td><td colspan="5"></td>${totalRow}<td class="cc-balance">${money(parcelBalance)}</td><td></td></tr>
+      <tr class="cc-total-row"><td class="cc-sticky-1">TOTAL</td><td class="cc-sticky-2">Faturas projetadas</td><td colspan="5"></td>${totalRow}<td class="cc-balance">${money(parcelBalance)}</td><td class="cc-action-cell"></td></tr>
       </tbody></table>`;
     const dot=document.getElementById('dot-cartoes');if(dot)dot.className='nav-status '+(creditCardsData.items.length?'done':'');
   };
@@ -10531,8 +10537,10 @@ button[onclick^="deleteLivreItem"]:hover{
   };
   window.deleteCreditCardItem=function(id){
     const item=creditCardsData.items.find(i=>idSafe(i.id)===String(id));if(!item)return;
-    if(!confirm(`Excluir “${item.desc}” do cartão ${item.card}?`))return;
-    creditCardsData.items=creditCardsData.items.filter(i=>idSafe(i.id)!==String(id));renderCreditCards();scheduleSave();
+    if(!confirm(`Excluir somente “${item.desc}” do cartão ${item.card}?\n\nOs outros lançamentos serão mantidos.`))return;
+    creditCardsData.items=creditCardsData.items.filter(i=>idSafe(i.id)!==String(id));
+    renderCreditCards();scheduleSave();
+    toast(`🗑️ “${item.desc}” excluído. Os demais lançamentos foram mantidos.`);
   };
   window.toggleCreditPaid=function(id,month){
     const item=creditCardsData.items.find(i=>idSafe(i.id)===String(id));if(!item||!itemProjection(item,month))return;
