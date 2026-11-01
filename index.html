@@ -371,7 +371,7 @@ h1 em{font-weight:400;font-style:italic;color:var(--wine)}
    <details class="movie-options wrap" id="movieOptions">
     <summary>Pôster e sinopse: informações, fonte e opções</summary>
     <div class="movie-options-inner">
-      <p>O site tenta encontrar automaticamente pôster e resumo na Wikipédia, sem cadastro. Para ampliar a cobertura e obter sinopses em português, você pode ativar o TMDB com seu <strong>token pessoal de leitura da API</strong>. Ele fica salvo somente neste navegador e <strong>não</strong> é publicado no HTML do GitHub. <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener noreferrer" style="text-decoration:underline">Como obter um token TMDB ↗</a></p>
+      <p>O site busca pôsteres e sinopses em português automaticamente pelo TMDB, usando a conexão segura com o Cloudflare Worker. <strong>Não é necessário colocar token aqui.</strong> Se o TMDB estiver indisponível, alguns filmes da seleção da casa poderão usar informações da Wikipédia. A opção de token pessoal abaixo é apenas um recurso avançado e não é necessária para navegar.</p>
       <div class="tmdb-setup"><input id="tmdbToken" type="password" autocomplete="off" placeholder="Cole seu token de leitura TMDB" aria-label="Token de leitura da API TMDB"><button type="button" id="saveToken">Ativar TMDB</button><button class="secondary" type="button" id="clearToken">Desativar</button></div>
       <p class="options-note" id="providerNotice">Fonte automática: Wikipédia · Conexão com internet necessária. Alguns filmes podem não ter capa ou sinopse disponível. O catálogo e o sorteio continuam funcionando offline.</p>
       <div class="info-provider"><span class="provider-tag">TMDB</span> Este produto usa a API do TMDB, mas não é endossado nem certificado pelo TMDB. <a href="https://www.themoviedb.org" target="_blank" rel="noopener noreferrer" style="text-decoration:underline">Saiba mais</a>.</div>
@@ -423,14 +423,14 @@ h1 em{font-weight:400;font-style:italic;color:var(--wine)}
      <div class="world-actions"><button type="submit">Aplicar filtros</button><button type="button" class="world-reset" id="worldReset">Limpar</button><p id="worldFilterNote">Combinações personalizadas · Filmes e notas fornecidos pelo TMDB</p></div>
     </form>
    </div>
-   <div class="world-result-head"><strong id="worldHeading">Filmes para descobrir</strong><span id="worldResultCount" role="status" aria-live="polite">Conecte o TMDB para explorar</span></div>
-   <div class="world-grid" id="worldGrid"><div class="world-empty">Sua seleção da casa continua logo abaixo. Para desbloquear o acervo mundial, conecte sua API do TMDB nas configurações.</div></div>
+   <div class="world-result-head"><strong id="worldHeading">Filmes para descobrir</strong><span id="worldResultCount" role="status" aria-live="polite">Carregando o acervo mundial…</span></div>
+   <div class="world-grid" id="worldGrid"><div class="world-empty">O acervo mundial será carregado automaticamente. Se não aparecer, confira a conexão com a internet.</div></div>
    <button type="button" id="worldMore" class="world-more" hidden>Carregar mais filmes</button>
-   <details class="world-connect" id="worldSettings"><summary>⚙ Conexão com o TMDB · Configurar catálogo mundial</summary>
-    <p>Para uso pessoal, ative seu token TMDB em <a href="#movieOptions" id="worldTokenLink">Pôster e sinopse: opções de fonte</a> (seção acima). Para disponibilizar o catálogo a <strong>todos os visitantes</strong> no GitHub Pages, use um Worker como intermediário e guarde nele a chave privada — nunca no HTML.</p>
-    <p>Se você já criou o Worker, cole aqui o endereço HTTPS dele. Este ajuste vale somente para o seu navegador. Para ativar para todos, configure <code>WORKER_URL</code> no HTML antes de publicar.</p>
+   <details class="world-connect" id="worldSettings"><summary>⚙ Conexão com o TMDB · Detalhes técnicos</summary>
+    <p>O acervo mundial já está conectado automaticamente pelo Cloudflare Worker. Nenhum visitante precisa fornecer token. <a href="#movieOptions" id="worldTokenLink">Informações sobre pôsteres e sinopses</a>.</p>
+    <p>A conexão está configurada para todos os visitantes. Os controles abaixo são opcionais, para quem quiser testar outro Worker neste navegador.</p>
     <div class="world-connection-inputs"><input id="workerInput" type="url" placeholder="https://seu-worker.seudominio.workers.dev" aria-label="Endereço do Worker"><button id="worldConnect" type="button">Conectar Worker</button><button id="worldDisconnect" class="secondary" type="button">Desconectar</button></div>
-    <p id="worldConnectionMessage">Sem conexão, a seleção original continua funcionando normalmente.</p>
+    <p id="worldConnectionMessage">Conexão automática já configurada para todos os visitantes.</p>
    </details>
    <div class="world-legal"><img src="https://www.themoviedb.org/assets/v4/logos/v2/blue_square_1_white-ff84c271cc8c93e00aa0264a425434c329089bdfc6a392987332b5f32903f75c.svg" alt="TMDB" loading="lazy" onerror="this.style.display='none'">Este produto usa a API do TMDB, mas não é endossado nem certificado pelo TMDB. As notas e disponibilidades podem mudar; o filtro de “clássicos prováveis” é uma estimativa, não uma classificação oficial. <a href="https://www.themoviedb.org" target="_blank" rel="noopener noreferrer">Fonte: The Movie Database</a>.</div>
   </section>
@@ -771,7 +771,7 @@ function bind(){
    Para disponibilizar para todos, coloque aqui seu Worker,
    NUNCA o token secreto do TMDB:
    ======================================================= */
-const WORKER_URL = ''; // Ex.: 'https://filmes-api.seunome.workers.dev'
+const WORKER_URL = 'https://oproximofilme-api.paulossray.workers.dev'; // API pública do site: token permanece apenas no Cloudflare
 const WORLD_WORKER_KEY='proximoFilmeWorkerUrl_v1';
 let workerURL=WORKER_URL;
 try{if(!workerURL)workerURL=localStorage.getItem(WORLD_WORKER_KEY)||''}catch{}
@@ -793,7 +793,7 @@ function updateWorldStatus(){
  $('#worldStatus').classList.toggle('is-on',enabled);
  $('#worldStatusText').textContent=workerURL?'Acervo mundial · Worker conectado':tmdbToken?'Acervo mundial · token pessoal':'Acervo mundial · conexão necessária';
  $('#workerInput').value=workerURL;
- $('#worldConnectionMessage').textContent=workerURL?'Worker conectado para este navegador'+(WORKER_URL?' (também configurado no HTML).':'.') : tmdbToken?'Token pessoal ativo neste navegador. Para seus visitantes, configure o Worker no HTML.':'Sem conexão: os 957 filmes da seleção original continuam disponíveis.';
+ $('#worldConnectionMessage').textContent=workerURL?(WORKER_URL&&workerURL===WORKER_URL?'Worker conectado automaticamente para todos os visitantes.':'Worker personalizado conectado neste navegador.') : tmdbToken?'Token pessoal ativo neste navegador. Para seus visitantes, configure o Worker no HTML.':'Sem conexão: os 957 filmes da seleção original continuam disponíveis.';
  $('#microSource').textContent=enabled?'TMDB disponível':'Seleção da casa';
  updateProviderNotice();
 }
