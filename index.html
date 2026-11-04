@@ -3,8 +3,8 @@
 <html lang="pt-BR"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PainelFin — Planejamento Financeiro</title>
-<link href="./oirk_files/css2" rel="stylesheet">
+<title>PainelFin 2006 • Orkut, MSN, Real e Simulador</title>
+<meta name="theme-color" content="#8557b7">
 
 <!-- ══════════ FIREBASE SDK ══════════ -->
 <script type="module">
@@ -24,6 +24,8 @@ import {
   getDatabase,
   ref,
   set,
+  update,
+  get,
   onValue
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
@@ -43,9 +45,55 @@ const db = getDatabase(app);
 const provider = new GoogleAuthProvider();
 provider.setCustomParameters({ prompt: "select_account" });
 
+/* AMBIENTES ISOLADOS: o banco REAL continua no caminho original. */
+const PF_ENV_KEY = 'painelfin_ambiente_v2000';
+let ambienteAtivo = null;
+try {
+  const saved = sessionStorage.getItem(PF_ENV_KEY);
+  if (saved === 'real' || saved === 'simulador') ambienteAtivo = saved;
+} catch (_) { /* Navegador com armazenamento restrito */ }
+
+function referenciaDados(uid) {
+  // SIMULADOR usa filho próprio de usuarios/{uid}; as regras atuais por usuário continuam válidas.
+  return ref(db, ambienteAtivo === 'simulador'
+    ? `usuarios/${uid}/ambientes/simulador`
+    : `usuarios/${uid}`);
+}
+function pintarAmbiente() {
+  document.body.dataset.ambiente = ambienteAtivo || 'escolher';
+  const nome = ambienteAtivo === 'simulador' ? 'SIMULADOR' : 'REAL';
+  for (const el of document.querySelectorAll('[data-ambiente-nome]')) el.textContent = nome;
+  const aviso = document.getElementById('ambiente-aviso');
+  if (aviso) aviso.textContent = ambienteAtivo === 'simulador'
+    ? 'Área de testes • suas alterações aqui não modificam os dados reais.'
+    : 'Área oficial • as alterações salvas aqui modificam seu planejamento real.';
+  const novoSim = document.getElementById('novo-simulador-btn');
+  if(novoSim) novoSim.hidden = ambienteAtivo !== 'simulador';
+}
+window.escolherAmbiente = (modo) => {
+  if (modo !== 'simulador' && modo !== 'real') return;
+  try { sessionStorage.setItem(PF_ENV_KEY, modo); }
+  catch (e) { alert('Ative o armazenamento de sessão do navegador para separar os ambientes.'); return; }
+  location.reload(); // Recarrega para zerar completamente o estado em memória de todos os módulos.
+};
+window.trocarAmbiente = async () => {
+  if(!confirm('Trocar entre Real e Simulador? Vou salvar o ambiente atual antes de continuar.')) return;
+  if(currentUser) { const ok=await window.salvarFirestore(); if(!ok) return; }
+  try { sessionStorage.removeItem(PF_ENV_KEY); } catch(_) {}
+  location.reload();
+};
+window.alternarVisual = async () => {
+  if(currentUser) {
+    if(!confirm('Abrir o visual clássico? Vou salvar os dados deste ambiente antes de mudar.')) return;
+    if(!await window.salvarFirestore()) return;
+  }
+  window.location.assign('versao-antiga.html');
+};
+
 let currentUser = null;
 let unsubscribe = null;
 let ignorarProximoSnapshotLocal = false;
+let dadosCarregados = false;
 
 window.loginGoogle = async () => {
   setLoginLoading(true);
@@ -161,88 +209,194 @@ window.logout = async () => {
     unsubscribe();
     unsubscribe = null;
   }
+  try { sessionStorage.removeItem(PF_ENV_KEY); } catch (_) {}
   await signOut(auth);
+  location.reload();
 };
 
 onAuthStateChanged(auth, user => {
   currentUser = user;
+  document.body.dataset.pfUid = user?.uid || '';
+  if (!user) window.dispatchEvent(new CustomEvent('pf-retro-auth', {
+    detail: {uid: null, ambiente: ambienteAtivo}
+  }));
   setLoginLoading(false);
+  const gate = document.getElementById('environment-gate');
+  const login = document.getElementById('login-screen');
+  const shell = document.getElementById('app-shell');
+  if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+  dadosCarregados = false;
+  gate.style.display = ambienteAtivo ? 'none' : 'flex';
+  login.style.display = 'none';
+  shell.style.display = 'none';
+  pintarAmbiente();
+  if (!ambienteAtivo) return; // NUNCA carrega o banco antes da escolha do ambiente.
 
   if (user) {
-    document.getElementById("login-screen").style.display = "none";
-    document.getElementById("app-shell").style.display = "flex";
-
-    const nome = user.displayName?.split(" ")[0] || user.email?.split("@")[0] || "Usuário";
-    document.getElementById("user-name").textContent = nome;
-    document.getElementById("user-email").textContent = user.email || "—";
-
-    const avatarEl = document.getElementById("user-avatar");
+    shell.style.display = 'flex';
+    const nome = user.displayName?.split(' ')[0] || user.email?.split('@')[0] || 'Usuário';
+    document.getElementById('user-name').textContent = nome;
+    document.getElementById('user-email').textContent = user.email || '—';
+    const avatarEl = document.getElementById('user-avatar');
     if (user.photoURL) {
       avatarEl.style.backgroundImage = `url(${user.photoURL})`;
-      avatarEl.style.backgroundSize = "cover";
-      avatarEl.textContent = "";
+      avatarEl.style.backgroundSize = 'cover';
+      avatarEl.textContent = '';
     } else {
-      avatarEl.style.backgroundImage = "";
+      avatarEl.style.backgroundImage = '';
       avatarEl.textContent = nome.charAt(0).toUpperCase();
     }
-
     listenData(user.uid);
+    window.dispatchEvent(new CustomEvent('pf-retro-auth', {
+      detail: {uid: user.uid, ambiente: ambienteAtivo}
+    }));
   } else {
-    document.getElementById("login-screen").style.display = "flex";
-    document.getElementById("app-shell").style.display = "none";
-    if (unsubscribe) {
-      unsubscribe();
-      unsubscribe = null;
-    }
+    login.style.display = 'flex';
   }
 });
 
-/* Realtime Database: cada usuário acessa somente o próprio registro. */
+/* O registro original 'usuarios/{uid}' é o REAL. A cópia de teste fica em
+   'usuarios/{uid}/ambientes/simulador'. O update no REAL preserva este filho. */
+let criandoSimulador = false;
 function listenData(uid) {
   if (unsubscribe) unsubscribe();
-
-  const userRef = ref(db, `usuarios/${uid}`);
-  unsubscribe = onValue(
-    userRef,
-    snapshot => {
-      if (snapshot.exists()) {
-        if (ignorarProximoSnapshotLocal) {
-          ignorarProximoSnapshotLocal = false;
-          setCloudStatus?.("saved");
-          return;
-        }
-        applyData(snapshot.val());
-        showToast("☁️ Dados sincronizados");
+  const userRef = referenciaDados(uid);
+  unsubscribe = onValue(userRef, async snapshot => {
+    if (!snapshot.exists()) {
+      if (ambienteAtivo === 'simulador' && !criandoSimulador) {
+        criandoSimulador = true;
+        try {
+          const realSnapshot = await get(ref(db, `usuarios/${uid}`));
+          if (!currentUser || currentUser.uid !== uid) return;
+          const base = realSnapshot.exists() ? realSnapshot.val() : null;
+          if (base && typeof base === 'object') {
+            // Impede aninhamento/cópias recursivas dos ambientes dentro de si mesmos.
+            const { ambientes, ...copia } = base;
+            const temDados = Object.keys(copia).some(k => k !== 'updatedAt');
+            if (temDados) {
+              const aindaVazio = !(await get(userRef)).exists();
+              if (aindaVazio) {
+                await set(userRef, {...copia, criadoComoCopiaEm: new Date().toISOString(), updatedAt: new Date().toISOString()});
+                showToast('🧪 Simulador criado a partir do Real!');
+              }
+            } else {
+              dadosCarregados = true;
+              setCloudStatus('saved');
+            }
+          } else {
+            dadosCarregados = true;
+            setCloudStatus('saved');
+          }
+        } catch (e) {
+          setCloudStatus('error');
+          showToast('⚠️ Não foi possível iniciar o simulador: ' + e.message, true);
+        } finally { criandoSimulador = false; }
+      } else if (ambienteAtivo !== 'simulador') {
+        dadosCarregados = true;
+        setCloudStatus('saved');
       }
-    },
-    error => {
-      showToast("⚠️ Erro ao sincronizar: " + error.message, true);
+      return;
     }
-  );
+    if (ignorarProximoSnapshotLocal) {
+      ignorarProximoSnapshotLocal = false;
+      dadosCarregados = true;
+      setCloudStatus('saved');
+      return;
+    }
+    try {
+      applyData(snapshot.val());
+      dadosCarregados = true;
+      setCloudStatus('saved');
+    } catch (e) {
+      console.error('Falha ao aplicar dados salvos', e);
+      showToast('Erro ao carregar os dados: ' + e.message, true);
+    }
+  }, error => {
+    setCloudStatus('error');
+    showToast('⚠️ Erro de sincronização: ' + error.message, true);
+  });
 }
 
-/* Mantive o nome salvarFirestore para não quebrar os botões existentes,
-   mas agora o salvamento é feito no Realtime Database. */
+/* Mantemos o nome para compatibilidade com botões e salvamentos automáticos. */
 window.salvarFirestore = async () => {
-  if (!currentUser) {
-    showToast("Faça login primeiro.", true);
-    return;
+  if (!currentUser || !ambienteAtivo) {
+    showToast('Escolha o ambiente e entre na conta primeiro.', true);
+    return false;
   }
-
+  if(!dadosCarregados) { showToast('⏳ Aguarde o carregamento dos dados antes de salvar ou trocar de visual.',true); return false; }
   const data = coletarDados();
-  const userRef = ref(db, `usuarios/${currentUser.uid}`);
-
+  const userRef = referenciaDados(currentUser.uid);
   try {
     ignorarProximoSnapshotLocal = true;
-    setCloudStatus?.("saving");
-    await set(userRef, {
-      ...data,
-      updatedAt: new Date().toISOString()
-    });
-    setCloudStatus?.("saved");
-    showToast("✅ Salvo na nuvem!");
+    setCloudStatus('saving');
+    const payload = {...data, updatedAt: new Date().toISOString()};
+    // update evita apagar campos não utilizados por este visual, tanto no Real quanto no Simulador.
+    await update(userRef, payload);
+    setCloudStatus('saved');
+    window.dispatchEvent(new CustomEvent('pf-retro-saved', {detail:{ambiente:ambienteAtivo}}));
+    showToast(ambienteAtivo === 'simulador' ? '🧪 Teste salvo no simulador!' : '✅ Dados reais salvos!');
+    return true;
   } catch (e) {
-    showToast("❌ Erro ao salvar: " + e.message, true);
+    ignorarProximoSnapshotLocal = false;
+    setCloudStatus('error');
+    showToast('❌ Erro ao salvar: ' + e.message, true);
+    return false;
+  }
+};
+
+window.reiniciarSimulador = async () => {
+  if(ambienteAtivo !== 'simulador' || !currentUser) return;
+  if(!confirm('Substituir TODOS os dados do simulador por uma nova cópia do Real? Seus testes atuais serão perdidos. O Real não será modificado.')) return;
+  const confirmacao = prompt('Digite RECRIAR para confirmar:');
+  if(confirmacao !== 'RECRIAR') return;
+  try {
+    setCloudStatus('saving');
+    const realSnapshot = await get(ref(db, `usuarios/${currentUser.uid}`));
+    const base = realSnapshot.exists() ? realSnapshot.val() : {};
+    const { ambientes, ...copia } = base;
+    ignorarProximoSnapshotLocal = false;
+    await set(referenciaDados(currentUser.uid), {
+      ...copia, criadoComoCopiaEm: new Date().toISOString(), updatedAt: new Date().toISOString()
+    });
+    location.reload();
+  } catch(e) {
+    setCloudStatus('error');
+    showToast('Não foi possível recriar o simulador: ' + e.message, true);
+  }
+};
+
+window.exportarBackupCompleto = async () => {
+  if (!currentUser) { showToast('Entre na sua conta para baixar o backup.', true); return; }
+  try {
+    setCloudStatus('saving');
+    // Copia o registro completo, inclusive os DOIS ambientes, sem alterar nada no banco.
+    const snapshot = await get(ref(db, `usuarios/${currentUser.uid}`));
+    const extras = {};
+    for (const key of [
+      `painelfin2006-game:${currentUser.uid}:real`,
+      `painelfin2006-game:${currentUser.uid}:simulador`,
+      'painelfin2006-skin'
+    ]) { try { const v=localStorage.getItem(key); if(v!==null) extras[key]=v; } catch(_) {} }
+    const pacote = {
+      tipo:'BACKUP_COMPLETO_PAINELFIN', versao:1,
+      exportadoEm:new Date().toISOString(),
+      observacao:'Contém o registro integral do Firebase (REAL + SIMULADOR, se existir). Guarde este arquivo em local privado. Não é uma operação de restauração.',
+      registroFirebase:snapshot.val(),
+      personalizacaoLocal:extras
+    };
+    const texto = JSON.stringify(pacote,null,2);
+    const blob = new Blob([texto],{type:'application/json;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    const hoje = new Date().toISOString().replaceAll(':','-').replaceAll('.','-');
+    a.href=url; a.download=`PainelFin-backup-${hoje}.json`;
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),20000);
+    setCloudStatus('saved');
+    showToast('✅ Backup completo baixado! Guarde o arquivo em local privado.');
+  } catch(e) {
+    setCloudStatus('error');
+    showToast('❌ Falha ao gerar backup: '+e.message,true);
   }
 };
 </script>
@@ -847,8 +1001,92 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
 @media(max-width:1100px){.debt-filter-grid{grid-template-columns:1fr 1fr 1fr}}
 @media(max-width:720px){.debt-filter-grid{grid-template-columns:1fr}}
 </style>
+<style id="pf-dual-visual-css">
+.pf-classic-switch{background:#f8eaf8!important;border:1px solid #bc8bca!important;color:#673a86!important;font-weight:800!important}
+.pf-visual-gate-link{width:100%;margin-top:12px;padding:8px 10px;border:1px dashed #a78ec2;color:#60348b;background:#fff5fc;font:700 12px Arial,sans-serif;cursor:pointer;border-radius:4px}
+.pf-login-visual{text-align:right;margin:-8px -4px 10px}
+.pf-login-visual button{border:1px solid var(--bd2);border-radius:6px;padding:5px 9px;background:var(--s2);color:var(--tx);cursor:pointer;font-size:11px}
+@media(max-width:650px){.pf-classic-switch{font-size:11px!important;padding:5px 7px!important}}
+</style>
+<style id="pf-bruto-liquido-style">
+/* Holerite editável: sem alterar cálculos antigos, que continuam lendo .val (líquido). */
+/* Sobrepõe a grade mobile antiga destinada às linhas simples de renda. */
+#rendas-list > div.pf-income-card{display:block!important;grid-template-columns:none!important;gap:0!important;align-items:stretch!important;padding:0!important}
+#rendas-list > div.pf-income-card > .pf-income-main,#rendas-list > div.pf-income-card > .pf-income-deductions{grid-column:auto!important;grid-row:auto!important}
+#rendas-list .pf-income-card .pf-income-amounts{display:grid!important}
+#rendas-list .pf-income-card .pf-income-deductions{display:block!important}
+#rendas-list .pf-income-card .pf-income-line{display:flex!important}
+#rendas-list .pf-income-card .pf-income-money{display:flex!important}
+#rendas-list .pf-income-card .pf-deduction-row{display:grid!important}
+#rendas-list .pf-income-card .pf-income-remove{grid-column:auto!important;grid-row:auto!important}
+#rendas-list .pf-income-card .pf-income-name{min-width:100px;flex:1}
+#rendas-list .pf-income-card,.pf-monthly-income-card{
+  background:var(--s2);border:1px solid var(--bd2);border-radius:12px;overflow:hidden;
+  box-shadow:0 2px 5px rgba(0,0,0,.04);margin-bottom:7px;
+}
+#rendas-list .pf-income-main,.pf-monthly-income-card .pf-income-main{padding:12px 14px}
+#rendas-list .pf-income-line,.pf-monthly-income-card .pf-income-line{display:flex;flex-wrap:wrap;align-items:center;gap:9px}
+#rendas-list .pf-income-name,.pf-monthly-income-card .pf-income-name{display:flex;align-items:center;gap:8px;flex:1;min-width:150px}
+#rendas-list .pf-income-name input,.pf-monthly-income-card .pf-income-name input{width:100%;min-width:0;background:transparent;border:0;border-bottom:1px dashed transparent;outline:0;padding:7px 2px;color:var(--tx);font:600 13px 'Inter',Arial,sans-serif}
+#rendas-list .pf-income-name input:focus,.pf-monthly-income-card .pf-income-name input:focus{border-bottom-color:var(--teal)}
+#rendas-list .pf-income-switch,.pf-monthly-income-card .pf-income-switch{font-size:12px;font-weight:700;padding:7px 10px;border:1px solid var(--bd2);border-radius:7px;background:var(--s1);color:var(--tx);cursor:pointer}
+#rendas-list .pf-income-amounts,.pf-monthly-income-card .pf-income-amounts{display:grid;grid-template-columns:minmax(135px,1fr) minmax(135px,1fr);gap:9px;margin-top:10px}
+#rendas-list .pf-income-box,.pf-monthly-income-card .pf-income-box{border:1px solid var(--bd);border-radius:8px;padding:8px 10px;background:var(--s1);min-width:0}
+#rendas-list .pf-income-label,.pf-monthly-income-card .pf-income-label{display:block;color:var(--mu);font:700 10px 'Inter',Arial,sans-serif;letter-spacing:.05em;text-transform:uppercase;margin-bottom:4px}
+#rendas-list .pf-income-money,.pf-monthly-income-card .pf-income-money{display:flex;align-items:center;gap:5px;font:700 14px 'Space Grotesk',Arial,sans-serif;color:var(--teal)}
+#rendas-list .pf-income-money input,.pf-monthly-income-card .pf-income-money input{max-width:100%;min-width:0;width:100%;background:transparent;border:0;outline:0;color:var(--tx);font:700 17px 'Space Grotesk',Arial,sans-serif;-moz-appearance:textfield}
+#rendas-list .pf-income-money input::-webkit-inner-spin-button,.pf-monthly-income-card .pf-income-money input::-webkit-inner-spin-button{-webkit-appearance:none}
+#rendas-list .pf-income-net,.pf-monthly-income-card .pf-income-net{border-color:var(--tbd);background:var(--tbg)}
+#rendas-list .pf-income-net strong,.pf-monthly-income-card .pf-income-net strong{font:800 19px 'Space Grotesk',Arial,sans-serif;color:var(--teal);display:block;line-height:1.45}
+#rendas-list .pf-income-helper,.pf-monthly-income-card .pf-income-helper{font-size:10px;color:var(--mu);margin-top:5px}
+#rendas-list .pf-income-remove,.pf-monthly-income-card .pf-income-remove{border:1px solid var(--bd);color:var(--mu);background:var(--s1);font-size:18px;padding:2px 9px;border-radius:6px;cursor:pointer}
+#rendas-list .pf-income-remove:hover,.pf-monthly-income-card .pf-income-remove:hover{color:var(--red);border-color:var(--red)}
+#rendas-list .pf-income-deductions,.pf-monthly-income-card .pf-income-deductions{padding:11px 14px 12px;border-top:1px dashed var(--bd2);background:var(--s1)}
+#rendas-list .pf-deduction-heading,.pf-monthly-income-card .pf-deduction-heading{display:flex;align-items:center;flex-wrap:wrap;justify-content:space-between;gap:6px;font-weight:800;font-size:12px;color:var(--tx);margin-bottom:8px}
+#rendas-list .pf-deduction-row,.pf-monthly-income-card .pf-deduction-row{display:grid;grid-template-columns:minmax(100px,1fr) minmax(100px,145px) 26px;gap:7px;margin-bottom:6px;align-items:center}
+#rendas-list .pf-deduction-row input,.pf-monthly-income-card .pf-deduction-row input{height:35px;min-width:0;width:100%;border:1px solid var(--bd2);border-radius:6px;padding:4px 8px;background:var(--s2);color:var(--tx);font:500 12px Arial,sans-serif}
+#rendas-list .pf-deduction-row input[type=number],.pf-monthly-income-card .pf-deduction-row input[type=number]{text-align:right;font-weight:700}
+#rendas-list .pf-deduction-row button,.pf-monthly-income-card .pf-deduction-row button{color:var(--mu);border:1px solid var(--bd);border-radius:5px;background:var(--s2);cursor:pointer;font-size:16px;height:30px}
+#rendas-list .pf-deduction-row button:hover,.pf-monthly-income-card .pf-deduction-row button:hover{color:var(--red)}
+#rendas-list .pf-deduction-bottom,.pf-monthly-income-card .pf-deduction-bottom{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:7px}
+#rendas-list .pf-deduction-add,.pf-monthly-income-card .pf-deduction-add{border:1px dashed var(--tbd);border-radius:6px;background:var(--tbg);color:var(--teal);font-weight:800;font-size:11px;padding:6px 9px;cursor:pointer}
+#rendas-list .pf-deduction-summary,.pf-monthly-income-card .pf-deduction-summary{font-size:12px;color:var(--mu);font-weight:700}
+#rendas-list .pf-deduction-summary b,.pf-monthly-income-card .pf-deduction-summary b{color:var(--red)}
+#rendas-list .pf-income-warning,.pf-monthly-income-card .pf-income-warning{color:var(--red);font-size:11px;font-weight:700;margin-top:6px}
+#rendas-list .pf-paystub-tip,.pf-monthly-income-card .pf-paystub-tip{font-size:10px;line-height:1.5;color:var(--mu);margin-top:7px}
+@media(max-width:560px){
+ #rendas-list .pf-income-main,.pf-monthly-income-card .pf-income-main{padding:10px}
+ #rendas-list .pf-income-amounts,.pf-monthly-income-card .pf-income-amounts{grid-template-columns:1fr 1fr;gap:5px}
+ #rendas-list .pf-income-box,.pf-monthly-income-card .pf-income-box{padding:7px}
+ #rendas-list .pf-income-net strong,.pf-monthly-income-card .pf-income-net strong{font-size:14px}
+ #rendas-list .pf-income-money input,.pf-monthly-income-card .pf-income-money input{font-size:14px}
+ #rendas-list .pf-deduction-row,.pf-monthly-income-card .pf-deduction-row{grid-template-columns:minmax(85px,1fr) minmax(80px,115px) 25px;gap:4px}
+}
+</style>
 </head>
-<body>
+<body data-ambiente="escolher" data-pf-skin="orkut">
+<!-- TELA INICIAL: escolher ANTES de ver ou tocar nos dados -->
+<section id="environment-gate" class="retro-gate" aria-label="Escolha seu ambiente" role="dialog" aria-modal="true">
+  <div class="gate-window">
+    <div class="gate-titlebar"><span>▣ PainelFin 2006</span><span class="gate-win-controls">_ &nbsp; □ &nbsp; ×</span></div>
+    <div class="gate-window-body">
+      <div class="gate-logo"><span class="pixel-sun">✦</span><div><strong>painel<span>fin</span></strong><small>PERSONAL FINANCE // ORKUT + MSN EDITION</small></div></div>
+      <div class="gate-rule"></div>
+      <div class="gate-intro"><b>Bem-vindo ao PainelFin!</b><p>Bem-vindo de volta à internet de 2006! Escolha o ambiente antes de entrar no seu cantinho.</p></div>
+      <div class="gate-options">
+        <button type="button" class="gate-option gate-real" onclick="escolherAmbiente('real')">
+          <span class="gate-option-icon">▣</span><span class="gate-option-copy"><strong>Entrar no REAL</strong><span>Meu planejamento oficial</span><small>Seus dados verdadeiros. Use com atenção ao editar.</small></span><span class="gate-chevron">›</span>
+        </button>
+        <button type="button" class="gate-option gate-sim" onclick="escolherAmbiente('simulador')">
+          <span class="gate-option-icon">✦</span><span class="gate-option-copy"><strong>Abrir SIMULADOR</strong><span>Meu laboratório de testes</span><small>Experimente sem modificar o Real. Os testes também ficam salvos.</small></span><span class="gate-chevron">›</span>
+        </button>
+      </div>
+      <p class="gate-note">☑ Na primeira visita, o simulador começa como uma cópia do Real. Depois, os dois seguem independentes.</p>
+      <button type="button" class="pf-visual-gate-link" onclick="alternarVisual()">🖥️ Prefere o layout original? Abrir versão clássica</button>
+    </div>
+    <div class="gate-statusbar"><span>● Conexão segura com sua conta</span><span>v3.0 • MSN / Orkut edition</span></div>
+  </div>
+</section>
 
 <!-- ═══════════════ TELA DE LOGIN ═══════════════ -->
 <div id="login-screen" style="display: flex;">
@@ -860,8 +1098,9 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
     </div>
   </div>
   <div class="login-card">
-    <div class="login-logo">painel<span>fin</span></div>
-    <div class="login-tagline">Organize suas finanças, acompanhe suas metas<br>e invista com inteligência.</div>
+    <div class="pf-login-visual"><button type="button" onclick="alternarVisual()">🖥️ Ver versão clássica</button></div>
+    <div class="login-logo">▣ painel<span>fin</span> <sup>2000</sup></div>
+    <div class="login-tagline">Suas finanças no controle.<br>💬 Você entrou no PainelFin 2006. Prepare o MSN e organize seu cantinho!</div>
 
     <!-- ABAS -->
     <div class="login-tabs">
@@ -938,7 +1177,7 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
       <div class="login-link" onclick="setLoginTab(&#39;login&#39;)">Voltar para o <span>login</span></div>
     </div>
 
-    <div class="login-footer" style="margin-top:16px">Seus dados ficam no Firebase (Google). Ninguém mais tem acesso.</div>
+    <div class="login-footer" style="margin-top:16px">Login via Firebase • Dados de cada usuário protegidos pelas regras do banco.</div>
   </div>
 </div>
 
@@ -963,8 +1202,18 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
 <nav class="sidebar">
   <div class="sidebar-logo">
     painel<span>fin</span>
-    <small>Planejamento Financeiro</small>
+    <small>Messenger / Orkut / XP • edição 2006</small>
   </div>
+  <div class="sidebar-env">
+    <span class="env-led"></span><span>ÁREA <b data-ambiente-nome>REAL</b></span>
+    <button type="button" class="env-change" onclick="trocarAmbiente()" title="Escolher Real ou Simulador">Trocar ↗</button>
+  </div>
+  <button type="button" id="pf-mini-profile" onclick="pfOpenProfile('perfil')" title="Abrir seu perfil estilo Orkut">
+    <div class="pf-mini-top"><span class="pf-mini-icon" id="pf-mini-avatar">🧑‍💻</span><span class="pf-mini-label" id="pf-mini-nick">Meu cantinho<small>🟢 Online no PainelFin</small></span><span class="pf-mini-level" id="pf-lv-mini">Nível 1</span></div>
+    <div style="margin-top:7px" class="pf-progress"><div id="pf-xp-bar-mini"></div></div>
+    <div class="pf-mini-meta"><span id="pf-xp-mini">0/100 XP</span><span id="pf-medals-mini">0/8 medalhas</span></div>
+  </button>
+
   <!-- MODE SWITCHER -->
   <div style="padding:10px 10px 4px">
     <div class="mode-switcher">
@@ -1014,6 +1263,7 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
   </div>
 
   <div class="sidebar-footer">
+    <div class="sidebar-bottom-switch"><button type="button" onclick="trocarAmbiente()">⇄ Trocar Real / Simulador</button></div>
     <div class="saldo-sidebar">
       <div class="saldo-label">saldo disponível</div>
       <div class="saldo-value" id="sidebar-saldo" style="color:var(--teal)">R$ —</div>
@@ -1030,28 +1280,55 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
 <div class="topbar">
   <div class="topbar-title" id="topbar-title">Renda mensal</div>
   <div class="topbar-actions">
-    <div class="theme-toggle" onclick="toggleTheme()" id="theme-toggle-btn" title="Alternar tema">
-      <div class="toggle-track" id="toggle-track"><div class="toggle-thumb"></div></div>
-      <span id="theme-label">Escuro</span>
-    </div>
-    <button class="btn btn-sm" onclick="exportExcel()" title="Exportar para Excel">📥 Excel</button>
-    <button class="btn btn-sm" onclick="gerarPdfGeral()" title="Gerar relatório do panorama geral">📄 PDF geral</button>
-    <button class="btn btn-sm" onclick="gerarPdfMensal()" title="Gerar relatório do mês selecionado">📄 PDF mensal</button>
-    <button class="btn btn-sm" onclick="gerarPdfDividas()" title="Gerar relatório detalhado das dívidas">📄 PDF dívidas</button>
-    <button class="btn btn-sm" onclick="resetAll()">Limpar</button>
-    <button class="btn btn-save btn-sm" onclick="salvarFirestore()">☁️ Salvar</button>
-    <button class="btn btn-primary btn-sm" onclick="calcular();goTo(&#39;plano&#39;)">Ver plano →</button>
+    <span class="topbar-env"><span class="env-led"></span><b data-ambiente-nome>REAL</b></span>
+    <button type="button" class="btn btn-sm switch-env-top" onclick="trocarAmbiente()" title="Alternar Real e Simulador">⇄ Ambiente</button>
+    <button type="button" class="btn btn-sm pf-classic-switch" onclick="alternarVisual()" title="Abrir o visual original com as mesmas finanças">🖥️ Visual clássico</button>
+    <button type="button" class="btn btn-sm pf-profile-top-btn" onclick="pfOpenProfile('perfil')" title="Perfil estilo Orkut">💖 Perfil</button>
+    <button type="button" class="btn btn-sm pf-msn-top-btn" onclick="pfOpenMessenger()" title="Messenger de atalhos">💬 MSN</button>
+    <details class="retro-tools">
+      <summary class="btn btn-sm">▤ Ferramentas ▾</summary>
+      <div class="retro-tools-pop">
+        <div class="retro-tools-head">ARQUIVO / FERRAMENTAS</div>
+        <button class="btn btn-sm" onclick="exportarBackupCompleto()">💾 Backup completo (JSON)</button>
+        <button class="btn btn-sm" onclick="alternarVisual()">🖥️ Abrir visual clássico</button>
+        <button class="btn btn-sm" onclick="exportExcel()">▧ Exportar Excel</button>
+        <button class="btn btn-sm" onclick="gerarPdfGeral()">▤ PDF geral</button>
+        <button class="btn btn-sm" onclick="gerarPdfMensal()">▤ PDF mensal</button>
+        <button class="btn btn-sm" onclick="gerarPdfDividas()">▤ PDF dívidas</button>
+        <div class="retro-tools-line"></div>
+        <button id="novo-simulador-btn" class="btn btn-sm" onclick="reiniciarSimulador()" hidden>↺ Recriar simulador a partir do Real</button>
+        <button class="btn btn-sm danger-tool" onclick="resetAll()">⌫ Limpar dados desta tela</button>
+        <div class="retro-tools-line"></div>
+        <div class="theme-toggle" onclick="toggleTheme()" id="theme-toggle-btn" title="Alternar tema">
+          <div class="toggle-track" id="toggle-track"><div class="toggle-thumb"></div></div>
+          <span id="theme-label">Escuro</span>
+        </div>
+      </div>
+    </details>
+    <button class="btn btn-save btn-sm save-top" onclick="salvarFirestore()">💾 Salvar <span data-ambiente-nome>REAL</span></button>
+    <button class="btn btn-primary btn-sm plan-top" onclick="calcular();goTo('plano')">▸ Ver plano</button>
   </div>
 </div>
 
+<div class="retro-alertbar"><span class="env-led"></span><span id="ambiente-aviso">Área oficial • as alterações salvas aqui modificam seu planejamento real.</span><span class="retro-alert-version">PAINELFIN / 2006</span></div>
 <div class="content">
+<div id="pf-portal" role="region" aria-label="Boas-vindas e atalhos rápidos">
+  <span class="pf-portal-avatar" id="pf-portal-avatar">🧑‍💻</span>
+  <div class="pf-portal-copy"><strong>💖 Bem-vindo ao seu cantinho, <span id="pf-portal-nick">visitante</span>!</strong><small>🟢 <span id="pf-mood-label">Organizando as ideias ✨</span> · explore, organize e conquiste medalhas.</small></div>
+  <div class="pf-portal-buttons">
+    <button class="pf-pixel-btn pf-pink" onclick="pfOpenProfile('conquistas')" title="Ver conquistas">🏆 XP e medalhas</button>
+    <button class="pf-pixel-btn" onclick="pfOpenProfile('recados')" title="Abrir mural de recados">💌 Recados</button>
+    <button class="pf-pixel-btn" onclick="pfOpenMessenger()" title="Abrir Messenger">💬 MSN</button>
+  </div>
+</div>
+
 
 <!-- ── RENDA ── -->
 <div class="page-section active" id="sec-renda">
   <div class="section-header">
     <div class="section-eyebrow">passo 1</div>
     <div class="section-title">Qual é a sua renda?</div>
-    <div class="section-desc">Valores líquidos (já descontado impostos). Renomeie cada fonte e adicione quantas quiser.</div>
+    <div class="section-desc">Informe valores líquidos ou brutos. No bruto, discrimine os descontos; somente o líquido entra nas somas.</div>
   </div>
 
   <!-- FONTES DE RENDA DINÂMICAS -->
@@ -1998,6 +2275,93 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
 </div><!-- /content -->
 </div><!-- /main -->
 </div><!-- /app -->
+<!-- PAINELFIN 2006: Orkut / MSN / XP. Widgets extras, sem substituir funções financeiras. -->
+<div class="pf-dialog-shade" id="pf-dialog" role="presentation" aria-hidden="true">
+  <section class="pf-window" role="dialog" aria-modal="true" aria-label="Meu cantinho: perfil, conquistas, recados e temas">
+    <div class="pf-window-title"><span>💌 Meu cantinho no PainelFin — perfil pessoal</span><button class="pf-window-close" onclick="pfCloseProfile()" title="Fechar" aria-label="Fechar meu perfil">×</button></div>
+    <div class="pf-window-content">
+      <div class="pf-tabs" role="group" aria-label="Abas do perfil">
+        <button class="pf-tab active" data-tab="perfil" data-pf-tab="perfil">👤 Perfil</button>
+        <button class="pf-tab" data-tab="conquistas" data-pf-tab="conquistas">🏆 Conquistas</button>
+        <button class="pf-tab" data-tab="recados" data-pf-tab="recados">💌 Recados</button>
+        <button class="pf-tab" data-tab="temas" data-pf-tab="temas">🎨 Temas</button>
+      </div>
+      <section class="pf-panel active" id="pf-panel-perfil">
+        <div class="pf-profile-top"><div class="pf-big-ava" id="pf-big-avatar">🧑‍💻</div><div style="min-width:0;flex:1">
+          <div class="pf-profile-title" id="pf-profile-name">Visitante</div>
+          <div class="pf-profile-sub">🟢 Online · perfil privado, estilo Orkut 2006</div>
+          <div class="pf-profile-sub">⭐ <b id="pf-lv-full">Nível 1</b> · <span id="pf-medals-full">0/8 medalhas</span></div>
+        </div></div>
+        <div class="pf-labelline"><b>Meu progresso</b><span id="pf-xp-full">0/100 XP</span></div>
+        <div class="pf-progress" style="height:11px;margin-bottom:16px"><div id="pf-xp-bar-full"></div></div>
+        <div class="pf-form-row"><label for="pf-nickname">Meu apelido</label><input id="pf-nickname" maxlength="30" class="pf-input" placeholder="Seu apelido da época de lan house"></div>
+        <div class="pf-form-row"><label for="pf-mood">Meu humor no Messenger</label><select id="pf-mood" class="pf-input">
+          <option>Organizando as ideias ✨</option><option>Ocupado, planejando 💼</option><option>Online e focado 🎯</option><option>Voltei, saudade do MSN 💬</option><option>Não perturbe: fechando o mês 😎</option><option>Só passando para conferir 👀</option>
+        </select></div>
+        <div class="pf-form-row"><label>Escolha um avatar (bem 2006)</label><div class="pf-avatars">
+          <button class="pf-avatar-btn selected" data-pf-avatar="🧑‍💻" title="Computador">🧑‍💻</button><button class="pf-avatar-btn" data-pf-avatar="😎" title="Descolado">😎</button>
+          <button class="pf-avatar-btn" data-pf-avatar="👾" title="Arcade">👾</button><button class="pf-avatar-btn" data-pf-avatar="🐸" title="Sapo">🐸</button>
+          <button class="pf-avatar-btn" data-pf-avatar="🐱" title="Gato">🐱</button><button class="pf-avatar-btn" data-pf-avatar="🦊" title="Raposa">🦊</button>
+          <button class="pf-avatar-btn" data-pf-avatar="🤖" title="Robô">🤖</button><button class="pf-avatar-btn" data-pf-avatar="🦋" title="Borboleta">🦋</button>
+        </div></div>
+        <button class="pf-pixel-btn pf-pink" onclick="pfSaveProfile()">💾 Salvar meu perfil</button>
+      </section>
+      <section class="pf-panel" id="pf-panel-conquistas">
+        <p style="margin-bottom:12px;font-size:12px;color:#706180">As conquistas celebram o hábito de organizar, explorar e salvar — nunca o valor de ganhos ou gastos.</p>
+        <div class="pf-achi-grid" id="pf-badges"></div>
+        <p style="margin-top:12px;font-size:11px;color:#8c7b9e">A pontuação fica salva neste navegador, em registros separados para Real e Simulador.</p>
+      </section>
+      <section class="pf-panel" id="pf-panel-recados">
+        <p style="font-size:12px;margin-bottom:11px;color:#7a698b">Como no mural de recados do Orkut, mas aqui só você vê. Use para guardar lembretes curtos sobre sua organização.</p>
+        <label for="pf-note-input" style="display:block;font-size:11px;font-weight:800;color:#795494;margin-bottom:6px">Deixe um recado para seu eu do futuro</label>
+        <textarea id="pf-note-input" class="pf-input" rows="3" maxlength="400" placeholder="Ex.: Rever o orçamento quando fechar o mês..."></textarea>
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;margin:7px 0 14px"><small style="color:#9887a8">Até 20 recados, só neste navegador</small><button class="pf-pixel-btn pf-pink" onclick="pfAddNote()">✉️ Publicar recado</button></div>
+        <div id="pf-notes-list"></div>
+      </section>
+      <section class="pf-panel" id="pf-panel-temas">
+        <p style="font-size:12px;margin-bottom:13px;color:#796b88">Escolha o visual da sua época favorita. É apenas aparência: nenhum tema altera seus dados.</p>
+        <div class="pf-skins">
+          <button class="pf-skin-btn selected" data-pf-skin-choice="orkut"><div class="pf-skin-swatch orkut"></div>💖 Orkut 2006</button>
+          <button class="pf-skin-btn" data-pf-skin-choice="msn"><div class="pf-skin-swatch msn"></div>💬 MSN 7.5</button>
+          <button class="pf-skin-btn" data-pf-skin-choice="xp"><div class="pf-skin-swatch xp"></div>🖥️ Windows XP</button>
+        </div>
+        <p style="font-size:11px;color:#9887a8;margin-top:15px">Dica: o botão “Ferramentas” continua oferecendo o tema claro/escuro original.</p>
+      </section>
+    </div>
+    <div class="pf-window-foot"><span>● Conexão: conta privada · progresso e recados armazenados localmente</span><button class="pf-pixel-btn" onclick="pfCloseProfile()">Fechar</button></div>
+  </section>
+</div>
+
+<!-- Ajudante local com atalhos; não é uma conversa em tempo real nem usa IA externa. -->
+<div id="pf-buddy" role="complementary" aria-label="Messenger de atalhos PainelFin">
+  <div class="pf-buddy-title"><span style="flex:1">💬 PainelFin Messenger 7.5</span><button class="pf-buddy-close" onclick="pfCloseMessenger()" aria-label="Fechar Messenger">✕</button></div>
+  <div class="pf-buddy-header"><div style="font-size:31px">🧑‍💻</div><div><b>Assistente do PainelFin</b><span class="pf-buddy-status">🟢 Online · ajudante local (sem IA)</span></div></div>
+  <div id="pf-chat-thread" class="pf-chat-thread" role="log" aria-live="polite"><div class="pf-chat-line"><strong>PainelFin • ajudante</strong>Oiê! 😄 Bem-vindo ao MSN do painel. Quer abrir uma seção? Me mande "dívidas", "metas", "renda" ou "mensal"!</div></div>
+  <div class="pf-chat-actions"><button onclick="pfNavigate('renda')">💰 Renda</button><button onclick="pfNavigate('dividas')">💳 Dívidas</button><button onclick="pfNavigate('metas')">🎯 Metas</button><button onclick="pfNavigate('mes-lancamentos','mensal')">📅 Mensal</button></div>
+  <div class="pf-chat-compose"><input id="pf-chat-input" maxlength="300" autocomplete="off" placeholder="Digite um módulo..." aria-label="Mensagem para o ajudante"><button onclick="pfSendChat()">Enviar</button></div>
+</div>
+
+<div id="pf-start-menu" aria-label="Menu Iniciar">
+  <div class="pf-start-menu-head">👾 PainelFin 2006 · Menu iniciar</div>
+  <button onclick="pfNavigate('renda')">💰 Meu planejamento · Renda</button>
+  <button onclick="pfNavigate('mes-lancamentos','mensal')">🗓️ Meus lançamentos mensais</button>
+  <button onclick="pfNavigate('metas')">🎯 Minhas metas</button>
+  <button onclick="pfOpenProfile('perfil')">💖 Meu cantinho · Perfil</button>
+  <button onclick="pfOpenProfile('conquistas')">🏆 Conquistas e medalhas</button>
+  <button onclick="pfOpenMessenger()">💬 Messenger</button>
+  <button onclick="trocarAmbiente()">⇄ Trocar Real / Simulador</button>
+</div>
+
+<div id="pf-taskbar" aria-label="Barra de tarefas retrô">
+  <button id="pf-start" onclick="pfToggleStart()">🟩 iniciar</button>
+  <button onclick="pfOpenProfile('perfil')">💖 Meu perfil</button>
+  <button onclick="alternarVisual()">🖥️ Abrir visual clássico</button>
+  <button onclick="pfOpenMessenger()">💬 Messenger</button>
+  <span class="pf-taskbar-env"><span class="env-led"></span> <b data-ambiente-nome>REAL</b></span>
+  <div class="pf-taskbar-spacer"></div><span class="pf-taskbar-clock">🕒 <span id="pf-time">--:--</span></span>
+</div>
+<div id="pf-xp-toast" class="pf-xp-toast" role="status" aria-live="polite"></div>
+
 </div><!-- /app-shell -->
 
 <div class="toast" id="toast"></div>
@@ -2128,55 +2492,126 @@ window.addMissionario = () => {
   if(last){last.focus();last.select();}
 };
 
-/* ── RENDAS DINÂMICAS ── */
-function renderRendas() {
-  const list = document.getElementById('rendas-list');
-  if (!list) return;
-  list.innerHTML = state.rendas.map(r => `
-    <div style="display:flex;align-items:center;gap:7px;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:7px 11px">
-      <span style="font-size:14px">💰</span>
-      <input type="text" value="${r.nome}" placeholder="Nome (ex: CLT, Freelance...)"
-        style="background:transparent;border:none;outline:none;color:var(--tx);font-size:13px;flex:1;font-family:'Inter',sans-serif;font-weight:500"
-        onchange="updateRenda('${r.id}','nome',this.value)">
-      <div style="display:flex;align-items:center;background:var(--s3);border:1px solid var(--bd);border-radius:7px;overflow:hidden;flex-shrink:0">
-        <span style="padding:0 8px;font-size:11px;color:var(--di)">R$</span>
-        <input type="number" value="${r.val||''}" placeholder="0"
-          style="background:transparent;border:none;outline:none;color:var(--teal);font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:14px;width:100px;padding:6px 8px 6px 0;text-align:right;-moz-appearance:textfield"
-          oninput="updateRenda('${r.id}','val',this.value)">
+/* ══ PROVENTOS / HOLERITE: o campo .val segue sendo SEMPRE o líquido ══ */
+function pfValorNaoNegativo(v){ return Math.max(0,Number(v)||0); }
+function pfEscHtml(v){ return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
+function pfDescontosDefault(){ return [
+  {id:'d1',nome:'INSS',val:0},
+  {id:'d2',nome:'IRRF',val:0},
+  {id:'d3',nome:'Vale-transporte',val:0},
+  {id:'d4',nome:'Outros descontos',val:0}
+]; }
+function pfNormalizaProvento(r){
+  if(!r||typeof r!=='object') return;
+  if(r.tipoValor!=='bruto')r.tipoValor='liquido';
+  if(!Array.isArray(r.descontos))r.descontos=[];
+  r.descontos.forEach((d,i)=>{if(!d.id)d.id='d'+(i+1);d.val=pfValorNaoNegativo(d.val);});
+  r.val=pfValorNaoNegativo(r.val);
+  if(r.tipoValor==='bruto'){
+    if(!Number.isFinite(Number(r.bruto))) r.bruto=r.val+pfSomaDescontos(r);
+    pfCalcularLiquido(r);
+  }
+}
+function pfSomaDescontos(r){ return (r.descontos||[]).reduce((s,d)=>s+pfValorNaoNegativo(d.val),0); }
+function pfCalcularLiquido(r){
+  if(r.tipoValor==='bruto')r.val=Math.max(0,Math.round((pfValorNaoNegativo(r.bruto)-pfSomaDescontos(r))*100)/100);
+  else r.val=pfValorNaoNegativo(r.val);
+  return r.val;
+}
+function pfFormatCentavos(v){return (Number(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:2,maximumFractionDigits:2});}
+function pfGerarIdDesconto(r){
+  const usados=new Set((r.descontos||[]).map(d=>String(d.id)));
+  let n=1;while(usados.has('d'+n))n++;return 'd'+n;
+}
+function pfDeductionUI(r,changeHandler,addHandler,deleteHandler){
+  const total=pfSomaDescontos(r),bruto=pfValorNaoNegativo(r.bruto);
+  return `<div class="pf-income-deductions">
+    <div class="pf-deduction-heading"><span>📋 Descontos discriminados</span><span class="pf-deduction-summary">Total descontado: <b data-pf-total-desconto>${pfFormatCentavos(total)}</b></span></div>
+    ${(r.descontos||[]).map((d,i)=>`<div class="pf-deduction-row">
+      <input type="text" aria-label="Nome do desconto ${i+1}" value="${pfEscHtml(d.nome)}" placeholder="Ex.: INSS, IRRF" onchange="${changeHandler}${i},'nome',this.value)">
+      <input aria-label="Valor do desconto ${i+1}" type="number" min="0" step="0.01" value="${d.val||''}" placeholder="0,00" oninput="${changeHandler}${i},'val',this.value)">
+      <button type="button" onclick="${deleteHandler}${i})" title="Remover desconto">×</button>
+    </div>`).join('')}
+    <div class="pf-deduction-bottom"><button type="button" class="pf-deduction-add" onclick="${addHandler}">＋ Adicionar desconto</button><span class="pf-deduction-summary">Bruto − descontos = líquido</span></div>
+    <div class="pf-income-warning" data-pf-warning style="${total>bruto?'':'display:none'}">⚠️ Os descontos ultrapassam o valor bruto. Líquido limitado a R$ 0.</div>
+    <p class="pf-paystub-tip">Informe os valores do contracheque. INSS, IRRF e outros descontos não são estimados automaticamente.</p>
+  </div>`;
+}
+function pfRendaAgendaSave(){if(typeof window.agendarAutoSave==='function')window.agendarAutoSave(800);}
+function pfRendaTotais(){
+  const total=state.rendas.reduce((s,r)=>s+pfCalcularLiquido(r),0);
+  const lbl=document.getElementById('total-rendas-label');if(lbl)lbl.textContent=pfFormatCentavos(total);
+}
+function pfRendaRefrescar(id){
+  const r=state.rendas.find(x=>String(x.id)===String(id));if(!r)return;
+  const div=[...document.querySelectorAll('#rendas-list .pf-income-card')].find(x=>x.dataset.id===String(id));
+  if(div){
+    const val=div.querySelector('[data-pf-net]');if(val)val.textContent=pfFormatCentavos(r.val);
+    const desconto=div.querySelector('[data-pf-total-desconto]');if(desconto)desconto.textContent=pfFormatCentavos(pfSomaDescontos(r));
+    const aviso=div.querySelector('[data-pf-warning]');if(aviso)aviso.style.display=pfSomaDescontos(r)>pfValorNaoNegativo(r.bruto)?'':'none';
+  }
+  pfRendaTotais();calcular();pfRendaAgendaSave();
+}
+function renderRendas(){
+  const list=document.getElementById('rendas-list');if(!list)return;
+  list.innerHTML=state.rendas.map(r=>{
+    pfNormalizaProvento(r);
+    const bruto=r.tipoValor==='bruto';
+    const id=pfEscHtml(r.id);
+    return `<div class="pf-income-card" data-id="${id}">
+      <div class="pf-income-main">
+       <div class="pf-income-line">
+        <div class="pf-income-name"><span aria-hidden="true">💰</span><input type="text" aria-label="Nome da fonte de renda" value="${pfEscHtml(r.nome)}" placeholder="Nome do provento" onchange="updateRenda('${id}','nome',this.value)"></div>
+        <select aria-label="Tipo de valor" class="pf-income-switch" onchange="trocarTipoRenda('${id}',this.value)">
+         <option value="liquido" ${!bruto?'selected':''}>💚 Líquido</option><option value="bruto" ${bruto?'selected':''}>📄 Bruto</option>
+        </select>
+        <button type="button" class="pf-income-remove" title="Remover provento" onclick="delRenda('${id}')">×</button>
+       </div>
+       <div class="pf-income-amounts">
+        <label class="pf-income-box"><span class="pf-income-label">${bruto?'Valor bruto':'Valor líquido informado'}</span>
+         <span class="pf-income-money">R$ <input type="number" min="0" step="0.01" aria-label="${bruto?'Valor bruto':'Valor líquido'}" value="${bruto?pfValorNaoNegativo(r.bruto)||'':r.val||''}" placeholder="0,00" oninput="updateRenda('${id}','${bruto?'bruto':'val'}',this.value)"></span>
+        </label>
+        <div class="pf-income-box pf-income-net"><span class="pf-income-label">Líquido considerado na soma</span><strong data-pf-net>${pfFormatCentavos(r.val)}</strong><div class="pf-income-helper">Valor disponível para planejar</div></div>
+       </div>
       </div>
-      <button onclick="delRenda('${r.id}')"
-        style="background:none;border:none;cursor:pointer;color:var(--di);font-size:18px;padding:2px 5px;border-radius:5px;transition:color .15s;flex-shrink:0"
-        onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--di)'" title="Remover">×</button>
-    </div>`).join('');
-  // Atualiza total
-  const total = state.rendas.reduce((s,r)=>s+r.val,0);
-  const lbl = document.getElementById('total-rendas-label');
-  if(lbl) lbl.textContent = fmt(total);
+      ${bruto?pfDeductionUI(r,`editarDescontoRenda('${id}',`,`adicionarDescontoRenda('${id}')`,`excluirDescontoRenda('${id}',`):''}
+    </div>`;
+  }).join('');
+  pfRendaTotais();
 }
-
-function updateRenda(id, field, val) {
-  const r = state.rendas.find(x=>x.id===id);
-  if(!r) return;
-  r[field] = field==='val' ? (parseFloat(val)||0) : val;
-  const total = state.rendas.reduce((s,r)=>s+r.val,0);
-  const lbl = document.getElementById('total-rendas-label');
-  if(lbl) lbl.textContent = fmt(total);
-  calcular();
+function updateRenda(id,field,v){
+  const r=state.rendas.find(x=>String(x.id)===String(id));if(!r)return;
+  if(field==='nome')r.nome=String(v);
+  else if(field==='val')r.val=pfValorNaoNegativo(v);
+  else if(field==='bruto'){r.bruto=pfValorNaoNegativo(v);pfCalcularLiquido(r);}
+  pfRendaRefrescar(id);
 }
-
-function delRenda(id) {
-  if(state.rendas.length <= 1) { showToast('Mantenha ao menos uma fonte de renda.', true); return; }
-  state.rendas = state.rendas.filter(r=>r.id!==id);
-  renderRendas(); calcular();
+function trocarTipoRenda(id,tipo){
+  const r=state.rendas.find(x=>String(x.id)===String(id));if(!r)return;
+  if(tipo!=='bruto'&&tipo!=='liquido')return;
+  if(tipo==='bruto'&&r.tipoValor!=='bruto'){
+    if(!r.descontos?.length)r.descontos=pfDescontosDefault();
+    r.bruto=pfValorNaoNegativo(r.val)+pfSomaDescontos(r); // mantém líquido na troca
+  }
+  r.tipoValor=tipo;pfCalcularLiquido(r);renderRendas();calcular();pfRendaAgendaSave();
 }
-
-window.addRenda = () => {
-  state.rendas.push({id:'r'+state.nextRendaId++, nome:'Nova fonte de renda', val:0});
-  renderRendas();
-  const inputs = document.querySelectorAll('#rendas-list input[type="text"]');
-  const last = inputs[inputs.length-1];
-  if(last){ last.focus(); last.select(); }
-};
+function editarDescontoRenda(id,i,campo,v){
+  const r=state.rendas.find(x=>String(x.id)===String(id));if(!r||!r.descontos?.[i])return;
+  r.descontos[i][campo]=campo==='val'?pfValorNaoNegativo(v):String(v);
+  pfCalcularLiquido(r);pfRendaRefrescar(id);
+}
+function adicionarDescontoRenda(id){
+  const r=state.rendas.find(x=>String(x.id)===String(id));if(!r)return;
+  if(!Array.isArray(r.descontos))r.descontos=[];
+  r.descontos.push({id:pfGerarIdDesconto(r),nome:'Novo desconto',val:0});
+  renderRendas();calcular();pfRendaAgendaSave();
+  const box=[...document.querySelectorAll('#rendas-list .pf-income-card')].find(el=>el.dataset.id===String(id));
+  const inputs=box?.querySelectorAll('.pf-deduction-row input[type=text]');if(inputs?.length){inputs[inputs.length-1].focus();inputs[inputs.length-1].select();}
+}
+function excluirDescontoRenda(id,i){
+  const r=state.rendas.find(x=>String(x.id)===String(id));if(!r)return;
+  r.descontos?.splice(i,1);pfCalcularLiquido(r);renderRendas();calcular();pfRendaAgendaSave();
+}
 
 /* ── COLETAR/APLICAR dados ── */
 window.coletarDados = () => ({
@@ -3170,7 +3605,7 @@ function renderInvestir(){
 }
 
 /* ── UTILS ── */
-function fmt(v){if(!v&&v!==0)return'R$ —';return'R$ '+Math.round(v).toLocaleString('pt-BR');}
+function fmt(v){if(!v&&v!==0)return'R$ —';const n=Number(v)||0;const cents=Math.abs(n-Math.round(n))>0.001;return 'R$ '+n.toLocaleString('pt-BR',{minimumFractionDigits:cents?2:0,maximumFractionDigits:2});}
 
 let toastTimer;
 window.showToast = (msg, isError=false) => {
@@ -3273,7 +3708,7 @@ window.navAno=(dir)=>{
 function getMes(ano,mes){
   const k=mesKey(ano,mes);
   if(!mesesData[k]){
-    const rendas=state.rendas.map(r=>({id:r.id,nome:r.nome,val:r.val,icon:'💰'}));
+    const rendas=state.rendas.map(r=>({id:r.id,nome:r.nome,val:r.val,tipoValor:r.tipoValor||'liquido',bruto:r.bruto,descontos:Array.isArray(r.descontos)?r.descontos.map(d=>({...d})):[],icon:'💰'}));
     const ticket=+document.getElementById('ticket').value||0;
     if(ticket>0) rendas.push({id:'ticket',nome:'Ticket alimentação',val:ticket,icon:'🎫'});
     const fixas=[],variaveis=[],doacoes=[];
@@ -10166,7 +10601,7 @@ button[onclick^="deleteLivreItem"]:hover{
   let saveTimer=null;
   function backupKey(){
     const email=(document.getElementById('user-email')?.textContent||'').trim().toLowerCase();
-    return email && email!=='—' ? `painelfin_creditcards_backup_v1:${email}` : null;
+    return email && email!=='—' ? `painelfin_creditcards_backup_v1:${email}:${document.body.dataset.ambiente || "real"}` : null;
   }
   function saveLocalBackup(){
     try{const k=backupKey();if(k)localStorage.setItem(k,JSON.stringify({...creditCardsData,backupAt:new Date().toISOString()}));}catch(e){}
@@ -10665,5 +11100,664 @@ Cancelar = não alterar nada.`:'Carregar os 32 lançamentos reconstruídos?';
 
 <!-- PATCH V17 — SOMENTE VISUAL: ação de excluir clean -->
 <!-- PainelFin v18 estável: removido observador global que causava travamentos. -->
+<style id="painelfin-2000-retro-final">
+/* ╔══════════════════════════════════════════════════════════════╗
+   ║   PAINELFIN 2000 • tema inspirado nos desktop apps 1998-2005 ║
+   ╚══════════════════════════════════════════════════════════════╝ */
+:root,body:not(.dark){
+  --bg:#dce7f5;--s1:#fffefa;--s2:#edf3fb;--s3:#dae6f6;
+  --bd:#b7c7db;--bd2:#809bbd;--tx:#193251;--mu:#4d6888;--di:#7b8ba4;
+  --teal:#2564ae;--tbg:rgba(43,106,190,.11);--tbd:rgba(36,93,180,.35);
+  --blue:#225cd2;--purple:#7556ba;--amber:#b77b08;--green:#167744;--red:#ba3a45;
+}
+body.dark{
+  --bg:#15243b;--s1:#22334c;--s2:#2b415e;--s3:#344c6e;
+  --bd:#526983;--bd2:#748ba5;--tx:#f2f5fc;--mu:#c4d4e8;--di:#93a8c4;
+  --teal:#92c3ff;--tbg:rgba(142,190,254,.14);--tbd:rgba(142,190,254,.45);
+  --blue:#8aaff4;--purple:#c0a8ff;--amber:#fcd17d;--green:#85dca9;--red:#ff8e96;
+}
+html{scroll-behavior:smooth}
+body{font-family:Tahoma,Verdana,'Segoe UI',sans-serif;font-size:13px;letter-spacing:-.08px;
+  background: radial-gradient(ellipse at 90% 0%,#f4faff 0%,transparent 34%),
+  linear-gradient(135deg,var(--bg) 0%,var(--bg) 60%,#c8d8f3 100%);background-attachment:fixed;
+}
+body.dark{background:linear-gradient(138deg,#192e50,#122239)}
+button,input,select,textarea{font-family:Tahoma,Verdana,'Segoe UI',sans-serif!important}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid #e9a923!important;outline-offset:2px}
+::selection{background:#c1dfff;color:#10284e}
+::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:#a9bdd7;border:2px solid #e7effa;border-radius:5px}
+/* Door screen */
+.retro-gate{position:fixed;inset:0;z-index:8000;display:flex;align-items:center;justify-content:center;overflow-y:auto;
+  padding:30px 18px;background:radial-gradient(circle at 82% 18%,#fdfed4 0 10%,transparent 36%),
+  radial-gradient(ellipse at 12% 90%,#7ca9f1 0,transparent 55%),
+  linear-gradient(145deg,#2156ae 0%,#6d9cdf 55%,#3e73bd 100%)}
+.retro-gate::before{content:'';position:fixed;inset:0;pointer-events:none;opacity:.15;
+  background-image:repeating-linear-gradient(0deg,transparent 0 3px,#fff 4px 5px);}
+.gate-window{position:relative;width:min(660px,100%);border:2px solid #fff;border-right-color:#647f9e;border-bottom-color:#647f9e;
+  border-radius:9px 9px 3px 3px;box-shadow:0 0 0 2px #2b487c,0 25px 70px #122c6a88;background:#f4f6ed;color:#1d3556;overflow:hidden}
+.gate-titlebar{min-height:41px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;
+  font:700 14px Tahoma,Verdana,sans-serif;color:#fff;text-shadow:0 1px 1px #12387a;
+  background:linear-gradient(180deg,#6b9bee 0%,#2f66cb 12%,#1243ad 54%,#1f57bb 92%,#74a0ea 100%)}
+.gate-win-controls{font-size:17px;font-weight:400;letter-spacing:1px;color:#fff}
+.gate-window-body{padding:25px 28px 23px;background:linear-gradient(125deg,#fff 0%,#f6f6e9 100%)}
+.gate-logo{display:flex;align-items:center;gap:14px;margin-bottom:18px}.pixel-sun{display:grid;place-items:center;
+  width:58px;height:58px;border:2px solid #fff;outline:1px solid #315ca4;border-radius:10px;
+  background:linear-gradient(#4fa5fb,#1d5bb3);font-size:32px;color:#ffdc5a;text-shadow:1px 2px #11407f}
+.gate-logo strong{font-size:34px;font-weight:900;letter-spacing:-1.5px}.gate-logo strong span{color:#2976bf}
+.gate-logo small{display:block;color:#72809d;font-size:10px;letter-spacing:1.35px}
+.gate-rule{height:2px;border-top:1px solid #b7c6d6;border-bottom:1px solid #fff;margin-bottom:18px}
+.gate-intro{margin-bottom:21px}.gate-intro b{font-size:18px;color:#1c386d}.gate-intro p{margin-top:6px;line-height:1.6;color:#55708f;font-size:12px}
+.gate-options{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.gate-option{appearance:none;border:2px solid #c8d5e5;border-bottom-color:#7894ba;border-right-color:#7894ba;
+  border-radius:7px;background:linear-gradient(#fff,#e8f1fc);padding:21px 14px 19px;text-align:left;display:flex;gap:11px;
+  align-items:flex-start;min-height:171px;color:#1d3c65;cursor:pointer;transition:transform .15s,box-shadow .15s,border .15s;}
+.gate-option:hover{transform:translateY(-3px);box-shadow:0 8px 14px #42649730;border-color:#2664bb}
+.gate-option:active{transform:translateY(1px)}
+.gate-option-icon{display:grid;place-items:center;flex-shrink:0;width:36px;height:36px;border-radius:7px;
+  background:linear-gradient(#528fe4,#1e56a9);color:white;font-size:24px;box-shadow:inset 0 1px #bce0ff,1px 2px #b1c3dd}
+.gate-sim .gate-option-icon{background:linear-gradient(#75c7b0,#188769)}
+.gate-option-copy{display:flex;flex-direction:column;gap:5px;flex:1}.gate-option-copy strong{font-size:14px;color:#1a3f83}
+.gate-option-copy>span{font-size:12px;font-weight:700}.gate-option-copy small{font-size:11px;line-height:1.5;color:#657b93;font-weight:400}
+.gate-chevron{font-size:23px;color:#587bac}.gate-note{margin-top:21px;font-size:11px;color:#667d91;line-height:1.6}
+.gate-statusbar{background:#e6e9f1;border-top:1px solid #c3cad7;display:flex;justify-content:space-between;gap:12px;
+  padding:9px 14px;color:#547097;font-size:10px}
+/* Main shell + XP-style navigation */
+.sidebar{width:240px;background:linear-gradient(180deg,#e6f0ff 0%,#eaf0fb 55%,#d6e4f7 100%);
+  border-right:1px solid #8ca9cc;box-shadow:inset -2px 0 0 #fff;}
+body.dark .sidebar{background:linear-gradient(#223d66,#1e304c);border-color:var(--bd)}
+.main{margin-left:240px}
+.sidebar-logo{padding:21px 17px 17px;background:linear-gradient(180deg,#3073d2,#134aa8);border-bottom:2px solid #f3bb41!important;
+  color:#fff;font-size:19px;font-weight:900!important;text-shadow:0 1px 1px #17336f}
+.sidebar-logo span{color:#bfe2ff}.sidebar-logo small{color:#dbeaff;font-size:10px;letter-spacing:.4px}
+.sidebar-env{display:flex;gap:7px;align-items:center;padding:10px 11px;margin:11px 10px 6px;background:#fff;border:1px solid #8eaad0;
+  border-right-color:#dae9ff;border-bottom-color:#dae9ff;border-radius:5px;color:#28518f;font-size:11px;font-weight:600;min-width:0}
+.sidebar-env b{font-size:11px}.env-led{height:9px;width:9px;border-radius:50%;background:#26a861;box-shadow:0 0 0 2px #c8f1d9;flex-shrink:0;display:inline-block}
+body[data-ambiente="simulador"] .env-led{background:#e6a00b;box-shadow:0 0 0 2px #ffeab0}
+.env-change{margin-left:auto;border:0;background:transparent;font-size:10px!important;text-decoration:underline;color:#205ab1;cursor:pointer;white-space:nowrap}
+.sidebar .nav{padding:7px 10px;gap:3px}
+.nav-item{border:1px solid transparent;border-radius:5px;padding:10px!important;font-size:12px;font-weight:700;color:#315581!important}
+.nav-item:hover{background:#f5f9ff!important;border-color:#b4c9e4;color:#12498d!important}
+.nav-item.active{background:linear-gradient(180deg,#fff,#d1e3ff)!important;border:1px solid #8caed9!important;
+  box-shadow:inset 0 1px #fff,0 2px 4px #3e71af24;color:#164c9c!important}
+body.dark .nav-item{color:#d3e0f4!important}body.dark .nav-item:hover{background:#38537a!important}body.dark .nav-item.active{background:#355986!important;color:#fff!important}
+.nav-item .nav-icon{font-size:17px;width:23px}.nav-status{height:7px;width:7px}
+.mode-switcher{background:#d2e3fa;border:1px solid #a5c0e0;border-radius:5px;padding:3px;gap:2px;flex-wrap:wrap}
+.mode-btn{padding:7px 6px;border-radius:4px;font-size:10px;font-weight:700;border:1px solid transparent;white-space:nowrap;min-width:0}
+.mode-btn.active{background:linear-gradient(#fff,#eaf2ff);border:1px solid #96b4d8;color:#1e55aa;box-shadow:inset 0 1px #fff}
+body.dark .mode-switcher{background:#29496c}body.dark .mode-btn.active{background:#42648a;color:#e5f0ff}
+.user-card,.saldo-sidebar{border:1px solid #adc3de;border-radius:5px;background:#f9fcff;box-shadow:inset 0 1px #fff}
+body.dark .user-card,body.dark .saldo-sidebar{background:#2e4261}
+.sidebar-bottom-switch button{font-size:11px!important;border:1px solid #9eb6d8;border-radius:4px;color:#225a9e;background:#f6fbff;width:100%;padding:7px;cursor:pointer;margin-bottom:8px}
+body.dark .sidebar-bottom-switch button{color:#deebff;background:#314e72}
+/* title bar */
+.topbar{height:auto;min-height:62px;background:linear-gradient(180deg,#fafcff 0%,#e4efff 55%,#dae7f7 100%);
+  border-bottom:2px solid #9dbadf;padding:9px 20px;gap:14px;overflow:visible}
+body.dark .topbar{background:linear-gradient(#2b4c79,#213958);border-color:#5c7fa9}
+.topbar-title{font:700 15px Tahoma,Verdana,sans-serif;color:var(--tx);letter-spacing:-.4px}
+.topbar-title:before{content:'▣';font-weight:400;color:#255ebb;margin-right:8px}
+.topbar-actions{gap:8px;flex-wrap:nowrap;min-width:0}
+.btn,.theme-toggle,.login-btn-google,.login-btn-action,.mes-nav{border-radius:4px!important;box-shadow:inset 0 1px rgba(255,255,255,.8);font-weight:700!important}
+.btn{border:1px solid #9aafca;background:linear-gradient(#fff,#e5eefb);color:#24517f;padding:7px 11px!important;font-size:11px!important}
+.btn:hover{background:linear-gradient(#fff,#d6e7fc);border-color:#4075bf}
+.btn-primary,.btn-save{background:linear-gradient(180deg,#4a91e8,#1e5cba);border-color:#154a9c;color:#fff!important;text-shadow:0 1px #174276}
+.btn-primary:hover,.btn-save:hover{background:linear-gradient(#5aa5fa,#2d73d0)}
+.btn-save{background:linear-gradient(#4eaf6b,#26864a);border-color:#237244;text-shadow:0 1px #14512b}
+.btn-save:hover{background:linear-gradient(#64c381,#309b56)}
+body[data-ambiente="simulador"] .btn-save{background:linear-gradient(#facf77,#b87805);border-color:#90610a;text-shadow:0 1px #805708}
+.topbar-env{display:inline-flex;align-items:center;gap:7px;font-size:10px;color:#235a91;white-space:nowrap;
+  border-radius:3px;padding:6px 9px;border:1px solid #b2c6de;background:#fff}
+body.dark .topbar-env{color:#e7efff;background:#2a4667}
+body[data-ambiente="simulador"] .topbar-env{background:#fff4d8;color:#865200}
+.retro-alertbar{display:flex;gap:9px;align-items:center;padding:8px 23px;background:linear-gradient(#fbfdfd,#e9f4fa);
+  color:#426485;font-size:11px;border-bottom:1px solid #b6cada}
+body[data-ambiente="simulador"] .retro-alertbar{background:linear-gradient(#fff9eb,#fff0c9);color:#795819;border-color:#f0cb71}
+body.dark .retro-alertbar{background:var(--s2);color:var(--mu)}
+.retro-alert-version{margin-left:auto;color:#91a7bf;font:700 9px Tahoma,Verdana;white-space:nowrap}
+.retro-tools{position:relative}.retro-tools>summary{list-style:none;white-space:nowrap;cursor:pointer}
+.retro-tools>summary::-webkit-details-marker{display:none}
+.retro-tools[open]>summary{border-color:#316cb5;background:#d4e5ff}
+.retro-tools-pop{position:absolute;right:0;top:calc(100% + 8px);z-index:200;width:258px;padding:9px;
+  background:var(--s1);border:1px solid #7796c2;border-radius:5px;box-shadow:0 14px 30px #22456e4b;display:grid;gap:5px}
+.retro-tools-pop button,.retro-tools-pop .theme-toggle{width:100%;text-align:left;justify-content:flex-start}
+.retro-tools-head{background:linear-gradient(#3876c7,#1f57ab);color:#fff;font-size:10px;font-weight:700;padding:7px 9px;letter-spacing:.4px}
+.retro-tools-line{height:1px;background:var(--bd);margin:4px 1px}.danger-tool{color:#b13437!important}
+.retro-tools button[hidden]{display:none!important}
+/* content: standard apps windows, but clean & readable */
+.content{max-width:1500px;width:100%;padding:22px 26px 92px}
+.section-header{padding:0 0 14px;margin-bottom:20px;border-bottom:1px solid #acc4df}
+.section-eyebrow{text-transform:uppercase;color:#3675c5;letter-spacing:1.3px;font-size:10px}
+.section-title{font:700 23px Tahoma,Verdana,sans-serif;letter-spacing:-.8px}
+.section-desc{font-size:12px;line-height:1.55}
+.card,.db-section,.db-card,.stat-card,.goal-card,.invest-card,.debt-card,.debt-projection,.debt-form-card,.debt-filter-card,
+.mes-block,.debt-items-list,.debt-empty{border:1px solid var(--bd2)!important;border-radius:6px!important;
+  box-shadow:0 2px 5px rgba(34,76,128,.06),inset 0 1px rgba(255,255,255,.35)}
+.card-header,.db-section-header,.debt-projection-header{background:linear-gradient(180deg,var(--s1),var(--s2));border-radius:6px 6px 0 0}
+.card-title,.db-section-title,.debt-projection-title{color:var(--tx)!important;font-weight:700}
+.stat-card,.db-card{border-top:3px solid #4a8bd3!important}
+.stat-value,.db-card-value{font-family:Tahoma,Verdana,sans-serif;font-weight:800;letter-spacing:-.8px}
+.input-wrap,.expense-item,.expense-val-wrap,.login-input-wrap,.login-card,.debt-field input,.debt-field select,.form-input,.debt-add-component input,
+.mes-item-val-wrap,.cat-select{border-radius:4px!important}
+.input-wrap:focus-within,.login-input-wrap:focus-within{border-color:#3878c5!important;box-shadow:0 0 0 2px #a8d2ff55}
+.form-input,.expense-val-input,.mes-item-input{font-family:Tahoma,Verdana,sans-serif!important}
+.login-card{max-width:450px;border:2px solid #fefefe;border-right-color:#91accb;border-bottom-color:#91accb;
+  box-shadow:0 0 0 1px #8badd8,0 13px 35px #24476f1a;border-radius:7px!important;padding:33px 31px}
+#login-screen{background:radial-gradient(circle at 88% 10%,#edf5ff,transparent 28%),linear-gradient(130deg,#b9d5f4,#eaf2fc)}
+body.dark #login-screen{background:linear-gradient(135deg,#152a48,#293e57)}
+.login-logo{font-family:Tahoma,Verdana,sans-serif;color:var(--tx);font-size:26px}.login-logo sup{font-size:10px;color:var(--mu)}
+.login-btn-google,.login-btn-action{border:1px solid #b0c6e4}
+.login-tab-btn{border-radius:3px!important}.login-tabs{border-radius:4px;background:var(--s3)}
+/* status and badges */
+.cloud-status{padding-top:7px;border-top:1px dotted #c6d7e9}.cloud-dot{width:8px;height:8px}
+.toast{border-radius:5px;box-shadow:0 6px 22px #2b486955}
+/* desktop medium / tablet */
+@media(max-width:1180px){.topbar{padding:9px 13px}.topbar-env{display:none}.plan-top{display:none}}
+@media(max-width:900px) and (min-width:769px){.sidebar{width:205px}.main{margin-left:205px}.sidebar-logo{font-size:15px}.mode-btn{font-size:10px}.content{padding:18px}}
+/* existing app provides a bottom mobile tab bar in earlier styles: respect it */
+@media(max-width:768px){
+ .sidebar{height:111px!important;background:#ecf3ff!important;border-top:2px solid #5c8acb!important}
+ body.dark .sidebar{background:#21334e!important}
+ .sidebar-env,.sidebar-bottom-switch{display:none!important}
+ .sidebar-logo{display:none!important}
+ .main{margin-left:0!important;padding-bottom:110px!important;width:100%}
+ .content{padding:18px 13px 72px!important;max-width:100%;min-width:0}
+ .retro-alertbar{padding:8px 12px}.retro-alert-version{display:none}
+ .topbar{min-height:55px;overflow:visible!important;justify-content:space-between;flex-wrap:wrap;padding:8px 11px!important}
+ .topbar-title{font-size:13px;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+ .topbar-actions{min-width:0!important;flex-wrap:nowrap!important;gap:5px}
+ .topbar .btn{padding:7px 9px!important;font-size:10px!important}
+ .switch-env-top{font-size:10px!important}
+ .save-top span,.plan-top{display:none!important}
+ .retro-tools-pop{right:-73px;top:calc(100% + 10px)}
+ .mode-switcher{flex-wrap:nowrap!important;gap:3px!important;border-radius:6px!important}
+ .mode-btn{font-size:10px!important;min-width:auto!important;padding:6px 5px!important}
+ .nav-item{border-radius:4px!important;padding:5px 9px!important}
+ .card-body{padding:13px!important}
+ .section-title{font-size:20px}
+}
+@media(max-width:640px){.gate-options{grid-template-columns:1fr}.gate-option{min-height:auto;padding:16px}.gate-window-body{padding:20px 17px 15px}.gate-logo strong{font-size:28px}.gate-statusbar span:last-child{display:none}}
+@media(max-width:410px){.topbar-title{font-size:11px}.topbar-actions{gap:3px}.topbar .btn{padding:6px 7px!important}.switch-env-top{max-width:75px;overflow:hidden}}
+</style>
+<style id="pf-orkut-msn-2006-style">
+/* ═════ PAINELFIN 2006: MSN + ORKUT + WINDOWS XP — sobre o painel original ═════ */
+:root{--pf-purple:#8d65bc;--pf-pink:#e887af;--pf-blue:#2c74c4;--pf-sea:#16a58d}
+body[data-pf-skin="orkut"]:not(.dark){
+  --bg:#e5e2f2;--s1:#fff;--s2:#f7f3ff;--s3:#eee5f7;--bd:#d4c5e5;--bd2:#b6a3d2;
+  --tx:#413459;--mu:#736684;--di:#90809f;--teal:#8051ac;--tbg:#eee2fa;--tbd:#cdb0ec;
+  --blue:#7356b8;--purple:#9d59b3;--pink:#cc5795;
+  background:repeating-linear-gradient(0deg,transparent 0 21px,rgba(255,255,255,.22) 22px 23px),
+    radial-gradient(ellipse at 89% 8%,#ffe6f0,transparent 32%),linear-gradient(135deg,#ebdff4,#ddeafa 82%)!important;
+}
+body[data-pf-skin="msn"]:not(.dark){
+  --bg:#dff1f5;--s1:#fff;--s2:#effbfa;--s3:#d9f0ed;--bd:#b9dada;--bd2:#8dbdbc;
+  --tx:#21485b;--mu:#527683;--di:#74959e;--teal:#168d93;--tbg:#d7f2ef;--tbd:#96d6d2;
+  --blue:#1d74ba;--purple:#586ebb;
+  background:radial-gradient(circle at 10% 0%,#f5ffc8,transparent 30%),linear-gradient(130deg,#c7e8f8,#e2f5f0)!important;
+}
+body[data-pf-skin="xp"]:not(.dark){--pf-pink:#f4ab56}
+body[data-pf-skin="orkut"] .sidebar{background:linear-gradient(#faf3ff,#efe6f8 60%,#e3d2f1)!important;border-color:#bca8d6!important}
+body[data-pf-skin="msn"] .sidebar{background:linear-gradient(#e9fffe,#d8f2f4 60%,#c6e5ee)!important;border-color:#94c5d2!important}
+body[data-pf-skin="orkut"] .sidebar-logo,body[data-pf-skin="orkut"] .gate-titlebar,
+body[data-pf-skin="orkut"] .pf-window-title,body[data-pf-skin="orkut"] .pf-buddy-title{
+  background:linear-gradient(#d3b7ee 0%,#a178d1 10%,#8557b7 55%,#965dc2 90%,#c699e6 100%)!important;border-color:#e4b8ec!important;
+}
+body[data-pf-skin="msn"] .sidebar-logo,body[data-pf-skin="msn"] .gate-titlebar,
+body[data-pf-skin="msn"] .pf-window-title,body[data-pf-skin="msn"] .pf-buddy-title{
+  background:linear-gradient(#82d8d8 0%,#27b5ae 10%,#177eab 55%,#237db4 90%,#72cdda)!important;border-color:#94d6e8!important;
+}
+body[data-pf-skin="orkut"] .topbar{background:linear-gradient(#fff9ff,#f6edff,#ebdbf7)!important;border-color:#d5b7e5!important}
+body[data-pf-skin="msn"] .topbar{background:linear-gradient(#faffff,#e6f7f9,#d2ecf5)!important;border-color:#a3d1d5!important}
+body[data-pf-skin="orkut"] .nav-item.active{background:linear-gradient(#fff,#f1dff6)!important;color:#8548a4!important;border-color:#ceb3de!important}
+body[data-pf-skin="msn"] .nav-item.active{background:linear-gradient(#fff,#d6f5ed)!important;color:#16717e!important;border-color:#9ad0cb!important}
+body[data-pf-skin="orkut"] .sidebar-env{background:#fff5fd;color:#78478f;border-color:#dabbe8}
+body[data-pf-skin="msn"] .sidebar-env{background:#f2ffff;color:#267e8b;border-color:#a6dce0}
+body[data-pf-skin="orkut"] .gate-window{box-shadow:0 0 0 3px #875aaf,0 24px 70px #39234e69!important}
+body[data-pf-skin="orkut"] .gate-option:hover{border-color:#b273c5!important}
+body[data-pf-skin="orkut"] .gate-real .gate-option-icon{background:linear-gradient(#b690df,#8e5abf)!important}
+body[data-pf-skin="orkut"] .gate-sim .gate-option-icon{background:linear-gradient(#f8b2d6,#cb659f)!important}
+body[data-pf-skin="orkut"] .gate-logo strong span{color:#9159bf}
+body[data-pf-skin="msn"] .gate-logo strong span{color:#22928c}
+body[data-pf-skin="orkut"] .btn-primary{background:linear-gradient(#ae7cce,#8655b8);border-color:#7145a1}
+body[data-pf-skin="msn"] .btn-primary{background:linear-gradient(#56bdbd,#268b9f);border-color:#1b7790}
+body[data-pf-skin="orkut"] .stat-card,body[data-pf-skin="orkut"] .db-card{border-top-color:#c887d0!important}
+body[data-pf-skin="msn"] .stat-card,body[data-pf-skin="msn"] .db-card{border-top-color:#6cc5b2!important}
+/* Portal ribbon */
+#pf-portal{display:flex;gap:13px;align-items:center;padding:9px 16px;background:linear-gradient(#fff,#f8f3ff);
+  border:1px solid var(--bd2);border-top:3px solid #cd92c8;border-radius:5px;box-shadow:0 3px 8px #64407a12;
+  margin:0 0 18px;min-height:68px}
+body.dark #pf-portal{background:var(--s1)}
+#pf-portal .pf-portal-avatar{width:43px;height:43px;flex-shrink:0;border-radius:8px;border:2px solid #fff;outline:1px solid #b6a7cf;background:#f1e6ff;
+  display:grid;place-items:center;font-size:25px;box-shadow:2px 2px 0 #dacbe6}
+.pf-portal-copy{flex:1;min-width:0}.pf-portal-copy strong{display:block;font-size:13px;color:var(--tx)}
+.pf-portal-copy small{display:block;color:var(--mu);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pf-portal-buttons{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.pf-pixel-btn{font:700 11px Tahoma,Verdana,sans-serif;border:1px solid #c4b2d8;border-right-color:#8d80aa;border-bottom-color:#8d80aa;
+  background:linear-gradient(#fff,#f1e9fb);color:#755196;padding:7px 10px;border-radius:3px;cursor:pointer;white-space:nowrap}
+.pf-pixel-btn:hover{background:#fff3fc;border-color:#9b6db9}.pf-pixel-btn:active{transform:translateY(1px)}
+.pf-pixel-btn.pf-pink{color:#a63b78;background:linear-gradient(#fff,#f8deed)}
+body.dark .pf-pixel-btn{background:#35445c;color:#ebd7ff;border-color:#637491}
+/* Personal status in sidebar */
+#pf-mini-profile{margin:5px 10px 6px;border:1px solid #c7b3de;background:linear-gradient(#fff,#f8edff);
+ border-radius:5px;padding:8px 9px;cursor:pointer;box-shadow:inset 0 1px #fff;flex-shrink:0;text-align:left;color:var(--tx)}
+body.dark #pf-mini-profile{background:#293852;border-color:#596e86;color:#fff}
+.pf-mini-top{display:flex;gap:7px;align-items:center}
+.pf-mini-icon{display:grid;place-items:center;font-size:20px;width:31px;height:31px;background:#e5f2ff;border:1px solid #bed1ec;border-radius:5px}
+.pf-mini-label{flex:1;min-width:0;font-size:11px;font-weight:800}.pf-mini-label small{display:block;font-weight:400;color:var(--mu);font-size:10px}
+.pf-mini-level{font-size:10px;background:#fff2c2;border:1px solid #e9cb5c;color:#885e1d;padding:3px 5px;border-radius:2px}
+.pf-progress{height:8px;border:1px solid #baa6d2;box-shadow:inset 0 1px #fff;background:#e7dbf1;border-radius:2px;overflow:hidden}
+.pf-progress>div{height:100%;width:0%;background:linear-gradient(#ffc7dc,#db77ad);transition:width .4s}
+.pf-mini-meta{font-size:10px;color:var(--mu);margin-top:5px;display:flex;justify-content:space-between;gap:4px}
+/* App preview title visual */
+.page-section .section-header:before{content:'📁  MEUS DOCUMENTOS  /  PAINELFIN';display:block;margin:0 0 12px;
+ padding:7px 11px;color:#fff!important;background:linear-gradient(90deg,#9c6ec5,#d794c3);border-radius:4px 4px 0 0;
+ text-shadow:0 1px #8854ae;font:700 10px Tahoma,Verdana,sans-serif;letter-spacing:.7px}
+body[data-pf-skin="xp"] .page-section .section-header:before{background:linear-gradient(90deg,#275bb8,#83aff3)}
+body[data-pf-skin="msn"] .page-section .section-header:before{background:linear-gradient(90deg,#138f9f,#7acac1)}
+body.dark .page-section .section-header:before{background:linear-gradient(90deg,#476284,#293f62)}
+/* Portals and panels */
+.pf-dialog-shade{position:fixed;inset:0;background:rgba(25,25,54,.4);backdrop-filter:blur(2px);z-index:2500;
+ display:none;align-items:center;justify-content:center;padding:15px}
+.pf-dialog-shade.open{display:flex}
+.pf-window{width:min(720px,100%);max-height:min(90dvh,760px);display:flex;flex-direction:column;background:#f9f7fc;color:#433657;
+ border:2px solid #fff;border-right-color:#8f779e;border-bottom-color:#8f779e;box-shadow:0 0 0 2px #765e99,0 21px 75px #29204470;border-radius:7px 7px 3px 3px;overflow:hidden}
+.pf-window-title,.pf-buddy-title{display:flex;align-items:center;gap:9px;padding:9px 11px;background:linear-gradient(#b2a3de,#794da8 45%,#8854b1);
+ color:white;font:700 12px Tahoma,Verdana,sans-serif;text-shadow:0 1px #734f97}
+.pf-window-title span{flex:1}.pf-window-close{width:27px;height:24px;border:1px solid #fff7;border-radius:3px;
+ background:linear-gradient(#fd9a86,#d44038);color:#fff;font-size:18px;line-height:18px;font-weight:800;cursor:pointer;text-shadow:0 1px #9e261e}
+.pf-window-content{overflow-y:auto;flex:1;padding:16px 18px}.pf-window-foot{display:flex;justify-content:space-between;align-items:center;
+ gap:10px;padding:7px 12px;background:#e8e3f2;border-top:1px solid #c7bedc;color:#706183;font-size:10px}
+.pf-tabs{display:flex;gap:5px;flex-wrap:wrap;background:#e9e1f2;border:1px solid #d1c0e3;padding:5px;border-radius:3px;margin-bottom:14px}
+.pf-tab{border:1px solid transparent;cursor:pointer;background:none;color:#716184;border-radius:3px;padding:8px 11px;font:700 11px Tahoma,Verdana,sans-serif}
+.pf-tab.active{background:#fff;border:1px solid #bca5d8;color:#8751aa;box-shadow:1px 1px 2px #aa97c033}
+.pf-panel{display:none}.pf-panel.active{display:block}
+.pf-profile-top{display:flex;gap:16px;align-items:center;background:#fff;border:1px solid #e1d5ec;padding:14px;margin-bottom:12px;border-radius:4px}
+.pf-big-ava{display:grid;place-items:center;flex-shrink:0;width:77px;height:77px;border:3px solid #fff;outline:1px solid #a5a0c8;background:linear-gradient(#ffe9f4,#e7f1ff);border-radius:5px;font-size:42px}
+.pf-profile-title{font-size:19px;font-weight:800;color:#764ca4}.pf-profile-sub{font-size:11px;color:#777;margin-top:4px}
+.pf-form-row{margin:12px 0}.pf-form-row label{font-weight:800;display:block;font-size:11px;color:#795494;margin-bottom:5px}
+.pf-input{width:100%;border:1px solid #b6accd;background:#fff;border-radius:3px;padding:9px 10px;color:#433657;font:12px Tahoma,Verdana,sans-serif}
+.pf-avatars{display:flex;gap:7px;flex-wrap:wrap}.pf-avatar-btn{width:39px;height:39px;border:2px solid #d9c6e7;border-radius:5px;background:white;cursor:pointer;font-size:22px}
+.pf-avatar-btn.selected{border-color:#bb63af;box-shadow:0 0 0 2px #ffd2ee}
+.pf-labelline{display:flex;justify-content:space-between;gap:9px;align-items:center;margin-bottom:6px;font-size:11px}
+.pf-achi-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.pf-achievement{border:1px solid #ddcfea;background:#fff;border-radius:5px;padding:11px;display:flex;gap:10px;align-items:center;opacity:.55}
+.pf-achievement.unlocked{opacity:1;border-color:#cf9ac7;background:#fff8fc}
+.pf-achievement-icon{display:grid;place-items:center;width:36px;height:36px;flex-shrink:0;font-size:20px;background:#f0e9fa;border-radius:5px}
+.pf-achievement strong{font-size:11px;display:block;color:#583a79}.pf-achievement small{display:block;font-size:10px;color:#887a99;line-height:1.45;margin-top:3px}
+.pf-note{background:#fff;border:1px solid #d7c9e5;border-left:4px solid #d690c5;padding:9px 11px;margin:8px 0;border-radius:3px}
+.pf-note-top{display:flex;justify-content:space-between;align-items:center;font-size:10px;color:#957ca7;margin-bottom:5px}
+.pf-note-text{font-size:12px;color:#423654;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.55}
+.pf-empty{text-align:center;padding:24px;color:#a091b0;font-size:12px}
+.pf-skins{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.pf-skin-btn{border:2px solid #d4c5df;border-radius:5px;background:#fff;padding:9px;cursor:pointer;font:700 12px Tahoma,Verdana;color:#67527b}
+.pf-skin-btn.selected{border-color:#ab60b6;background:#f9eafa}.pf-skin-swatch{height:37px;margin-bottom:8px;border-radius:3px;border:1px solid #fff}
+.pf-skin-swatch.orkut{background:linear-gradient(90deg,#d78cbd 33%,#b6a2dd 34% 66%,#f2e3f8 66%)}
+.pf-skin-swatch.msn{background:linear-gradient(90deg,#23acac 33%,#83ccd8 34% 66%,#e3faf5 66%)}
+.pf-skin-swatch.xp{background:linear-gradient(90deg,#265bc2 33%,#81b0eb 34% 66%,#e1f0fd 66%)}
+/* Local messenger */
+#pf-buddy{position:fixed;right:19px;bottom:56px;z-index:1500;width:min(332px,calc(100vw - 24px));display:none;
+ background:#f4fbfa;border:2px solid #fff;border-right-color:#76999e;border-bottom-color:#76999e;border-radius:8px 8px 3px 3px;box-shadow:0 0 0 2px #4c97a7,0 15px 45px #183d5480;color:#285a66;overflow:hidden}
+#pf-buddy.open{display:flex;flex-direction:column}
+.pf-buddy-title{background:linear-gradient(#6bcdc8,#258da2 35%,#2078ad)!important;text-shadow:0 1px #196384}
+.pf-buddy-close{background:#fff3;border:1px solid #fff8;border-radius:2px;color:white;cursor:pointer;padding:2px 7px}
+.pf-buddy-header{display:flex;align-items:center;gap:10px;padding:11px;background:linear-gradient(#fff,#ddf6fa);border-bottom:1px solid #bbd8df;font-size:11px}
+.pf-buddy-status{display:block;color:#27896f;font-size:10px;margin-top:3px}
+.pf-chat-thread{height:230px;overflow:auto;background:#fff;padding:12px;display:flex;flex-direction:column;gap:8px}
+.pf-chat-line{font-size:11px;line-height:1.5;color:#42606c;background:#f0f7fb;border:1px solid #dcecf1;border-radius:3px;padding:7px 9px;max-width:94%;white-space:pre-wrap;overflow-wrap:anywhere}
+.pf-chat-line.me{background:#ecf9ed;border-color:#b8e2d0;align-self:flex-end}
+.pf-chat-line strong{display:block;color:#2878ab;font-size:10px;margin-bottom:2px}
+.pf-chat-actions{display:flex;gap:5px;flex-wrap:wrap;padding:8px 10px;border-top:1px solid #c5e2e4;background:#f3fafe}
+.pf-chat-actions button{background:#fff;border:1px solid #a8cbdd;color:#36789e;border-radius:3px;font-size:10px;padding:5px 7px;cursor:pointer}
+.pf-chat-compose{display:flex;gap:5px;padding:9px 10px;background:#e2f4f3;border-top:1px solid #b3d8dc}
+.pf-chat-compose input{min-width:0;flex:1;padding:8px;border:1px solid #a7c9d2;background:#fff;border-radius:3px;font-size:12px}
+.pf-chat-compose button{border:1px solid #2a8a9f;background:linear-gradient(#80d9c2,#3fb29d);color:#fff;font-size:11px;font-weight:700;border-radius:3px;padding:0 10px;cursor:pointer}
+/* XP/taskbar */
+#pf-taskbar{height:37px;position:fixed;bottom:0;left:0;right:0;z-index:950;display:flex;align-items:center;gap:5px;padding:3px 9px;
+ background:linear-gradient(#578de4 0%,#1d5db8 17%,#2461b7 67%,#1653ac);border-top:1px solid #7eb4f5;box-shadow:0 -1px 6px #23549440;color:#fff}
+#pf-taskbar button{border:1px solid #ffffff46;border-radius:3px;background:linear-gradient(#83a9e2,#3d73b9);padding:5px 11px;color:#fff;cursor:pointer;font:700 11px Tahoma,Verdana;text-shadow:0 1px #35629c;white-space:nowrap}
+#pf-taskbar button:hover{background:linear-gradient(#9ad0fc,#5b89cb)}
+#pf-taskbar #pf-start{border-radius:3px 12px 12px 3px;padding:5px 18px 5px 11px;background:linear-gradient(#86ca72,#2f913b);border-color:#b4e3a0;font-style:italic;font-size:12px}
+.pf-taskbar-env{font-size:10px;margin-left:6px;color:#e6f1ff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pf-taskbar-spacer{flex:1}.pf-taskbar-clock{background:linear-gradient(#55b1e3,#2887d1);border:1px solid #b1dbff66;padding:5px 8px;border-radius:3px;font-size:11px;font-weight:700}
+#pf-start-menu{position:fixed;bottom:41px;left:8px;width:250px;z-index:1600;background:#f9fafc;border:2px solid #fff;border-right-color:#7993b0;border-bottom-color:#7993b0;
+ box-shadow:0 0 0 2px #3470c5,0 10px 28px #12306480;border-radius:7px;display:none;color:#234c7d;overflow:hidden}
+#pf-start-menu.open{display:block}.pf-start-menu-head{padding:13px;background:linear-gradient(#4f8cda,#1d5bb1);color:#fff;font-weight:800;font-size:13px}
+#pf-start-menu button{display:block;width:100%;text-align:left;border:0;background:transparent;padding:11px 13px;border-bottom:1px solid #e4eaf6;color:#214d86;font:700 11px Tahoma,Verdana;cursor:pointer}
+#pf-start-menu button:hover{background:#deebfb}
+.pf-xp-toast{position:fixed;right:13px;bottom:48px;z-index:2100;max-width:310px;background:linear-gradient(#fffefa,#fff0b8);
+ border:1px solid #c29c49;border-radius:6px;padding:10px 13px;box-shadow:0 7px 25px #332c2c42;color:#745119;font:700 11px Tahoma,Verdana;display:none}
+.pf-xp-toast.show{display:block;animation:pfPop .25s ease-out}@keyframes pfPop{from{transform:translateY(12px);opacity:0}to{transform:translateY(0);opacity:1}}
+body{padding-bottom:38px}
+body #app-shell .main{padding-bottom:38px}
+@media(max-width:1150px){#pf-portal{gap:7px}.pf-portal-copy small{white-space:normal;line-height:1.35}.pf-portal-buttons{gap:4px}.pf-pixel-btn{padding:6px}}
+@media(max-height:730px) and (min-width:769px){#pf-mini-profile{padding:5px;margin:2px 10px}.pf-mini-meta{display:none}.pf-mini-icon{width:25px;height:25px}.sidebar .nav{overflow-y:auto;min-height:0}}
+@media(max-width:768px){
+ body{padding-bottom:0}body #app-shell .main{padding-bottom:111px}
+ #pf-taskbar,#pf-start-menu,#pf-mini-profile{display:none!important}
+ #pf-portal{flex-wrap:wrap;margin-bottom:12px;padding:9px 10px;min-height:0}
+ .pf-portal-buttons{width:100%;justify-content:space-between}
+ .pf-pixel-btn{flex:1}
+ #pf-buddy{bottom:117px;right:9px;max-height:calc(100dvh - 145px)}
+ .pf-chat-thread{height:min(190px,31dvh)}
+ .pf-xp-toast{bottom:120px;right:8px}
+ .pf-window{max-height:87dvh}.pf-window-content{padding:12px}
+ .pf-achi-grid{grid-template-columns:1fr}
+ .pf-profile-top{gap:10px}.pf-big-ava{width:58px;height:58px;font-size:33px}
+ .pf-profile-title{font-size:15px}.pf-window-foot{flex-wrap:wrap}
+}
+@media(max-width:380px){.pf-portal-avatar{display:none!important}.pf-portal-buttons .pf-pixel-btn{font-size:10px;padding:6px 4px}.pf-skin-btn{font-size:10px;padding:5px}}
+@media(prefers-reduced-motion:reduce){.pf-progress>div,.pf-xp-toast{transition:none;animation:none}}
+</style>
+
+<style id="pf-2006-desktop-nav-fix">
+@media(min-width:769px){
+  .sidebar{overflow:hidden!important}
+  .sidebar .nav{flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;overflow-y:auto!important;min-height:0!important;width:100%!important}
+  .sidebar .nav .nav-item{width:100%!important;max-width:none!important;flex:0 0 auto!important;align-items:center!important;justify-content:flex-start!important}
+  .sidebar .nav .nav-item>span:nth-child(2){display:inline!important}
+  .sidebar .mode-switcher{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important}
+  .sidebar .mode-btn{font-size:11px!important;flex:1 1 0!important;padding:7px 3px!important;white-space:nowrap!important}
+  .sidebar .mode-btn .mode-label{display:inline!important;font-size:10px!important}
+  .sidebar .user-card{display:flex!important;flex-shrink:0!important}
+  .sidebar .user-info{display:block!important}
+  .sidebar .sidebar-footer{display:block!important;flex-shrink:0!important}
+  .sidebar #pf-mini-profile{display:block!important}
+}
+</style>
+
+<style id="pf-2006-navigation-polish">
+@media(min-width:769px){
+  .sidebar .mode-switcher{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:4px!important;align-items:stretch!important}
+  .sidebar .mode-btn{width:100%!important;min-width:0!important;min-height:29px!important;display:flex!important;justify-content:center!important;align-items:center!important;gap:4px!important;flex:initial!important;font-size:11px!important;padding:5px!important}
+  .sidebar .mode-btn .mode-label{font-size:10px!important;display:inline!important}
+}
+@media(max-width:768px){.topbar .pf-profile-top-btn,.topbar .pf-msn-top-btn{display:none!important}}
+</style>
+
+
+<style id="pf-2006-mobile-icon-repair">
+@media(max-width:768px){
+ .sidebar .nav .nav-item .nav-icon{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex-shrink:0!important}
+ .sidebar .nav .nav-item .nav-status{display:block!important}
+ .sidebar .nav .nav-item{width:49px!important;min-width:49px!important;max-width:49px!important}
+ .sidebar .nav{display:flex!important;flex-shrink:0!important}
+ .sidebar .nav[style*="display:none"]{display:none!important}
+}
+</style>
+<script id="painelfin-2000-behavior">
+(()=>{
+  const original = window.resetAll;
+  if(typeof original === 'function'){
+    window.resetAll = function(...args){
+      if(document.body.dataset.ambiente === 'real'){
+        const confirmation=prompt('ATENÇÃO: você está no REAL. Para permitir a limpeza de dados desta tela, digite APAGAR:');
+        if(confirmation !== 'APAGAR') return;
+      }
+      return original.apply(this,args);
+    };
+  }
+  // Tooltip ajuda a navegação por ícones no celular, também para guias criadas por módulos extras.
+  function setHints(){
+    document.querySelectorAll('.nav-item').forEach(b=>{
+      if(!b.title) b.title=(b.textContent||'').trim().replace(/\\s+/g,' ').slice(0,60);
+    });
+  }
+  document.addEventListener('DOMContentLoaded',setHints);
+  setHints();
+  document.addEventListener('click',e=>{
+    const menu=document.querySelector('.retro-tools');
+    if(menu && menu.open && !menu.contains(e.target)) menu.open=false;
+    if(menu && menu.open && e.target.closest('.retro-tools-pop button')) menu.open=false;
+  });
+})();
+</script>
+<script id="pf-orkut-msn-2006-behavior">
+/* Todas as conquistas e os recados ficam no armazenamento LOCAL por usuário e ambiente.
+   Não há novos writes no Firebase; os dados financeiros mantêm a lógica original. */
+(()=>{
+  'use strict';
+  const BADGES = [
+    {id:'boasvindas',icon:'💻',name:'Conectado!',hint:'Entre pela primeira vez no PainelFin',xp:15,ok:s=>s.days.length>=1},
+    {id:'salvou',icon:'💾',name:'Disquete de ouro',hint:'Salve seus dados pelo menos uma vez',xp:30,ok:s=>s.saves.length>=1},
+    {id:'explorador',icon:'🔍',name:'Web surfer',hint:'Abra quatro seções diferentes',xp:35,ok:s=>s.visited.length>=4},
+    {id:'veterano',icon:'🏆',name:'Rei da lan house',hint:'Conheça oito seções do painel',xp:60,ok:s=>s.visited.length>=8},
+    {id:'persistencia',icon:'📆',name:'Voltei para organizar',hint:'Use o painel em três dias diferentes',xp:45,ok:s=>s.days.length>=3},
+    {id:'laboratorio',icon:'🧪',name:'Cientista financeiro',hint:'Entre no ambiente Simulador',xp:25,ok:s=>s.env==='simulador'},
+    {id:'recados',icon:'💌',name:'Mural de recados',hint:'Escreva seu primeiro recado pessoal',xp:20,ok:s=>s.notes.length>=1},
+    {id:'personalizado',icon:'😎',name:'Perfil estiloso',hint:'Escolha um avatar ou defina seu humor',xp:20,ok:s=>s.customized===true},
+  ];
+  const SKIN_KEY='painelfin2006-skin';
+  const DEFAULT = () => ({xp:0,days:[],saves:[],visited:[],notes:[],unlocked:[],avatar:'🧑‍💻',mood:'Organizando as ideias ✨',nick:'',customized:false,env:'real'});
+  let uid='',env='',data=DEFAULT(),tab='perfil',toastTimeout=null,loaded=false;
+  const $=id=>document.getElementById(id);
+  const safeLocal={
+    get(k){try{return localStorage.getItem(k)}catch(e){return null}},
+    set(k,v){try{localStorage.setItem(k,v)}catch(e){}},
+  };
+  const key=()=>`painelfin2006-game:${uid}:${env}`;
+  const today=()=>{const n=new Date();return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`};
+  const unique=a=>Array.from(new Set(Array.isArray(a)?a:[]));
+  const level=()=>Math.floor(data.xp/100)+1;
+  const levelPct=()=>data.xp%100;
+  function save(){if(uid&&env)safeLocal.set(key(),JSON.stringify(data))}
+  function toast(msg){const el=$('pf-xp-toast');if(!el)return;el.textContent=msg;el.classList.add('show');clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>el.classList.remove('show'),4400)}
+  function earn(xp,msg){data.xp+=xp;save();paint();if(msg)toast(`★ +${xp} XP · ${msg}`)}
+  function achievements(){
+    let bonus=0,names=[];
+    for(const b of BADGES){
+      if(!data.unlocked.includes(b.id) && b.ok(data)){
+        data.unlocked.push(b.id);bonus+=b.xp;names.push(b.name);
+      }
+    }
+    if(bonus){data.xp+=bonus;save();toast(`🏅 Nova conquista: ${names.join(', ')} (+${bonus} XP)`)}
+  }
+  function initUser(userId,ambiente){
+    if(!userId||!['simulador','real'].includes(ambiente))return;
+    if(loaded&&uid===userId&&env===ambiente)return;
+    uid=userId;env=ambiente;loaded=true;
+    try{const raw=JSON.parse(safeLocal.get(key())||'null');data={...DEFAULT(),...(raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{})}}
+    catch(e){data=DEFAULT()}
+    data.days=unique(data.days);data.visited=unique(data.visited);data.saves=unique(data.saves);
+    data.unlocked=unique(data.unlocked);data.notes=Array.isArray(data.notes)?data.notes.slice(0,20):[];
+    data.xp=Math.max(0,Number(data.xp)||0);data.env=env;
+    if(!data.days.includes(today())){data.days.push(today());earn(10,'Uma visita, um passo de cada vez!')}
+    if(!data.visited.includes('renda'))data.visited.push('renda');
+    achievements();save();paint();
+    try{const well=`pf-hello-2006:${uid}:${env}`;
+      if(!sessionStorage.getItem(well)){sessionStorage.setItem(well,'1');setTimeout(()=>toast(`💬 ${env==='simulador'?'Você entrou no laboratório de testes!':'Você está na área REAL.'} Bem-vindo ao PainelFin 2006!`),900)}
+    }catch(e){}
+  }
+  function paint(){
+    if(!loaded)return;
+    const displayName = (data.nick.trim()||$('user-name')?.textContent||'Visitante').trim().slice(0,30);
+    const miniAvatar=$('pf-mini-avatar'),welcomeAvatar=$('pf-portal-avatar');
+    for(const e of [miniAvatar,welcomeAvatar,$('pf-big-avatar')])if(e)e.textContent=data.avatar;
+    for(const id of ['pf-mini-nick','pf-portal-nick','pf-profile-name']){const el=$(id);if(el)el.textContent=displayName}
+    const mood=$('pf-mood-label');if(mood)mood.textContent=data.mood;
+    const lv=level(),percent=levelPct();
+    for(const id of ['pf-lv-mini','pf-lv-full']){const el=$(id);if(el)el.textContent=`Nível ${lv}`}
+    for(const id of ['pf-xp-mini','pf-xp-full']){const el=$(id);if(el)el.textContent=`${percent}/100 XP`}
+    for(const id of ['pf-xp-bar-mini','pf-xp-bar-full']){const el=$(id);if(el)el.style.width=percent+'%'}
+    for(const id of ['pf-medals-mini','pf-medals-full']){const el=$(id);if(el)el.textContent=`${data.unlocked.length}/${BADGES.length} medalhas`}
+    const nick=$('pf-nickname');if(nick&&document.activeElement!==nick)nick.value=data.nick;
+    const moodSelect=$('pf-mood');if(moodSelect&&document.activeElement!==moodSelect)moodSelect.value=data.mood;
+    document.querySelectorAll('[data-pf-avatar]').forEach(b=>b.classList.toggle('selected',b.dataset.pfAvatar===data.avatar));
+    document.querySelectorAll('[data-pf-skin-choice]').forEach(b=>b.classList.toggle('selected',b.dataset.pfSkinChoice===document.body.dataset.pfSkin));
+    const section=$('pf-badges');if(section){section.replaceChildren();for(const b of BADGES){
+      const unlocked=data.unlocked.includes(b.id);const item=document.createElement('div');item.className='pf-achievement'+(unlocked?' unlocked':'');
+      const icon=document.createElement('div');icon.className='pf-achievement-icon';icon.textContent=unlocked?b.icon:'🔒';
+      const copy=document.createElement('div');const t=document.createElement('strong');t.textContent=b.name;
+      const h=document.createElement('small');h.textContent=b.hint+(unlocked?' · Concluída':` · +${b.xp} XP`);
+      copy.append(t,h);item.append(icon,copy);section.append(item);
+    }}
+    const list=$('pf-notes-list');if(list){list.replaceChildren();if(!data.notes.length){const none=document.createElement('div');none.className='pf-empty';none.textContent='Seu mural está vazio. Que tal deixar um recado para você mesmo?';list.append(none)}
+      data.notes.forEach((note,i)=>{const item=document.createElement('div');item.className='pf-note';const head=document.createElement('div');head.className='pf-note-top';
+        const when=document.createElement('span');when.textContent=note.at||'Sem data';const del=document.createElement('button');del.className='pf-pixel-btn';del.textContent='Excluir';
+        del.setAttribute('aria-label',`Excluir recado ${i+1}`);del.onclick=()=>{if(confirm('Excluir este recado?')){data.notes.splice(i,1);save();paint()}};
+        head.append(when,del);const body=document.createElement('div');body.className='pf-note-text';body.textContent=String(note.message||'');item.append(head,body);list.append(item)})
+    }
+  }
+  function chooseSkin(skin){if(!['orkut','msn','xp'].includes(skin))return;document.body.dataset.pfSkin=skin;safeLocal.set(SKIN_KEY,skin);paint()}
+  function recordVisit(button){if(!loaded)return;const id=button?.id||'';if(!id.startsWith('nav-'))return;
+    if(data.visited.includes(id))return;data.visited.push(id);earn(7,'Nova seção descoberta!');achievements();save();paint()}
+  function openProfile(which='perfil'){$('pf-dialog')?.classList.add('open');$('pf-dialog')?.setAttribute('aria-hidden','false');switchTab(which);if(which==='perfil')$('pf-nickname')?.focus()}
+  function closeProfile(){$('pf-dialog')?.classList.remove('open');$('pf-dialog')?.setAttribute('aria-hidden','true')}
+  function switchTab(which){tab=which;document.querySelectorAll('.pf-tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===which));
+    document.querySelectorAll('.pf-panel').forEach(x=>x.classList.toggle('active',x.id==='pf-panel-'+which));paint()}
+  function saveProfile(){if(!loaded)return;data.nick=($('pf-nickname')?.value||'').trim().slice(0,30);data.mood=$('pf-mood')?.value||data.mood;
+    data.customized=true;save();achievements();paint();toast('💌 Perfil atualizado e salvo neste navegador!')}
+  function setAvatar(avatar){if(!loaded)return;const allowed=['🧑‍💻','😎','👾','🐸','🐱','🦊','🤖','🦋'];if(!allowed.includes(avatar))return;
+    data.avatar=avatar;data.customized=true;save();achievements();paint()}
+  function addNote(){const area=$('pf-note-input');const msg=area?.value?.trim();if(!loaded||!msg)return;if(msg.length>400){toast('Os recados têm limite de 400 caracteres.');return}
+    data.notes.unshift({at:new Date().toLocaleString('pt-BR'),message:msg});data.notes=data.notes.slice(0,20);area.value='';
+    save();achievements();paint();toast('📨 Recado adicionado ao seu mural!')}
+  function openMessenger(){if(!$('pf-buddy')||!loaded)return;closeStart();const win=$('pf-buddy');win.classList.toggle('open');if(win.classList.contains('open'))$('pf-chat-input')?.focus()}
+  function closeMessenger(){$('pf-buddy')?.classList.remove('open')}
+  function closeStart(){$('pf-start-menu')?.classList.remove('open')}
+  function navigateTo(section,mode='geral'){closeStart();closeMessenger();closeProfile();if(typeof window.setMode==='function')window.setMode(mode);
+    const navId=mode==='geral'?`nav-${section}`:`nav-${section.replace(/^mes-/,'')}`;
+    const btn=$(navId);if(btn)btn.click();
+    else if(mode==='geral'&&typeof window.goTo==='function')window.goTo(section);
+    else if(mode==='mensal'&&typeof window.goToMensal==='function')window.goToMensal(section);
+  }
+  function chatLine(who,message){const t=$('pf-chat-thread');if(!t)return;const box=document.createElement('div');box.className='pf-chat-line'+(who==='Você'?' me':'');
+    const whoEl=document.createElement('strong');whoEl.textContent=who;const textEl=document.createElement('span');textEl.textContent=message;
+    box.append(whoEl,textEl);t.append(box);while(t.children.length>24)t.removeChild(t.firstChild);t.scrollTop=t.scrollHeight}
+  function respond(raw){const q=raw.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');if(!q)return;
+    chatLine('Você',raw);
+    let answer='Posso abrir Renda, Despesas, Dívidas, Metas, Investir, Dashboard ou Mensal. Digite o nome da seção!';let target=null,mode='geral';
+    if(/divid|cartao|parcela/.test(q)){target='dividas';answer='💳 Achei! Vou abrir suas dívidas. Aqui você pode conferir parcelas e vencimentos.'}
+    else if(/meta|objetivo/.test(q)){target='metas';answer='🎯 Bora acompanhar as metas! Evite mexer no Real só para ganhar XP, combinado?'}
+    else if(/invest|aplica/.test(q)){target='investir';answer='📈 Encontrei Investir. Esta janela é só um atalho, não indica onde aplicar dinheiro.'}
+    else if(/despesa|gasto/.test(q)){target='despesas';answer='📋 Vamos organizar as despesas!'}
+    else if(/renda|salario|receita/.test(q)){target='renda';answer='💰 Abrindo o espaço de renda!'}
+    else if(/dashboard|grafico|resumo geral|painel/.test(q)){target='dashboard';answer='🖥️ Vamos ao Dashboard!'}
+    else if(/mensal|mes|lancamento/.test(q)){target='mes-lancamentos';mode='mensal';answer='📅 Abrindo seus lançamentos mensais!'}
+    else if(/simulad|teste|real/.test(q)){answer='🧪 Para trocar de Real para Simulador ou vice-versa, clique em “Ambiente” lá em cima. Os dois conjuntos de dados são separados.'}
+    else if(/conquista|xp|nivel|perfil|orkut/.test(q)){answer='🏅 Abra Meu perfil para conferir XP, medalhas, recados e temas. Os pontos são por organização, não por ganhar ou gastar dinheiro.'}
+    else if(/oi|ola|eai|ajuda|menu/.test(q)){answer='E aí! 😎 Digite um módulo que eu abro para você. Eu funciono por atalhos locais, sem IA e sem ler suas conversas.'}
+    chatLine('PainelFin • ajudante',answer);
+    if(target)setTimeout(()=>navigateTo(target,mode),500);
+  }
+  function sendChat(){const input=$('pf-chat-input');if(!input)return;const s=input.value.trim();if(!s)return;input.value='';respond(s.slice(0,300))}
+  function initUI(){
+    let skin=safeLocal.get(SKIN_KEY)||'orkut';chooseSkin(['xp','orkut','msn'].includes(skin)?skin:'orkut');
+    document.querySelectorAll('[data-pf-tab]').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.pfTab)));
+    document.querySelectorAll('[data-pf-avatar]').forEach(b=>b.addEventListener('click',()=>setAvatar(b.dataset.pfAvatar)));
+    document.querySelectorAll('[data-pf-skin-choice]').forEach(b=>b.addEventListener('click',()=>chooseSkin(b.dataset.pfSkinChoice)));
+    document.querySelectorAll('[data-pf-navigate]').forEach(b=>b.addEventListener('click',()=>navigateTo(b.dataset.pfNavigate,b.dataset.pfMode||'geral')));
+    document.addEventListener('click',e=>{
+      const button=e.target.closest('.nav-item');if(button)recordVisit(button);
+      const start=$('pf-start-menu');if(start?.classList.contains('open')&&!e.target.closest('#pf-start-menu')&&!e.target.closest('#pf-start'))closeStart();
+    });
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeProfile();closeMessenger();closeStart()}});
+    $('pf-dialog')?.addEventListener('click',e=>{if(e.target===$('pf-dialog'))closeProfile()});
+    $('pf-chat-input')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();sendChat()}});
+    function updateClock(){const el=$('pf-time');if(el)el.textContent=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}
+    updateClock();setInterval(updateClock,30000);
+    // Firebase autenticação é assíncrona; o atributo serve como fallback.
+    if(document.body.dataset.pfUid)initUser(document.body.dataset.pfUid,document.body.dataset.ambiente);
+  }
+  window.pfOpenProfile=openProfile;
+  window.pfCloseProfile=closeProfile;
+  window.pfOpenMessenger=openMessenger;
+  window.pfCloseMessenger=closeMessenger;
+  window.pfToggleStart=()=>{$('pf-start-menu')?.classList.toggle('open')};
+  window.pfSaveProfile=saveProfile;
+  window.pfAddNote=addNote;
+  window.pfSendChat=sendChat;
+  window.pfNavigate=navigateTo;
+  window.addEventListener('pf-retro-auth',e=>{if(e.detail?.uid)initUser(e.detail.uid,e.detail.ambiente);else{uid='';env='';loaded=false;closeProfile();closeMessenger()}});
+  window.addEventListener('pf-retro-saved',e=>{
+    if(!loaded||e.detail?.ambiente!==env)return;
+    if(!data.saves.includes(today())){data.saves.push(today());earn(15,'Dados salvos com sucesso!');achievements();save();paint()}
+  });
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initUI,{once:true});else initUI();
+})();
+</script>
+
+<script id="pf-monthly-gross-net">
+/* Controle mensal: em RECEITAS o bruto e os descontos são discriminados,
+   mas item.val mantém somente o líquido, sem alterar os outros lançamentos. */
+(function(){
+ let oldRender=window.renderMesList;
+ if(typeof oldRender!=='function')return;
+ const money=pfFormatCentavos,esc=pfEscHtml;
+ function find(key,idx){return mesesData?.[key]?.receitas?.[idx];}
+ function refreshTotals(key,idx){
+   const r=find(key,idx);if(!r)return;
+   pfCalcularLiquido(r);
+   if(typeof window.updateMesItem==='function')window.updateMesItem(key,'receita',idx,r.val);
+   const box=[...document.querySelectorAll('#mes-receitas-list .pf-monthly-income-card')].find(e=>e.dataset.idx===String(idx));
+   if(box){
+     const net=box.querySelector('[data-pf-net]');if(net)net.textContent=money(r.val);
+     const des=box.querySelector('[data-pf-total-desconto]');if(des)des.textContent=money(pfSomaDescontos(r));
+     const warn=box.querySelector('[data-pf-warning]');if(warn)warn.style.display=pfSomaDescontos(r)>pfValorNaoNegativo(r.bruto)?'':'none';
+   }
+ }
+ window.pfMonthIncomeType=(key,idx,tipo)=>{
+   const r=find(key,idx);if(!r)return;
+   if(tipo!=='bruto'&&tipo!=='liquido')return;
+   if(tipo==='bruto'&&r.tipoValor!=='bruto'){
+     if(!r.descontos?.length)r.descontos=pfDescontosDefault();
+     r.bruto=pfValorNaoNegativo(r.val)+pfSomaDescontos(r);
+   }
+   r.tipoValor=tipo;pfCalcularLiquido(r);window.renderLancamentos();window.agendarSalvarMensal?.(800);
+ };
+ window.pfMonthIncomeChange=(key,idx,campo,v)=>{
+   const r=find(key,idx);if(!r)return;
+   if(campo==='bruto'){r.bruto=pfValorNaoNegativo(v);pfCalcularLiquido(r);}
+   else if(campo==='val')r.val=pfValorNaoNegativo(v);
+   refreshTotals(key,idx);
+ };
+ window.pfMonthDiscountChange=(key,idx,i,campo,v)=>{
+   const r=find(key,idx);if(!r||!r.descontos?.[i])return;
+   r.descontos[i][campo]=campo==='val'?pfValorNaoNegativo(v):String(v);
+   refreshTotals(key,idx);
+ };
+ window.pfMonthDiscountAdd=(key,idx)=>{
+   const r=find(key,idx);if(!r)return;
+   r.descontos??=[];r.descontos.push({id:pfGerarIdDesconto(r),nome:'Novo desconto',val:0});
+   window.renderLancamentos();window.agendarSalvarMensal?.(800);
+ };
+ window.pfMonthDiscountDelete=(key,idx,i)=>{
+   const r=find(key,idx);if(!r)return;
+   r.descontos?.splice(i,1);pfCalcularLiquido(r);window.renderLancamentos();window.agendarSalvarMensal?.(800);
+ };
+ const renderGrossMonth=(elId,items,tipo,cor)=>{
+   if(tipo!=='receita')return oldRender(elId,items,tipo,cor);
+   const el=document.getElementById(elId);if(!el)return;
+   const key=mesKey(anoAtual,mesAtual);
+   if(!items?.length){el.innerHTML='<div style="padding:12px;color:var(--mu)">Nenhum provento neste mês.</div>';return;}
+   el.innerHTML=items.map((r,idx)=>{
+     pfNormalizaProvento(r);
+     const bruto=r.tipoValor==='bruto',diff=r.planejado!=null?r.val-r.planejado:null;
+     return `<div class="pf-monthly-income-card" data-idx="${idx}">
+       <div class="pf-income-main">
+        <div class="pf-income-line">
+         <div class="pf-income-name"><span>💰</span><input aria-label="Nome da receita" value="${esc(r.nome)}" onchange="window.updateMesItemName('${key}','receita',${idx},this.value)"></div>
+         <select class="pf-income-switch" aria-label="Valor bruto ou líquido" onchange="pfMonthIncomeType('${key}',${idx},this.value)">
+           <option value="liquido" ${bruto?'':'selected'}>💚 Líquido</option><option value="bruto" ${bruto?'selected':''}>📄 Bruto</option>
+         </select>
+         <button type="button" class="pf-income-remove" onclick="delMesItem('${key}','receita',${idx})" title="Excluir receita">×</button>
+        </div>
+        <div class="pf-income-amounts">
+         <label class="pf-income-box"><span class="pf-income-label">${bruto?'Valor bruto':'Valor líquido informado'}</span><span class="pf-income-money">R$ <input type="number" step="0.01" min="0" aria-label="Valor do provento" value="${bruto?(pfValorNaoNegativo(r.bruto)||''):(r.val||'')}" oninput="pfMonthIncomeChange('${key}',${idx},'${bruto?'bruto':'val'}',this.value)"></span></label>
+         <div class="pf-income-box pf-income-net"><span class="pf-income-label">Líquido na soma</span><strong data-pf-net>${money(r.val)}</strong>${diff===null?'':`<div class="pf-income-helper">Planejado: ${money(r.planejado)}</div>`}</div>
+        </div>
+       </div>
+       ${bruto?pfDeductionUI(r,`pfMonthDiscountChange('${key}',${idx},`,`pfMonthDiscountAdd('${key}',${idx})`,`pfMonthDiscountDelete('${key}',${idx},`):''}
+      </div>`;
+   }).join('');
+ };
+ window.renderMesList=renderGrossMonth;
+ // Há código legado que reinstala renderMesList no DOMContentLoaded.
+ // Aplicamos a correção por último para preservar a edição bruto/líquido.
+ document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{
+   if(window.renderMesList!==renderGrossMonth){
+     oldRender=window.renderMesList;
+     window.renderMesList=renderGrossMonth;
+   }
+   if(document.body?.dataset?.pfMode==='mensal'&&typeof window.renderLancamentos==='function')window.renderLancamentos();
+ },0));
+})();
+</script>
 </body>
 </html>
