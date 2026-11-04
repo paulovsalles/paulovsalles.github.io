@@ -919,6 +919,26 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
 .debt-projection{background:var(--s1);border:1px solid var(--bd);border-radius:14px;margin-top:14px;overflow:hidden}.debt-projection-header{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--bd)}.debt-projection-title{font-size:13px;font-weight:800}.debt-projection-body{padding:12px 16px}.debt-month-row{display:grid;grid-template-columns:70px 1fr 80px;gap:8px;align-items:center;margin-bottom:7px}.debt-month-track{height:8px;background:var(--bd);border-radius:8px;overflow:hidden}.debt-month-fill{height:8px;border-radius:8px;background:var(--red)}.debt-month-name,.debt-month-value{font-size:11px;color:var(--mu)}.debt-month-value{text-align:right;font-family:'Space Grotesk',sans-serif;font-weight:800;color:var(--red)}
 @media(max-width:900px){.debt-step-box,.debt-filter-grid,.debt-card-top,.debt-edit-grid,.debt-add-component,.debt-component-row,.debt-item-row{grid-template-columns:1fr}.debt-card-actions{justify-content:flex-start}.debt-field input,.debt-field select{width:100%}}
 
+
+/* ═══ PATCH 2026-11: MISSÕES SEM SOBREPOSIÇÃO / DÍZIMO AUTOMÁTICO ═══ */
+#missionarios-grid.pf-mission-list{display:flex!important;flex-direction:column;gap:9px;width:100%;margin-bottom:14px;min-width:0}
+.pf-mission-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(115px,148px) 36px;gap:10px;align-items:center;min-width:0;background:var(--s2);border:1px solid var(--bd2);border-radius:10px;padding:10px 11px}
+.pf-mission-name{display:flex;align-items:center;gap:8px;min-width:0}
+.pf-mission-name>span{flex:none;font-size:16px}
+.pf-mission-name input{width:100%;min-width:0;background:var(--s1);border:1px solid var(--bd2);border-radius:7px;outline:none;color:var(--tx);font:inherit;font-size:13px;padding:9px}
+.pf-mission-money{display:flex;align-items:center;min-width:0;background:var(--s1);border:1px solid var(--bd2);border-radius:7px;overflow:hidden;color:var(--mu);font-size:12px;padding-left:8px}
+.pf-mission-money input{width:100%;min-width:0;background:transparent;border:0;outline:none;color:var(--blue);font:700 14px 'Space Grotesk',sans-serif;text-align:right;padding:9px 8px}
+.pf-mission-name:focus-within input,.pf-mission-money:focus-within{border-color:var(--blue);box-shadow:0 0 0 2px var(--tbg)}
+.pf-mission-del{border:1px solid var(--bd2);border-radius:7px;background:var(--s1);color:var(--mu);height:35px;min-width:35px;font-size:19px;cursor:pointer}
+.pf-mission-del:hover{color:var(--red);border-color:var(--red)}
+.pf-tithe-setup{display:grid;grid-template-columns:minmax(180px,1fr) minmax(200px,1.3fr);gap:12px;align-items:stretch}
+.pf-tithe-result{background:var(--s1);border:1px solid var(--tbd);border-radius:11px;padding:13px 15px;min-width:0}
+.pf-tithe-result strong{display:block;font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:24px;line-height:1.3;color:var(--purple);margin:5px 0 3px;overflow-wrap:anywhere}
+.pf-tithe-result small{display:block;font-size:11px;color:var(--mu)}
+.pf-tithe-hint{font-size:11px;color:var(--mu);margin-top:9px}
+@media(max-width:640px){.pf-tithe-setup{grid-template-columns:1fr}.pf-mission-row{grid-template-columns:minmax(0,1fr) 100px 34px;gap:6px;padding:8px}.pf-mission-name input{padding:8px 6px}.pf-mission-money input{padding:8px 5px}.pf-tithe-result strong{font-size:21px}}
+@media(max-width:390px){.pf-mission-row{grid-template-columns:minmax(0,1fr) 88px 30px}.pf-mission-name>span{display:none}}
+
 </style>
 <style>
 .debt-item-quitado{opacity:.65;background:rgba(74,222,128,.04)}
@@ -1642,41 +1662,24 @@ body.dark[data-ambiente="simulador"] .classic-live-warning{background:#5a411b;co
         <div style="font-size:11px;color:var(--di)">Percentual da renda — calculado automaticamente</div>
       </div>
     </div>
-    <div class="form-grid-2" style="margin-bottom:12px">
+    <div class="pf-tithe-setup">
       <div class="form-group">
-        <label class="form-label">Percentual do dízimo</label>
+        <label class="form-label" for="dizimo-pct">Percentual do dízimo</label>
         <div class="input-wrap">
-          <input type="number" class="form-input" id="dizimo-pct" value="10" min="0" max="100" oninput="calcular();renderDizimo()">
+          <input type="number" class="form-input" id="dizimo-pct" value="10" min="0" max="100" step="0.1" oninput="calcular();window.agendarAutoSave?.()">
           <div class="input-suffix">%</div>
         </div>
-        <span class="form-sublabel">geralmente 10% da renda total</span>
+        <span class="form-sublabel">Defina o percentual da renda líquida; é possível usar 0%.</span>
       </div>
-      <div class="form-group">
-        <label class="form-label">Quanto já doa à igreja</label>
-        <div class="input-wrap">
-          <div class="input-prefix">R$</div>
-          <input type="number" class="form-input" id="dizimo-atual" value="0" min="0" oninput="calcular();renderDizimo()">
-        </div>
-        <span class="form-sublabel">dízimo entregue atualmente</span>
+      <div class="pf-tithe-result" aria-live="polite">
+        <div class="stat-label">🙏 Dízimo calculado automaticamente</div>
+        <strong id="diz-meta">R$ 0,00</strong>
+        <small id="diz-pct-label">10% da renda líquida</small>
+        <small>Renda considerada: <span id="diz-renda-base">R$ 0,00</span></small>
       </div>
     </div>
-    <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:0">
-      <div class="stat-card" style="border-color:rgba(167,139,250,.3);background:rgba(167,139,250,.05)">
-        <div class="stat-label">Meta do dízimo</div>
-        <div class="stat-value" id="diz-meta" style="color:var(--purple)">R$ 0</div>
-        <div class="stat-sub" id="diz-pct-label">10% da renda</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Já doa</div>
-        <div class="stat-value" id="diz-dado" style="color:var(--tx)">R$ 0</div>
-        <div class="stat-sub" id="diz-dado-pct">—</div>
-      </div>
-      <div class="stat-card" style="border-color:rgba(251,191,36,.3)">
-        <div class="stat-label">Falta para 100%</div>
-        <div class="stat-value" id="diz-falta" style="color:var(--amber)">R$ 0</div>
-        <div class="stat-sub">a acrescentar</div>
-      </div>
-    </div>
+    <input type="hidden" id="dizimo-atual" value="0">
+    <p class="pf-tithe-hint">Valor planejado e calculado automaticamente, não comprovante de pagamento. Missões e ofertas são somadas separadamente.</p>
   </div>
 
   <!-- BLOCO 2: MURILO E BRENDA -->
@@ -1688,16 +1691,7 @@ body.dark[data-ambiente="simulador"] .classic-live-warning{background:#5a411b;co
         <div style="font-size:11px;color:var(--di)">Valor fixo mensal — não entra no percentual do dízimo</div>
       </div>
     </div>
-    <div class="form-grid" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr));margin-bottom:12px" id="missionarios-grid">
-    <div style="display:flex;align-items:center;gap:7px;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:7px 11px">
-      <span style="font-size:14px">✉️</span>
-      <input type="text" value="Murilo e Brenda" placeholder="Nome" style="background:transparent;border:none;outline:none;color:var(--tx);font-size:13px;flex:1;font-family:&#39;Inter&#39;,sans-serif" onchange="updateMiss(&#39;m1&#39;,&#39;nome&#39;,this.value)">
-      <div style="display:flex;align-items:center;background:var(--s3);border:1px solid var(--bd);border-radius:7px;overflow:hidden;flex-shrink:0">
-        <span style="padding:0 7px;font-size:11px;color:var(--di)">R$</span>
-        <input type="number" value="150" placeholder="0" style="background:transparent;border:none;outline:none;color:var(--blue);font-family:&#39;Space Grotesk&#39;,sans-serif;font-weight:600;font-size:13px;width:80px;padding:5px 7px 5px 0;text-align:right;-moz-appearance:textfield" oninput="updateMiss(&#39;m1&#39;,&#39;val&#39;,this.value)">
-      </div>
-      <button onclick="delMiss(&#39;m1&#39;)" style="background:none;border:none;cursor:pointer;color:var(--di);font-size:16px;padding:2px 4px;border-radius:5px;transition:color .15s" onmouseover="this.style.color=&#39;var(--red)&#39;" onmouseout="this.style.color=&#39;var(--di)&#39;">×</button>
-    </div></div>
+    <div class="pf-mission-list" id="missionarios-grid"></div>
     <button class="add-expense-btn" onclick="addMissionario()" style="max-width:220px">
       <span style="font-size:16px">+</span> Adicionar missionário
     </button>
@@ -1717,7 +1711,7 @@ body.dark[data-ambiente="simulador"] .classic-live-warning{background:#5a411b;co
         <label class="form-label">Valor fixo mensal</label>
         <div class="input-wrap">
           <div class="input-prefix">R$</div>
-          <input type="number" class="form-input" id="outras-doacoes" value="0" min="0" oninput="calcular();renderDizimo()">
+          <input type="number" class="form-input" id="outras-doacoes" value="0" min="0" oninput="calcular();window.agendarAutoSave?.()">
         </div>
         <span class="form-sublabel">projetos sociais, necessitados</span>
       </div>
@@ -1732,7 +1726,7 @@ body.dark[data-ambiente="simulador"] .classic-live-warning{background:#5a411b;co
 
   <!-- RESUMO TOTAL DOAÇÕES -->
   <div id="resumo-doacoes"></div>
-  <div id="alert-dizimo"><div class="alert alert-amber"><span class="alert-icon">🙏</span><div>Informe quanto já entrega de dízimo à igreja mensalmente.</div></div></div>
+  <div id="alert-dizimo"></div>
 
   <div class="divider"></div>
   <div style="display:flex;justify-content:space-between">
@@ -2244,7 +2238,7 @@ let state = {
   ],
   nextRendaId: 3,
   ticket:0, outras:0,
-  dizimoPct:10, dizimoAtual:0,
+  dizimoPct:10, dizimoAtual:0, dizimoHistoricoAntesAutomacao:null,
   // Missionários: lista de {id, nome, val}
   missionarios:[
     {id:'m1', nome:'Murilo e Brenda', val:150},
@@ -2275,46 +2269,49 @@ let state = {
   nextDividaId: 1
 };
 
-/* ── MISSIONÁRIOS ── */
+/* ── MISSIONÁRIOS: campos estáveis e editáveis sem perda de foco ── */
 function renderMissionarios() {
-  const grid = document.getElementById('missionarios-grid');
-  if (!grid) return;
-  grid.innerHTML = state.missionarios.map(m => `
-    <div style="display:flex;align-items:center;gap:7px;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:7px 11px">
-      <span style="font-size:14px">✉️</span>
-      <input type="text" value="${m.nome}" placeholder="Nome"
-        style="background:transparent;border:none;outline:none;color:var(--tx);font-size:13px;flex:1;font-family:'Inter',sans-serif"
-        onchange="updateMiss('${m.id}','nome',this.value)">
-      <div style="display:flex;align-items:center;background:var(--s3);border:1px solid var(--bd);border-radius:7px;overflow:hidden;flex-shrink:0">
-        <span style="padding:0 7px;font-size:11px;color:var(--di)">R$</span>
-        <input type="number" value="${m.val||''}" placeholder="0"
-          style="background:transparent;border:none;outline:none;color:var(--blue);font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;width:80px;padding:5px 7px 5px 0;text-align:right;-moz-appearance:textfield"
-          oninput="updateMiss('${m.id}','val',this.value)">
-      </div>
-      <button onclick="delMiss('${m.id}')"
-        style="background:none;border:none;cursor:pointer;color:var(--di);font-size:16px;padding:2px 4px;border-radius:5px;transition:color .15s"
-        onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--di)'">×</button>
-    </div>`).join('');
+  const grid=document.getElementById('missionarios-grid');
+  if(!grid)return;
+  grid.innerHTML=state.missionarios.map(m=>{
+    const id=pfEscHtml(m.id), nome=pfEscHtml(m.nome), valor=Number(m.val)||0;
+    return `<div class="pf-mission-row" data-id="${id}">
+      <label class="pf-mission-name"><span aria-hidden="true">✉️</span>
+        <input type="text" value="${nome}" aria-label="Nome do missionário" placeholder="Nome do missionário"
+         oninput="updateMiss('${id}','nome',this.value)">
+      </label>
+      <label class="pf-mission-money">R$
+        <input type="number" min="0" step="0.01" inputmode="decimal" aria-label="Valor mensal de ${nome}"
+          value="${valor||''}" placeholder="0" oninput="updateMiss('${id}','val',this.value)">
+      </label>
+      <button type="button" class="pf-mission-del" aria-label="Excluir missionário ${nome}" title="Excluir missionário" onclick="delMiss('${id}')">×</button>
+    </div>`;
+  }).join('');
 }
-
-function updateMiss(id, field, val) {
-  const m = state.missionarios.find(x=>x.id===id);
-  if (!m) return;
-  m[field] = field==='val' ? (parseFloat(val)||0) : val;
-  calcular(); renderDizimo();
+function updateMiss(id,field,val){
+  const m=state.missionarios.find(x=>String(x.id)===String(id));
+  if(!m)return;
+  if(field==='val')m.val=Math.max(0,Number(String(val).replace(',','.'))||0);
+  else if(field==='nome')m.nome=String(val);
+  // Recalcula somente os resultados. NUNCA recria inputs enquanto se digita.
+  calcular();
+  window.agendarAutoSave?.();
 }
-
-function delMiss(id) {
-  state.missionarios = state.missionarios.filter(m=>m.id!==id);
-  renderMissionarios(); calcular(); renderDizimo();
+function delMiss(id){
+  const m=state.missionarios.find(x=>String(x.id)===String(id));
+  if(!m)return;
+  if(!confirm(`Excluir o apoio a "${m.nome}"?`))return;
+  state.missionarios=state.missionarios.filter(x=>String(x.id)!==String(id));
+  renderMissionarios();calcular();window.agendarAutoSave?.();
 }
-
-window.addMissionario = () => {
-  state.missionarios.push({id:'m'+state.nextMissId++, nome:'Novo missionário', val:0});
-  renderMissionarios();
-  const inputs = document.querySelectorAll('#missionarios-grid input[type="text"]');
-  const last = inputs[inputs.length-1];
-  if(last){last.focus();last.select();}
+window.addMissionario=()=>{
+  let id;
+  do {id='m'+state.nextMissId++;}while(state.missionarios.some(m=>String(m.id)===id));
+  state.missionarios.push({id,nome:'',val:0});
+  renderMissionarios();calcular();window.agendarAutoSave?.();
+  const novo=[...document.querySelectorAll('#missionarios-grid .pf-mission-row')].find(e=>e.dataset.id===id);
+  const input=novo?.querySelector('input[type=text]');
+  if(input)input.focus();
 };
 
 /* ══ PROVENTOS / HOLERITE: o campo .val segue sendo SEMPRE o líquido ══ */
@@ -2438,14 +2435,50 @@ function excluirDescontoRenda(id,i){
   r.descontos?.splice(i,1);pfCalcularLiquido(r);renderRendas();calcular();pfRendaAgendaSave();
 }
 
+/* ── Adicionar/remover fontes de renda ──
+   Estas funções existiam no visual original e foram omitidas quando
+   a interface de bruto/líquido foi introduzida. Os botões do HTML
+   continuam chamando addRenda()/delRenda(). */
+function delRenda(id){
+  const indice=state.rendas.findIndex(r=>String(r.id)===String(id));
+  if(indice<0){showToast('Provento não encontrado.',true);return;}
+  if(state.rendas.length<=1){
+    showToast('Mantenha ao menos uma fonte de renda.',true);
+    return;
+  }
+  const nome=String(state.rendas[indice].nome||'esta fonte de renda');
+  if(!window.confirm(`Excluir o provento "${nome}" do ambiente atual?`))return;
+  state.rendas.splice(indice,1);
+  renderRendas();
+  calcular();
+  pfRendaAgendaSave();
+  showToast('Provento removido. Confira os totais e salve suas alterações.');
+}
+window.addRenda=()=>{
+  // Evita reutilizar IDs após importar dados de versões antigas.
+  let novoId;
+  do {novoId='r'+state.nextRendaId++;}
+  while(state.rendas.some(r=>String(r.id)===novoId));
+  state.rendas.push({id:novoId,nome:'Nova fonte de renda',val:0,tipoValor:'liquido',descontos:[]});
+  renderRendas();
+  calcular();
+  pfRendaAgendaSave();
+  const box=[...document.querySelectorAll('#rendas-list .pf-income-card')]
+    .find(el=>el.dataset.id===novoId);
+  const campo=box?.querySelector('.pf-income-name input');
+  if(campo){campo.focus();campo.select();}
+};
+
 /* ── COLETAR/APLICAR dados ── */
 window.coletarDados = () => ({
   rendas:        state.rendas,
   nextRendaId:   state.nextRendaId,
   ticket:        +document.getElementById('ticket').value||0,
   outras:        +document.getElementById('outras').value||0,
-  dizimoPct:        +document.getElementById('dizimo-pct').value||10,
-  dizimoAtual:      +document.getElementById('dizimo-atual').value||0,
+  dizimoPct:        getDizimoPct(),
+  dizimoAtual:      sincronizarDizimoAutomático(),
+  dizimoAutomatico:  true,
+  dizimoHistoricoAntesAutomacao: state.dizimoHistoricoAntesAutomacao,
   outrasDoacoes:    +document.getElementById('outras-doacoes').value||0,
   outrasDoacoesDesc: document.getElementById('outras-doacoes-desc').value||'',
   missionarios:  state.missionarios,
@@ -2467,8 +2500,14 @@ window.applyData = (d) => {
     if(d.extra) state.rendas.push({id:'r4',nome:'Renda extra / aulas',val:d.extra});
   }
   ['ticket','outras'].forEach(f => { if(d[f]!==undefined) document.getElementById(f).value = d[f]||''; });
-  if(d.dizimoPct)         document.getElementById('dizimo-pct').value        = d.dizimoPct;
-  if(d.dizimoAtual)       document.getElementById('dizimo-atual').value      = d.dizimoAtual;
+  if(d.dizimoPct!==undefined) document.getElementById('dizimo-pct').value = d.dizimoPct;
+  // Preserva o último valor manual antigo em campo histórico separado,
+  // sem utilizá-lo como dízimo planejado nem apagar a referência anterior.
+  if(d.dizimoHistoricoAntesAutomacao!==undefined && d.dizimoHistoricoAntesAutomacao!==null){
+    state.dizimoHistoricoAntesAutomacao=Number(d.dizimoHistoricoAntesAutomacao)||0;
+  } else if(d.dizimoAutomatico!==true && d.dizimoAtual!==undefined){
+    state.dizimoHistoricoAntesAutomacao=Number(d.dizimoAtual)||0;
+  }
   if(d.outrasDoacoes)     document.getElementById('outras-doacoes').value    = d.outrasDoacoes;
   if(d.outrasDoacoesDesc) document.getElementById('outras-doacoes-desc').value = d.outrasDoacoesDesc;
   if(d.missionarios)  { state.missionarios = d.missionarios; state.nextMissId = d.nextMissId||state.nextMissId; }
@@ -2507,6 +2546,22 @@ function goTo(id) {
   window.scrollTo(0,0);
 }
 
+/* Dízimo planejado: a base é a renda líquida utilizada pelo Painel Geral. */
+function getDizimoPct(){
+  const v=Number(document.getElementById('dizimo-pct')?.value);
+  return Number.isFinite(v)?Math.min(100,Math.max(0,v)):0;
+}
+function getDizimoCalculado(){
+  return Math.round((getRenda()*getDizimoPct()/100+Number.EPSILON)*100)/100;
+}
+function sincronizarDizimoAutomático(){
+  const valor=getDizimoCalculado();
+  const campo=document.getElementById('dizimo-atual');
+  if(campo)campo.value=valor.toFixed(2);
+  state.dizimoPct=getDizimoPct();state.dizimoAtual=valor;
+  return valor;
+}
+
 /* ── CÁLCULO ── */
 function getRenda() {
   return state.rendas.reduce((s,r) => s + r.val, 0)
@@ -2518,12 +2573,12 @@ function calcular() {
   const ticket    = +document.getElementById('ticket').value||0;
   const totalDesp = state.expenses.reduce((s,e)=>s+e.val,0);
   const saldo     = renda - totalDesp;
-  const dizPct    = +document.getElementById('dizimo-pct').value||10;
-  const dizMeta   = renda*(dizPct/100);
-  const dizAtual  = +document.getElementById('dizimo-atual').value||0;
+  const dizPct    = getDizimoPct();
+  const dizMeta   = sincronizarDizimoAutomático();
+  const dizAtual  = dizMeta;
   const missTotal = state.missionarios.reduce((s,m)=>s+m.val,0);
   const outrasDoa = +document.getElementById('outras-doacoes').value||0;
-  const totalDoa  = dizAtual + missTotal + outrasDoa;  // total já dado em doações
+  const totalDoa  = dizAtual + missTotal + outrasDoa;  // previsão mensal de doações
   const dizFalta  = Math.max(0, dizMeta - dizAtual);
   const saldoReal = Math.max(0, saldo - dizFalta);
 
@@ -2552,23 +2607,18 @@ function markDone(id){document.getElementById('dot-'+id).className='nav-status d
 
 function renderDizimo(){
   const renda      = getRenda();
-  const pct        = +document.getElementById('dizimo-pct').value||10;
-  const dado       = +document.getElementById('dizimo-atual').value||0;
+  const pct        = getDizimoPct();
+  const dado       = sincronizarDizimoAutomático();
   const missTotal  = state.missionarios.reduce((s,m)=>s+m.val,0);
   const outrasDoa  = +document.getElementById('outras-doacoes').value||0;
   const meta       = renda*(pct/100);
   const falta      = Math.max(0,meta-dado);
   const totalDoa   = dado + missTotal + outrasDoa;
 
-  // Dízimo stats
-  document.getElementById('diz-meta').textContent        = fmt(meta);
-  document.getElementById('diz-pct-label').textContent   = `${pct}% da renda`;
-  document.getElementById('diz-dado').textContent        = fmt(dado);
-  document.getElementById('diz-dado-pct').textContent    = renda>0 ? `${(dado/renda*100).toFixed(1)}% da renda` : '—';
-  document.getElementById('diz-falta').textContent       = fmt(falta);
-
-  // Missionários
-  renderMissionarios();
+  // Indicador calculado sem recriar campos de missionários durante digitação.
+  document.getElementById('diz-meta').textContent = pfFormatCentavos(meta);
+  document.getElementById('diz-pct-label').textContent = `${pct}% da renda líquida`;
+  document.getElementById('diz-renda-base').textContent = fmt(renda);
 
   // Resumo total doações
   const resumoEl = document.getElementById('resumo-doacoes');
@@ -2584,7 +2634,7 @@ function renderDizimo(){
           </div>
           ${state.missionarios.filter(m=>m.val>0).map(m=>`
           <div style="background:var(--s3);border-radius:9px;padding:9px 12px">
-            <div style="font-size:11px;color:var(--mu);margin-bottom:2px">✉️ ${m.nome}</div>
+            <div style="font-size:11px;color:var(--mu);margin-bottom:2px">✉️ ${pfEscHtml(m.nome)}</div>
             <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;color:var(--blue)">${fmt(m.val)}</div>
             <div style="font-size:10px;color:var(--di)">fixo mensal</div>
           </div>`).join('')}
@@ -2603,12 +2653,12 @@ function renderDizimo(){
       </div>`;
   }
 
-  // Alertas dízimo
-  const aEl = document.getElementById('alert-dizimo');
-  if(!aEl) return;
-  if(falta===0&&meta>0) aEl.innerHTML=`<div class="alert alert-green"><span class="alert-icon">✅</span><div>Dízimo completo! Glória a Deus!</div></div>`;
-  else if(dado===0)     aEl.innerHTML=`<div class="alert alert-amber"><span class="alert-icon">🙏</span><div>Informe quanto já entrega de dízimo à igreja mensalmente.</div></div>`;
-  else                  aEl.innerHTML=`<div class="alert alert-purple"><span class="alert-icon">🙏</span><div>Faltam <strong style="color:var(--purple)">${fmt(falta)}</strong> para o dízimo completo de ${pct}%. Aumente progressivamente.</div></div>`;
+  // Valores automáticos são uma PROJEÇÃO, nunca uma confirmação de pagamento.
+  const aEl=document.getElementById('alert-dizimo');
+  if(!aEl)return;
+  aEl.innerHTML= renda>0
+    ? `<div class="alert alert-teal"><span class="alert-icon">🧮</span><div>Dízimo planejado: <strong>${pfFormatCentavos(meta)}</strong> (${pct}% de ${fmt(renda)}). Missionários e outras ofertas são contabilizados separadamente.</div></div>`
+    : `<div class="alert alert-amber"><span class="alert-icon">💡</span><div>Cadastre as fontes de renda para calcular o dízimo automaticamente.</div></div>`;
 }
 
 /* ── PLANO ── */
@@ -2625,7 +2675,7 @@ function renderPlano(renda,ticket,totalDesp,saldo,saldoReal,dizMeta,dizAtual,diz
   if(saldo<0)        al+=`<div class="alert alert-red"><span class="alert-icon">🚨</span><div><strong style="color:var(--red)">Déficit de ${fmt(Math.abs(saldo))}/mês.</strong> Gastos superam a renda. Revise as despesas.</div></div>`;
   else if(pctDesp>90)al+=`<div class="alert alert-amber"><span class="alert-icon">⚠️</span><div><strong style="color:var(--amber)">Orçamento apertado (${pctDesp.toFixed(0)}%).</strong> Sobram apenas ${fmt(saldo)}.</div></div>`;
   else               al+=`<div class="alert alert-green"><span class="alert-icon">✅</span><div><strong style="color:var(--green)">Saldo positivo de ${fmt(saldo)}/mês.</strong> Direcione para dízimo e reserva.</div></div>`;
-  if(dizFalta>0)     al+=`<div class="alert alert-purple"><span class="alert-icon">🙏</span><div>Faltam <strong style="color:var(--purple)">${fmt(dizFalta)}</strong> para o dízimo completo de ${+document.getElementById('dizimo-pct').value||10}%. Total dado hoje (dízimo + missões + doações): <strong style="color:var(--purple)">${fmt(totalDoa)}</strong>.</div></div>`;
+  if(dizFalta>0)     al+=`<div class="alert alert-purple"><span class="alert-icon">🙏</span><div>Faltam <strong style="color:var(--purple)">${fmt(dizFalta)}</strong> para o dízimo completo de ${getDizimoPct()}%. Total planejado (dízimo + missões + doações): <strong style="color:var(--purple)">${fmt(totalDoa)}</strong>.</div></div>`;
   document.getElementById('plano-alertas').innerHTML=al;
 
   // Stats
@@ -2643,7 +2693,7 @@ function renderPlano(renda,ticket,totalDesp,saldo,saldoReal,dizMeta,dizAtual,diz
   if(dizAtual>0||dizMeta>0||missTotal>0||outrasDoa>0){
     tbl+=`<tr class="cat-header"><td colspan="3">🙏 Doações</td></tr>`;
     if(dizAtual>0||dizMeta>0)
-      tbl+=`<tr style="background:rgba(167,139,250,.04)"><td><span style="margin-right:5px">🙏</span>Dízimo (${+document.getElementById('dizimo-pct').value||10}%)</td><td style="color:var(--purple)">${fmt(dizAtual)}</td><td style="color:var(--mu)">${(dizAtual/renda*100).toFixed(1)}%</td></tr>`;
+      tbl+=`<tr style="background:rgba(167,139,250,.04)"><td><span style="margin-right:5px">🙏</span>Dízimo (${getDizimoPct()}%)</td><td style="color:var(--purple)">${fmt(dizAtual)}</td><td style="color:var(--mu)">${(dizAtual/renda*100).toFixed(1)}%</td></tr>`;
     state.missionarios.filter(m=>m.val>0).forEach(m=>{
       tbl+=`<tr style="background:rgba(96,165,250,.04)"><td><span style="margin-right:5px">✉️</span>${m.nome}</td><td style="color:var(--blue)">${fmt(m.val)}</td><td style="color:var(--mu)">${(m.val/renda*100).toFixed(1)}%</td></tr>`;
     });
@@ -3361,16 +3411,16 @@ function renderMetas(){
   const renda=getRenda();
   const totalDesp=state.expenses.reduce((s,e)=>s+e.val,0);
   const saldo=Math.max(0,renda-totalDesp);
-  const dizFalta=Math.max(0,renda*(+document.getElementById('dizimo-pct').value||10)/100-(+document.getElementById('dizimo-atual').value||0));
+  const dizFalta=Math.max(0,renda*(getDizimoPct())/100-(+document.getElementById('dizimo-atual').value||0));
   const saldoReal=Math.max(0,saldo-dizFalta);
   const reservaMensal=saldoReal*.55;
   const catT={};
   state.expenses.forEach(e=>{catT[e.cat]=(catT[e.cat]||0)+e.val;});
   const essenciais=(catT.moradia||0)+(catT.alimentacao||0)+state.ticket+(catT.transporte||0)+(catT.saude||0)+(catT.obrigacoes||0);
-  const dizMeta=renda*(+document.getElementById('dizimo-pct').value||10)/100;
+  const dizMeta=renda*(getDizimoPct())/100;
   const goals=[
     {icon:'🐷',name:'Reserva de emergência',desc:'6 meses dos gastos essenciais. Tesouro Selic.',meta:essenciais*6,aporte:reservaMensal,cor:'var(--green)'},
-    {icon:'🙏',name:'Dízimo completo',desc:'10% da renda. Aumentar progressivamente.',meta:dizMeta*12,aporte:+document.getElementById('dizimo-atual').value||0,cor:'var(--purple)'},
+    {icon:'🙏',name:'Dízimo planejado',desc:'Percentual da renda calculado automaticamente.',meta:dizMeta*12,aporte:+document.getElementById('dizimo-atual').value||0,cor:'var(--purple)'},
     {icon:'🚗',name:'Troca de carro',desc:'Planejamento substituição do veículo.',meta:40000,aporte:reservaMensal*.2,cor:'var(--amber)'},
     {icon:'✈️',name:'Viagem dos sonhos',desc:'Uma viagem especial para a família.',meta:15000,aporte:reservaMensal*.1,cor:'var(--blue)'},
   ];
@@ -3410,7 +3460,7 @@ function setPerfilTab(p,btn){state.perfil=p;document.querySelectorAll('.tab').fo
 function renderInvestir(){
   const renda=getRenda(),totalDesp=state.expenses.reduce((s,e)=>s+e.val,0);
   const saldo=Math.max(0,renda-totalDesp);
-  const dizFalta=Math.max(0,renda*(+document.getElementById('dizimo-pct').value||10)/100-(+document.getElementById('dizimo-atual').value||0));
+  const dizFalta=Math.max(0,renda*(getDizimoPct())/100-(+document.getElementById('dizimo-atual').value||0));
   const base=Math.max(0,(saldo-dizFalta)*.45);
   document.getElementById('invest-base-alert').innerHTML=base>0
     ?`<span class="alert-icon">📈</span> Você tem <strong style="color:var(--teal)">${fmt(base)}/mês</strong> para investimentos. Aporte todo mês, sem exceção.`
@@ -3751,7 +3801,7 @@ function calcScore(){
   if(!renda) return 50;
   const totalDesp=state.expenses.reduce((s,e)=>s+e.val,0);
   const saldo=renda-totalDesp;
-  const dizPct=+document.getElementById('dizimo-pct').value||10;
+  const dizPct=getDizimoPct();
   const dizMeta=renda*(dizPct/100);
   const dizAtual=+document.getElementById('dizimo-atual').value||0;
   const dividas=(state.expenses.filter(e=>e.cat==='dividas').reduce((s,e)=>s+e.val,0));
@@ -3762,7 +3812,7 @@ function calcScore(){
   // Dívidas < 20% renda +10, > 40% -15
   const divPct=dividas/renda;
   if(divPct<0.2) score+=10; else if(divPct>0.4) score-=15; else score+=5;
-  // Dízimo >=100% +10
+  // Planejamento do dízimo definido (+10); não confirma pagamento
   if(dizMeta>0) score+= dizAtual>=dizMeta?10:(dizAtual/dizMeta*10);
   // Tem investimento +5
   const invest=Math.max(0,(saldo-Math.max(0,dizMeta-dizAtual))*0.45);
@@ -3802,7 +3852,7 @@ function renderDashGeral(){
   const ticket=+document.getElementById('ticket').value||0;
   const totalDesp=state.expenses.reduce((s,e)=>s+e.val,0);
   const saldo=renda-totalDesp;
-  const dizPct=+document.getElementById('dizimo-pct').value||10;
+  const dizPct=getDizimoPct();
   const dizMeta=renda*(dizPct/100);
   const dizAtual=+document.getElementById('dizimo-atual').value||0;
   const missTotal=state.missionarios.reduce((s,m)=>s+m.val,0);
@@ -4159,7 +4209,7 @@ window.exportExcel=()=>{
     // Aba 1: Planejamento Geral
     const renda=getRenda();
     const ticket=+document.getElementById('ticket').value||0;
-    const dizPct=+document.getElementById('dizimo-pct').value||10;
+    const dizPct=getDizimoPct();
     const dizAtual=+document.getElementById('dizimo-atual').value||0;
     const missTotal=state.missionarios.reduce((s,m)=>s+m.val,0);
     const outrasDoa=+document.getElementById('outras-doacoes').value||0;
@@ -8370,7 +8420,7 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
         const data=typeof window.coletarDados==='function'?window.coletarDados():{}, wb=XLSX.utils.book_new(), used=new Set();
         const rendas=data.rendas||window.state?.rendas||[], despesas=data.expenses||window.state?.expenses||[], mis=data.missionarios||window.state?.missionarios||[];
         const totalRenda=rendas.reduce((s,r)=>s+n(r.val),0)+n(data.outras), totalDesp=despesas.reduce((s,e)=>s+n(e.val),0);
-        appendSheet(wb,used,'Resumo Geral',[["PAINELFIN — RESUMO GERAL"],[],['Indicador','Valor'],['Renda total',totalRenda],['Ticket',n(data.ticket)],['Despesas gerais',totalDesp],['Saldo geral',totalRenda-totalDesp],['Dízimo atual',n(data.dizimoAtual)],['Outras doações',n(data.outrasDoacoes)]],[28,18]);
+        appendSheet(wb,used,'Resumo Geral',[["PAINELFIN — RESUMO GERAL"],[],['Indicador','Valor'],['Renda total',totalRenda],['Ticket',n(data.ticket)],['Despesas gerais',totalDesp],['Saldo geral',totalRenda-totalDesp],['Dízimo calculado',n(data.dizimoAtual)],['Outras doações',n(data.outrasDoacoes)]],[28,18]);
         appendSheet(wb,used,'Rendas',[["Fonte","Valor"],...rendas.map(r=>[r.nome,n(r.val)]),['Outras rendas/benefícios',n(data.outras)],['Ticket',n(data.ticket)]],[32,16]);
         appendSheet(wb,used,'Despesas Geral',[["Categoria","Despesa","Valor"],...despesas.map(e=>[(window.CATS?.[e.cat]?.label)||e.cat,e.name,n(e.val)])],[22,34,16]);
         appendSheet(wb,used,'Doações',[["Tipo","Nome","Valor"],['Dízimo','Dízimo',n(data.dizimoAtual)],...mis.map(m=>['Missionário',m.nome,n(m.val)]),['Outras',data.outrasDoacoesDesc||'Outras doações',n(data.outrasDoacoes)]],[20,34,16]);
