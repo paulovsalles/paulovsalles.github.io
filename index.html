@@ -7111,6 +7111,12 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
 .pf-aulas-bottom{display:flex;gap:7px;flex-wrap:wrap;align-items:center;padding-top:9px;border-top:1px solid var(--bd)}
 .pf-aulas-action{border:1px solid var(--tbd);color:var(--teal);background:var(--s1);border-radius:8px;padding:7px 10px;cursor:pointer;font:700 11px Inter,sans-serif}
 .pf-aulas-action:hover{background:var(--tbg)}
+.pf-aula-row{overflow:visible}
+.pf-aula-row input[type="text"],.pf-aula-row .livre-money-wrap,.pf-aula-row .livre-date-chip,.pf-aula-row .livre-paid-check,.pf-aula-row .livre-del,.pf-aulas-action{position:relative}
+.pf-aula-row input[type="text"]:focus,.pf-aula-row input[type="text"]:focus-visible,.pf-aula-row .livre-money-wrap input:focus,.pf-aula-row .livre-money-wrap input:focus-visible,.pf-aula-row .livre-date-chip input:focus,.pf-aula-row .livre-date-chip input:focus-visible,.pf-aulas-action:focus-visible,.pf-aula-row .livre-del:focus-visible{outline:none!important;box-shadow:0 0 0 2px var(--tbd)!important;outline-offset:0!important;z-index:2}
+.pf-aula-row .livre-date-chip input:focus,.pf-aula-row .livre-date-chip input:focus-visible{box-shadow:none!important}
+.pf-aula-row .livre-date-chip:focus-within,.pf-aula-row .livre-money-wrap:focus-within{z-index:2}
+.pf-aulas-bottom{align-items:stretch}
 .pf-aulas-hint{margin:0;padding:9px 0;color:var(--mu);font-size:11px}
 .pf-aulas-migrar{margin-top:9px;background:var(--s1);border:1px solid var(--bd2);border-radius:10px;padding:11px}
 .pf-aulas-migrar p{color:var(--mu);font-size:11px;margin-bottom:8px}
@@ -7120,6 +7126,20 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
 .pf-aulas-escolhas label input{accent-color:var(--teal)}
 .pf-livre-resumo-aulas{cursor:pointer;background:var(--tbg)}
 .pf-livre-resumo-aulas:hover{filter:brightness(.98)}
+@media(max-width:760px){
+ .pf-aulas-colunas{display:none}
+ .pf-aula-row{grid-template-columns:minmax(0,1fr) 94px 28px;grid-template-areas:
+   "nome nome del"
+   "dia valor pago";gap:6px 6px}
+ .pf-aula-row>input[type="text"]{grid-area:nome}
+ .pf-aula-row>.livre-date-chip{grid-area:dia;width:100%;min-width:0;justify-self:stretch}
+ .pf-aula-row>.livre-money-wrap{grid-area:valor;width:100%;min-width:0}
+ .pf-aula-row>.livre-paid-check{grid-area:pago;justify-self:center}
+ .pf-aula-row>.pf-aula-excluir{grid-area:del;justify-self:end}
+ .pf-aulas-bottom{flex-direction:column;align-items:stretch}
+ .pf-aulas-action{width:100%;text-align:center}
+}
+
 @media(max-width:620px){
  .pf-aulas-head{padding:6px}
  .pf-aulas-body{margin:0 5px 8px 7px;padding:8px 7px}
@@ -7743,8 +7763,8 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
             oninput="editarAulaLivre('${escLivre(id)}','${escLivre(a.id)}','valor',this.value)"></div>
         ${statusAtivo?`<label class="livre-paid-check ${a.pago?'checked':''}" title="${a.pago?'Recebido':'Marcar como recebido'}">
           <input type="checkbox" ${a.pago?'checked':''} onchange="editarAulaLivre('${escLivre(id)}','${escLivre(a.id)}','pago',this.checked)">${checagem}
-        </label>`:'<span></span>'}
-        <button class="livre-del" type="button" title="Remover aluno" aria-label="Remover aluno"
+        </label>`:'<span class="pf-aula-paid-placeholder" aria-hidden="true"></span>'}
+        <button class="pf-aula-excluir" type="button" title="Remover aluno" aria-label="Remover aluno"
           onclick="removerAulaLivre('${escLivre(id)}','${escLivre(a.id)}')">×</button>
       </div>`).join('');
     const selecionaveis=candidatos.map(r=>`<label><input type="checkbox" value="${escLivre(r.id)}" data-pf-aula-migrar="${escLivre(id)}"><span>${escLivre(r.nome||'Sem nome')}</span><b>${moneyLivre(r.valor)}</b></label>`).join('');
@@ -12112,5 +12132,58 @@ body #app-shell .main{padding-bottom:38px}
  },0));
 })();
 </script>
+
+<!-- Correção isolada: X por aluno e colunas de aulas sem colisão com os estilos globais -->
+<style id="painelfin-aulas-x-fix">
+/* O botão do aluno NÃO herda o posicionamento absoluto do X dos proventos. */
+#sec-livre-lancamentos .pf-aula-row,
+#sec-livre-lancamentos .pf-aulas-colunas {
+  grid-template-columns:minmax(0,1fr) 82px 105px 25px 34px;
+  gap:7px;
+  min-width:0;
+}
+#sec-livre-lancamentos .pf-aula-row {position:relative;overflow:visible}
+#sec-livre-lancamentos .pf-aula-row .livre-date-chip,
+#sec-livre-lancamentos .pf-aula-row .livre-money-wrap {
+  width:100% !important; min-width:0 !important;
+  margin:0 !important; grid-column:auto !important; grid-row:auto !important;
+}
+#sec-livre-lancamentos .pf-aula-row .livre-date-chip {padding:0 4px !important;gap:2px !important;white-space:nowrap}
+#sec-livre-lancamentos .pf-aula-row .livre-date-chip .date-icon {flex-shrink:0}
+#sec-livre-lancamentos .pf-aula-row .livre-date-chip .day-label {font-size:9px !important}
+#sec-livre-lancamentos .pf-aula-row .livre-money-wrap input {min-width:0 !important;width:100% !important;padding-right:5px !important}
+#sec-livre-lancamentos .pf-aula-row .pf-aula-excluir {
+  position:static !important; inset:auto !important; transform:none !important;
+  display:flex;align-items:center;justify-content:center;justify-self:center;align-self:center;
+  width:32px;min-width:32px;height:32px;
+  padding:0;border:1px solid var(--bd2);border-radius:999px;
+  background:var(--s1);color:var(--di);cursor:pointer;
+  font:800 18px/1 'Inter',sans-serif;
+  box-shadow:0 2px 8px rgba(0,0,0,.05);
+  transition:background .15s,color .15s,border-color .15s;
+}
+#sec-livre-lancamentos .pf-aula-row .pf-aula-excluir:hover {
+  background:rgba(220,38,38,.1);border-color:var(--red);color:var(--red);
+}
+#sec-livre-lancamentos .pf-aula-row .pf-aula-excluir:focus-visible {
+  outline:2px solid var(--teal) !important;outline-offset:1px !important;
+}
+#sec-livre-lancamentos .pf-aula-row .pf-aula-paid-placeholder {display:block;min-width:0}
+/* Em larguras estreitas: nome + excluir na primeira linha, dia e valor abaixo. */
+@media (max-width:760px){
+  #sec-livre-lancamentos .pf-aulas-colunas {display:none}
+  #sec-livre-lancamentos .pf-aula-row {
+    grid-template-columns:90px minmax(0,1fr) 34px !important;
+    grid-template-areas:'nome nome del' 'dia valor pago' !important;
+    gap:8px !important;
+  }
+  #sec-livre-lancamentos .pf-aula-row > input[type="text"] {grid-area:nome !important;min-width:0}
+  #sec-livre-lancamentos .pf-aula-row > .livre-date-chip {grid-area:dia !important;width:100% !important;min-width:0 !important}
+  #sec-livre-lancamentos .pf-aula-row > .livre-money-wrap {grid-area:valor !important;width:100% !important;min-width:0 !important}
+  #sec-livre-lancamentos .pf-aula-row > .livre-paid-check {grid-area:pago !important;justify-self:center}
+  #sec-livre-lancamentos .pf-aula-row > .pf-aula-paid-placeholder {grid-area:pago !important}
+  #sec-livre-lancamentos .pf-aula-row > .pf-aula-excluir {grid-area:del !important;justify-self:center}
+}
+</style>
 </body>
 </html>
