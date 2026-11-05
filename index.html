@@ -7854,7 +7854,7 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
           <span class="pf-aulas-soma">${moneyLivre(total)}<small>total do mês</small></span>
           <span class="pf-aulas-seta">${aberto?'⌃':'⌄'}</span>
         </button>
-        <button type="button" class="pf-aulas-remover" onclick="deleteLivreItem('receitas','${escLivre(id)}')" title="Excluir grupo Aulas e todos os alunos">×</button>
+        <button type="button" class="pf-aulas-remover" onclick="deleteLivreItem('receitas','${escLivre(id)}')" title="Excluir grupo Aulas e todos os alunos" aria-label="Excluir grupo Aulas e todos os alunos">×</button>
       </div>
       ${aberto?`<div class="pf-aulas-body">
         <div class="pf-aulas-colunas"><span>Aluno / aula</span><span>Dia</span><span>Valor</span><span>${statusAtivo?'✓':' '}</span><span></span></div>
@@ -10901,7 +10901,7 @@ body[data-pf-mode="saude"] .page-section:not([id^="sec-saude-"]){display:none!im
 .mes-del-btn,
 .expense-item .del-btn,
 .mes-item > button[onclick^="delMesItem"],
-button[onclick^="deleteLivreItem"]{
+.livre-row > button[onclick^="deleteLivreItem"]{
   width:32px !important;
   height:32px !important;
   min-width:32px !important;
@@ -10921,7 +10921,7 @@ button[onclick^="deleteLivreItem"]{
   transition:background .15s,border-color .15s,color .15s,transform .15s !important;
 }
 .livre-del,
-button[onclick^="deleteLivreItem"]{
+.livre-row > button[onclick^="deleteLivreItem"]{
   position:absolute !important;
   right:10px !important;
   top:50% !important;
@@ -10932,7 +10932,7 @@ button[onclick^="deleteLivreItem"]{
 .mes-del-btn:hover,
 .expense-item .del-btn:hover,
 .mes-item > button[onclick^="delMesItem"]:hover,
-button[onclick^="deleteLivreItem"]:hover{
+.livre-row > button[onclick^="deleteLivreItem"]:hover{
   background:rgba(220,38,38,.10) !important;
   border-color:rgba(220,38,38,.28) !important;
   color:var(--red) !important;
@@ -11003,13 +11003,13 @@ button[onclick^="deleteLivreItem"]:hover{
     height:32px !important;
   }
   .livre-del,
-  button[onclick^="deleteLivreItem"]{
+  .livre-row > button[onclick^="deleteLivreItem"]{
     right:8px !important;
     top:10px !important;
     transform:none !important;
   }
   .livre-del:hover,
-  button[onclick^="deleteLivreItem"]:hover{
+  .livre-row > button[onclick^="deleteLivreItem"]:hover{
     transform:scale(1.04) !important;
   }
 }
@@ -12320,6 +12320,26 @@ body #app-shell .main{padding-bottom:38px}
 </script>
 
 <!-- Correção isolada: X por aluno e colunas de aulas sem colisão com os estilos globais -->
+<style id="painelfin-x-grupo-aulas-fix">
+/* Exclusão do GRUPO Aulas: fica ao lado do total e nunca vira botão flutuante. */
+#sec-livre-lancamentos .pf-aulas-head > .pf-aulas-remover {
+  position:static !important;
+  top:auto !important;right:auto !important;bottom:auto !important;left:auto !important;
+  transform:none !important; z-index:auto !important;
+  display:flex !important;align-items:center !important;justify-content:center !important;
+  flex:0 0 32px !important;width:32px !important;min-width:32px !important;height:32px !important;
+  align-self:center !important;margin:0 !important;padding:0 !important;
+  border:1px solid var(--bd2) !important;border-radius:50% !important;
+  background:var(--s1) !important;color:var(--di) !important;
+  cursor:pointer !important;font:800 18px/1 'Inter',sans-serif !important;
+}
+#sec-livre-lancamentos .pf-aulas-head > .pf-aulas-remover:hover {
+  transform:none !important;
+  background:rgba(220,38,38,.08) !important;
+  color:var(--red) !important;
+  border-color:var(--red) !important;
+}
+</style>
 <style id="painelfin-aulas-x-fix">
 /* O botão do aluno NÃO herda o posicionamento absoluto do X dos proventos. */
 #sec-livre-lancamentos .pf-aula-row,
