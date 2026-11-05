@@ -2090,7 +2090,10 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
         </div>
       </div>
       <div id="livre-receitas-list"></div>
-      <button class="livre-add" onclick="addLivreItem('receitas')">＋ Adicionar receita</button>
+      <div class="pf-livre-provento-actions">
+        <button class="livre-add" onclick="addLivreItem('receitas')">＋ Adicionar provento</button>
+        <button class="livre-add pf-livre-add-aulas" onclick="adicionarGrupoAulasLivre()">🎓 Aulas agrupadas</button>
+      </div>
     </div>
 
     <!-- DESPESAS -->
@@ -7076,6 +7079,59 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
   .livre-money-wrap{grid-column:3;grid-row:2;width:108px;margin-left:72px}
   .livre-group-head{padding-left:10px !important;padding-right:10px !important}
 }
+
+/* ===== PAINELFIN • PROVENTO AULAS AGRUPADAS ===== */
+.pf-livre-provento-actions{display:flex;flex-wrap:wrap;gap:8px;padding:11px 14px 12px}
+.pf-livre-provento-actions .livre-add{width:auto;flex:1 1 160px;margin:0!important;text-align:center}
+.pf-livre-provento-actions .pf-livre-add-aulas{border-color:var(--tbd);background:var(--tbg);color:var(--teal)}
+.pf-aulas-group{border-bottom:1px solid var(--bd);background:var(--s1)}
+.pf-aulas-head{display:flex;gap:7px;align-items:stretch;padding:7px 10px;background:var(--tbg)}
+.pf-aulas-opener{display:flex;align-items:center;gap:9px;min-width:0;flex:1;padding:6px 5px;color:var(--tx);background:transparent;border:0;border-radius:9px;text-align:left;cursor:pointer}
+.pf-aulas-opener:hover{background:var(--s2)}
+.pf-aulas-ico{width:36px;height:36px;border:1px solid var(--tbd);background:var(--s1);border-radius:10px;display:grid;place-items:center;flex-shrink:0;font-size:17px}
+.pf-aulas-info{display:flex;flex-direction:column;flex:1;min-width:0}
+.pf-aulas-info strong{font:800 13px 'Space Grotesk',sans-serif;color:var(--tx)}
+.pf-aulas-info small{color:var(--mu);font-size:10px;line-height:1.6;white-space:normal}
+.pf-aulas-soma{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;font:800 13px 'Space Grotesk',sans-serif;color:var(--green);white-space:nowrap}
+.pf-aulas-soma small{font:500 9px Inter,sans-serif;color:var(--mu)}
+.pf-aulas-seta{color:var(--teal);font-size:15px;align-self:center}
+.pf-aulas-remover{background:transparent;border:1px solid transparent;color:var(--di);border-radius:8px;width:26px;flex-shrink:0;cursor:pointer}
+.pf-aulas-remover:hover{color:var(--red);background:var(--s2)}
+.pf-aulas-body{padding:7px 12px 12px 18px;border-left:3px solid var(--teal);margin:0 10px 10px 15px;background:var(--s2);border-radius:0 0 9px 9px}
+.pf-aulas-colunas{display:grid;grid-template-columns:minmax(80px,1fr) 64px 100px 32px 28px;gap:7px;padding:4px 0 5px;color:var(--mu);font:700 9px Inter,sans-serif;text-transform:uppercase}
+.pf-aula-row{display:grid;grid-template-columns:minmax(80px,1fr) 64px 100px 32px 28px;align-items:center;gap:7px;border-top:1px solid var(--bd);padding:7px 0}
+.pf-aula-row input[type="text"]{width:100%;min-width:0;font-size:12px;height:32px;background:var(--s1);color:var(--tx);border:1px solid var(--bd2);border-radius:8px;padding:0 9px;outline:none}
+.pf-aula-row input[type="text"]:focus{border-color:var(--tbd)}
+.pf-aula-row .livre-date-chip{width:64px;min-width:64px;height:32px;background:var(--s1)}
+.pf-aula-row .livre-money-wrap{height:32px!important;min-width:0;background:var(--s1)}
+.pf-aula-row .livre-money-wrap input{height:30px;min-width:0;width:100%;font:800 12px 'Space Grotesk',sans-serif;color:var(--green);border:0;background:transparent;outline:none;padding:0 3px 0 0;text-align:right}
+.pf-aula-row .livre-money-wrap span{padding-left:5px;font-size:10px}
+.pf-aula-row .livre-paid-check{grid-column:auto!important;grid-row:auto!important;justify-self:center}
+.pf-aula-row .livre-del{grid-column:auto!important;grid-row:auto!important;width:27px;height:30px}
+.pf-aulas-bottom{display:flex;gap:7px;flex-wrap:wrap;align-items:center;padding-top:9px;border-top:1px solid var(--bd)}
+.pf-aulas-action{border:1px solid var(--tbd);color:var(--teal);background:var(--s1);border-radius:8px;padding:7px 10px;cursor:pointer;font:700 11px Inter,sans-serif}
+.pf-aulas-action:hover{background:var(--tbg)}
+.pf-aulas-hint{margin:0;padding:9px 0;color:var(--mu);font-size:11px}
+.pf-aulas-migrar{margin-top:9px;background:var(--s1);border:1px solid var(--bd2);border-radius:10px;padding:11px}
+.pf-aulas-migrar p{color:var(--mu);font-size:11px;margin-bottom:8px}
+.pf-aulas-escolhas{max-height:185px;overflow:auto;display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.pf-aulas-escolhas label{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 4px;border-bottom:1px solid var(--bd);font-size:11px;cursor:pointer}
+.pf-aulas-escolhas label span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pf-aulas-escolhas label input{accent-color:var(--teal)}
+.pf-livre-resumo-aulas{cursor:pointer;background:var(--tbg)}
+.pf-livre-resumo-aulas:hover{filter:brightness(.98)}
+@media(max-width:620px){
+ .pf-aulas-head{padding:6px}
+ .pf-aulas-body{margin:0 5px 8px 7px;padding:8px 7px}
+ .pf-aulas-ico{width:29px;height:29px}
+ .pf-aulas-soma{font-size:12px}
+ .pf-aulas-colunas{grid-template-columns:minmax(65px,1fr) 48px 76px 26px 25px;gap:4px}
+ .pf-aula-row{grid-template-columns:minmax(65px,1fr) 48px 76px 26px 25px;gap:4px}
+ .pf-aula-row .livre-date-chip{width:48px;min-width:48px;padding:0 2px;gap:2px}
+ .pf-aula-row .livre-date-chip .day-label{display:none}
+ .pf-aula-row .livre-money-wrap input{font-size:11px}
+ .pf-aulas-soma small{display:none}
+}
 </style>
 
 <script>
@@ -7087,6 +7143,8 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
   let livreNextId = 1;
   let livreSaveTimer = null;
   let livreDragAtual = null;
+  const aulasAbertasLivre = new Set();
+  const aulasMigracaoLivre = new Set();
 
   const livreSortModes = {
     receitas:'manual',
@@ -7233,6 +7291,7 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
         if(typeof x.vencimento!=='string')x.vencimento='';
         if(typeof x.pagoEm!=='string')x.pagoEm='';
         normalizarGrupoLivre(t,x);
+        if(t==='receitas'&&ehGrupoAulasLivre(x))sincronizarGrupoAulasLivre(x);
       });
     });
 
@@ -7245,15 +7304,66 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
     return d;
   }
 
+
+  // O grupo "Aulas" ocupa uma linha nas receitas; seus alunos são a fonte do valor.
+  // Uma receita normal continua usando os campos originais, sem migração automática.
+  function ehGrupoAulasLivre(item){
+    return !!item && item.subtipo==='aulas' && Array.isArray(item.aulas);
+  }
+
+  function somaAulasLivre(item){
+    return (item.aulas||[]).reduce((s,a)=>s+(Number(a.valor)||0),0);
+  }
+
+  function totalItemLivre(item){
+    return ehGrupoAulasLivre(item)?somaAulasLivre(item):(Number(item?.valor)||0);
+  }
+
+  function recebidoItemLivre(item){
+    if(ehGrupoAulasLivre(item))return (item.aulas||[]).reduce((s,a)=>s+(a.pago?(Number(a.valor)||0):0),0);
+    return item?.pago?(Number(item?.valor)||0):0;
+  }
+
+  function sincronizarGrupoAulasLivre(item){
+    if(!ehGrupoAulasLivre(item))return;
+    item.aulas.forEach(a=>{
+      if(typeof a.pago!=='boolean')a.pago=false;
+      if(typeof a.vencimento!=='string')a.vencimento='';
+      if(typeof a.pagoEm!=='string')a.pagoEm='';
+      if(!a.id)a.id=novoIdLivre();
+    });
+    item.valor=Math.round(somaAulasLivre(item)*100)/100;
+    item.pago=item.aulas.length>0&&item.aulas.every(a=>!!a.pago);
+    const datas=item.aulas.map(a=>a.vencimento).filter(Boolean).sort();
+    item.vencimento=datas[0]||'';
+    const recebidas=item.aulas.map(a=>a.pagoEm).filter(Boolean).sort();
+    item.pagoEm=item.pago?(recebidas[recebidas.length-1]||''):'';
+  }
+
+  function grupoAulasDoMesLivre(d=getLivre()){
+    return (d.receitas||[]).find(ehGrupoAulasLivre);
+  }
+
+  function obterOuCriarGrupoAulasLivre(){
+    const d=getLivre();
+    let grupo=grupoAulasDoMesLivre(d);
+    if(!grupo){
+      grupo={id:novoIdLivre(),nome:'Aulas',subtipo:'aulas',aulas:[],valor:0,pago:false,vencimento:'',pagoEm:''};
+      d.receitas.push(grupo);
+    }
+    aulasAbertasLivre.add(String(grupo.id));
+    return grupo;
+  }
+
   function calcLivreDizimo(d=getLivre()){
-    const receitas=(d.receitas||[]).reduce((s,x)=>s+(Number(x.valor)||0),0);
+    const receitas=(d.receitas||[]).reduce((s,x)=>s+totalItemLivre(x),0);
     const pct=Math.min(100,Math.max(0,Number(d.dizimoPct)||0));
     return d.dizimoAtivo ? receitas*(pct/100) : 0;
   }
 
   function totalsLivre(d=getLivre()){
-    const sum=t=>(d[t]||[]).reduce((s,x)=>s+(Number(x.valor)||0),0);
-    const sumPago=t=>(d[t]||[]).reduce((s,x)=>s+(x.pago?(Number(x.valor)||0):0),0);
+    const sum=t=>(d[t]||[]).reduce((s,x)=>s+(t==='receitas'?totalItemLivre(x):(Number(x.valor)||0)),0);
+    const sumPago=t=>(d[t]||[]).reduce((s,x)=>s+(t==='receitas'?recebidoItemLivre(x):(x.pago?(Number(x.valor)||0):0)),0);
     const statusAtivo=d.statusAtivo!==false;
 
     const receitas=sum('receitas');
@@ -7568,7 +7678,7 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
   function renderLivreDizimo(){
     const d=getLivre();
     const statusAtivo=d.statusAtivo!==false;
-    const receitas=(d.receitas||[]).reduce((s,x)=>s+(Number(x.valor)||0),0);
+    const receitas=(d.receitas||[]).reduce((s,x)=>s+totalItemLivre(x),0);
     const valor=calcLivreDizimo(d);
 
     const ativo=document.getElementById('livre-dizimo-ativo');
@@ -7612,6 +7722,58 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
     }
   }
 
+
+  function renderGrupoAulasLivre(x,statusAtivo){
+    sincronizarGrupoAulasLivre(x);
+    const id=String(x.id), aberto=aulasAbertasLivre.has(id);
+    const total=totalItemLivre(x), recebido=recebidoItemLivre(x);
+    const candidatos=getLivre().receitas.filter(r=>!ehGrupoAulasLivre(r));
+    const checagem=statusAtivo?'<span>✓</span>':'';
+    const rows=(x.aulas||[]).map(a=>`
+      <div class="pf-aula-row" data-aula-id="${escLivre(a.id)}">
+        <input type="text" aria-label="Nome do aluno" placeholder="Nome do aluno" value="${escLivre(a.nome||'')}"
+          oninput="editarAulaLivre('${escLivre(id)}','${escLivre(a.id)}','nome',this.value)">
+        <label class="livre-date-chip ${statusAtivo&&a.pago?'ok':!a.vencimento?'empty':''}" title="Dia previsto para receber a aula">
+          <span class="date-icon">📅</span><span class="day-label">Dia</span>
+          <input type="number" min="1" max="31" value="${escLivre(diaLivre(a.vencimento))}" placeholder="--"
+            aria-label="Dia previsto" onchange="editarAulaLivre('${escLivre(id)}','${escLivre(a.id)}','dia',this.value)">
+        </label>
+        <div class="livre-money-wrap"><span>R$</span>
+          <input type="number" min="0" step="0.01" aria-label="Valor da aula" value="${Number(a.valor)||0}"
+            oninput="editarAulaLivre('${escLivre(id)}','${escLivre(a.id)}','valor',this.value)"></div>
+        ${statusAtivo?`<label class="livre-paid-check ${a.pago?'checked':''}" title="${a.pago?'Recebido':'Marcar como recebido'}">
+          <input type="checkbox" ${a.pago?'checked':''} onchange="editarAulaLivre('${escLivre(id)}','${escLivre(a.id)}','pago',this.checked)">${checagem}
+        </label>`:'<span></span>'}
+        <button class="livre-del" type="button" title="Remover aluno" aria-label="Remover aluno"
+          onclick="removerAulaLivre('${escLivre(id)}','${escLivre(a.id)}')">×</button>
+      </div>`).join('');
+    const selecionaveis=candidatos.map(r=>`<label><input type="checkbox" value="${escLivre(r.id)}" data-pf-aula-migrar="${escLivre(id)}"><span>${escLivre(r.nome||'Sem nome')}</span><b>${moneyLivre(r.valor)}</b></label>`).join('');
+    return `<section class="pf-aulas-group" data-pf-aulas-grupo="${escLivre(id)}">
+      <div class="pf-aulas-head">
+        <button type="button" class="pf-aulas-opener" aria-expanded="${aberto}" onclick="alternarGrupoAulasLivre('${escLivre(id)}')" title="${aberto?'Recolher':'Ver'} alunos e valores">
+          <span class="pf-aulas-ico">🎓</span>
+          <span class="pf-aulas-info"><strong>${escLivre(x.nome||'Aulas')}</strong>
+          <small>${x.aulas.length} ${x.aulas.length===1?'aluno/aula':'alunos/aulas'}${statusAtivo?' · recebido '+moneyLivre(recebido):''}</small></span>
+          <span class="pf-aulas-soma">${moneyLivre(total)}<small>total do mês</small></span>
+          <span class="pf-aulas-seta">${aberto?'⌃':'⌄'}</span>
+        </button>
+        <button type="button" class="pf-aulas-remover" onclick="deleteLivreItem('receitas','${escLivre(id)}')" title="Excluir grupo Aulas e todos os alunos">×</button>
+      </div>
+      ${aberto?`<div class="pf-aulas-body">
+        <div class="pf-aulas-colunas"><span>Aluno / aula</span><span>Dia</span><span>Valor</span><span>${statusAtivo?'✓':' '}</span><span></span></div>
+        ${rows||'<p class="pf-aulas-hint">Nenhum aluno cadastrado neste mês. Adicione o primeiro abaixo.</p>'}
+        <div class="pf-aulas-bottom">
+          <button class="pf-aulas-action" type="button" onclick="adicionarAulaLivre('${escLivre(id)}')">＋ Adicionar aluno / aula</button>
+          ${candidatos.length?`<button class="pf-aulas-action" type="button" onclick="alternarMigracaoAulasLivre('${escLivre(id)}')">↳ Mover receitas existentes</button>`:''}
+        </div>
+        ${aulasMigracaoLivre.has(id)&&candidatos.length?`<div class="pf-aulas-migrar"><p>Marque só os lançamentos que são aulas. Eles serão movidos, sem duplicar o valor das receitas.</p>
+          <div class="pf-aulas-escolhas">${selecionaveis}</div>
+          <button type="button" class="pf-aulas-action" onclick="migrarReceitasParaAulasLivre('${escLivre(id)}')">Mover selecionados para Aulas</button>
+        </div>`:''}
+      </div>`:''}
+    </section>`;
+  }
+
   function renderListLivre(tipo){
     const d=getLivre();
     const box=document.getElementById(`livre-${tipo}-list`);
@@ -7653,7 +7815,9 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
       return;
     }
 
-    box.innerHTML=arr.map(x=>renderRowLivre(tipo,x,statusAtivo)).join('');
+    box.innerHTML=arr.map(x=>tipo==='receitas'&&ehGrupoAulasLivre(x)
+      ?renderGrupoAulasLivre(x,statusAtivo)
+      :renderRowLivre(tipo,x,statusAtivo)).join('');
   }
 
   function renderLivre(){
@@ -7708,6 +7872,15 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
     }
 
     return extra+arr.map(x=>{
+      if(tipo==='receitas'&&ehGrupoAulasLivre(x)){
+        const recebido=recebidoItemLivre(x);
+        const meta=`${x.aulas.length} ${x.aulas.length===1?'lançamento':'lançamentos'}${statusAtivo?' · recebido '+moneyLivre(recebido):''}`;
+        return `<div class="livre-resumo-item pf-livre-resumo-aulas" role="button" tabindex="0"
+          onclick="abrirDetalheAulasLivre('${escLivre(x.id)}')"
+          onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();abrirDetalheAulasLivre('${escLivre(x.id)}')}">
+          <span>🎓 ${escLivre(x.nome||'Aulas')} <small class="livre-item-meta-summary">${escLivre(meta)} · clicar para detalhar</small></span>
+          <strong>${moneyLivre(totalItemLivre(x))}</strong></div>`;
+      }
       const tag=statusAtivo
         ? ` <small class="livre-status-tag ${x.pago?'ok':''}">${x.pago?'✓':'○'} ${statusLivreTexto(tipo,!!x.pago)}</small>`
         : '';
@@ -7944,9 +8117,9 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
     }else if(modo==='za'){
       arr.sort((a,b)=>String(b.nome||'').localeCompare(String(a.nome||''),'pt-BR',{sensitivity:'base',numeric:true}));
     }else if(modo==='maior'){
-      arr.sort((a,b)=>(Number(b.valor)||0)-(Number(a.valor)||0));
+      arr.sort((a,b)=>totalItemLivre(b)-totalItemLivre(a));
     }else if(modo==='menor'){
-      arr.sort((a,b)=>(Number(a.valor)||0)-(Number(b.valor)||0));
+      arr.sort((a,b)=>totalItemLivre(a)-totalItemLivre(b));
     }else if(modo==='pendentes'){
       arr.sort((a,b)=>Number(!!a.pago)-Number(!!b.pago) || dateKey(a,'vencimento').localeCompare(dateKey(b,'vencimento')));
     }else if(modo==='concluidos'){
@@ -8010,6 +8183,106 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
     event.currentTarget.closest('.livre-row')?.classList.remove('dragging');
     document.querySelectorAll('.livre-row.drag-over').forEach(el=>el.classList.remove('drag-over'));
     livreDragAtual=null;
+  };
+
+
+  window.adicionarGrupoAulasLivre=function(){
+    const grupo=obterOuCriarGrupoAulasLivre();
+    renderLivre();
+    document.querySelector(`[data-pf-aulas-grupo="${grupo.id}"]`)?.scrollIntoView({behavior:'smooth',block:'nearest'});
+    autoSaveLivre();
+  };
+
+  window.alternarGrupoAulasLivre=function(id){
+    id=String(id);
+    if(aulasAbertasLivre.has(id)){
+      aulasAbertasLivre.delete(id);
+      aulasMigracaoLivre.delete(id);
+    }else aulasAbertasLivre.add(id);
+    renderListLivre('receitas');
+  };
+
+  window.abrirDetalheAulasLivre=function(id){
+    aulasAbertasLivre.add(String(id));
+    goToLivre('livre-lancamentos');
+    document.querySelector(`[data-pf-aulas-grupo="${String(id)}"]`)?.scrollIntoView({behavior:'smooth',block:'center'});
+  };
+
+  window.adicionarAulaLivre=function(grupoId){
+    const grupo=getLivre().receitas.find(x=>String(x.id)===String(grupoId)&&ehGrupoAulasLivre(x));
+    if(!grupo)return;
+    const aula={id:novoIdLivre(),nome:'',valor:0,pago:false,vencimento:'',pagoEm:''};
+    grupo.aulas.push(aula);
+    aulasAbertasLivre.add(String(grupo.id));
+    sincronizarGrupoAulasLivre(grupo);
+    renderListLivre('receitas');
+    refreshLivreTotals();
+    renderLivreDizimo();
+    autoSaveLivre();
+    document.querySelector(`[data-aula-id="${aula.id}"] input[type="text"]`)?.focus();
+  };
+
+  window.editarAulaLivre=function(grupoId,aulaId,campo,valor){
+    const grupo=getLivre().receitas.find(x=>String(x.id)===String(grupoId)&&ehGrupoAulasLivre(x));
+    const aula=grupo?.aulas.find(a=>String(a.id)===String(aulaId));
+    if(!aula)return;
+    if(campo==='nome')aula.nome=String(valor||'');
+    else if(campo==='valor')aula.valor=Math.max(0,Number(String(valor).replace(',','.'))||0);
+    else if(campo==='dia'){
+      const raw=String(valor??'').trim();
+      aula.vencimento=raw?dataDoDiaLivre(Math.max(1,Math.min(31,Number(raw)||1))):'';
+    }else if(campo==='pago'){
+      aula.pago=!!valor;
+      if(aula.pago&&!aula.pagoEm)aula.pagoEm=todayLivre();
+      if(!aula.pago)aula.pagoEm='';
+    }
+    sincronizarGrupoAulasLivre(grupo);
+    // Não reconstruir inputs durante a digitação: mantém foco e facilita escrever valores.
+    if(campo==='valor'||campo==='pago'||campo==='nome'){
+      const box=document.querySelector(`[data-pf-aulas-grupo="${String(grupoId)}"]`);
+      const soma=box?.querySelector('.pf-aulas-soma');
+      if(soma)soma.innerHTML=`${moneyLivre(totalItemLivre(grupo))}<small>total do mês</small>`;
+      const info=box?.querySelector('.pf-aulas-info small');
+      if(info)info.textContent=`${grupo.aulas.length} ${grupo.aulas.length===1?'aluno/aula':'alunos/aulas'}${getLivre().statusAtivo!==false?' · recebido '+moneyLivre(recebidoItemLivre(grupo)):''}`;
+      if(campo==='pago')renderListLivre('receitas');
+    }else renderListLivre('receitas');
+    refreshLivreTotals();
+    renderLivreDizimo();
+    autoSaveLivre();
+  };
+
+  window.removerAulaLivre=function(grupoId,aulaId){
+    const grupo=getLivre().receitas.find(x=>String(x.id)===String(grupoId)&&ehGrupoAulasLivre(x));
+    if(!grupo)return;
+    grupo.aulas=grupo.aulas.filter(a=>String(a.id)!==String(aulaId));
+    sincronizarGrupoAulasLivre(grupo);
+    renderLivre();
+    autoSaveLivre();
+  };
+
+  window.alternarMigracaoAulasLivre=function(id){
+    const k=String(id);
+    if(aulasMigracaoLivre.has(k))aulasMigracaoLivre.delete(k);
+    else aulasMigracaoLivre.add(k);
+    renderListLivre('receitas');
+  };
+
+  window.migrarReceitasParaAulasLivre=function(grupoId){
+    const grupo=getLivre().receitas.find(x=>String(x.id)===String(grupoId)&&ehGrupoAulasLivre(x));
+    if(!grupo)return;
+    const selecionados=new Set([...document.querySelectorAll('[data-pf-aula-migrar]')]
+      .filter(el=>el.dataset.pfAulaMigrar===String(grupoId)&&el.checked).map(el=>String(el.value)));
+    if(!selecionados.size){window.showToast?.('Marque ao menos um lançamento para mover.',true);return;}
+    const d=getLivre(), mover=d.receitas.filter(x=>!ehGrupoAulasLivre(x)&&selecionados.has(String(x.id)));
+    if(!mover.length)return;
+    mover.forEach(x=>grupo.aulas.push({id:novoIdLivre(),nome:String(x.nome||''),valor:Number(x.valor)||0,
+      pago:!!x.pago,vencimento:x.vencimento||'',pagoEm:x.pagoEm||''}));
+    d.receitas=d.receitas.filter(x=>!selecionados.has(String(x.id)));
+    aulasMigracaoLivre.delete(String(grupoId));
+    sincronizarGrupoAulasLivre(grupo);
+    renderLivre();
+    autoSaveLivre();
+    window.showToast?.(`🎓 ${mover.length} ${mover.length===1?'lançamento movido':'lançamentos movidos'} para Aulas, sem duplicar receitas.`);
   };
 
   window.addLivreItem=function(tipo){
@@ -8093,6 +8366,12 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
 
   window.deleteLivreItem=function(tipo,id){
     const d=getLivre();
+    const item=d[tipo]?.find(i=>String(i.id)===String(id));
+    if(ehGrupoAulasLivre(item)){
+      if(!confirm(`Excluir o grupo Aulas e os ${item.aulas.length} lançamentos dentro dele? Esta ação remove todos os valores do mês.`))return;
+      aulasAbertasLivre.delete(String(id));
+      aulasMigracaoLivre.delete(String(id));
+    }
     d[tipo]=d[tipo].filter(i=>String(i.id)!==String(id));
     renderLivre();
     autoSaveLivre();
@@ -8133,6 +8412,14 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
           vencimento:moverDataMesLivre(item?.vencimento||'',livreAnoAtual,livreMesAtual),
           pagoEm:''
         };
+        if(tipo==='receitas'&&ehGrupoAulasLivre(item)){
+          novo.subtipo='aulas';
+          novo.aulas=(item.aulas||[]).map(a=>({
+            id:novoIdLivre(),nome:String(a?.nome||''),valor:Math.max(0,Number(a?.valor)||0),
+            pago:false,vencimento:moverDataMesLivre(a?.vencimento||'',livreAnoAtual,livreMesAtual),pagoEm:''
+          }));
+          sincronizarGrupoAulasLivre(novo);
+        }
         if(tipo==='despesas'){
           novo.grupo=LIVRE_GRUPOS_DESP[item?.grupo]?item.grupo:'outros';
         }
@@ -8179,6 +8466,8 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
   };
 
   window.navLivre=function(dir){
+    aulasAbertasLivre.clear();
+    aulasMigracaoLivre.clear();
     livreMesAtual+=dir;
     if(livreMesAtual<0){
       livreMesAtual=11;
@@ -8200,6 +8489,8 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
   };
 
   window.abrirLivreMes=function(a,m){
+    aulasAbertasLivre.clear();
+    aulasMigracaoLivre.clear();
     livreAnoAtual=a;
     livreMesAtual=m;
     goToLivre('livre-lancamentos');
@@ -8243,6 +8534,9 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
   const collectPrev=window.coletarDados;
   window.coletarDados=function(){
     const base=typeof collectPrev==='function'?collectPrev():{};
+    Object.values(mensalLivreData).forEach(d=>{
+      (d?.receitas||[]).forEach(x=>{if(ehGrupoAulasLivre(x))sincronizarGrupoAulasLivre(x);});
+    });
     return {...base,mensalLivreData,livreNextId};
   };
 
@@ -8615,9 +8909,17 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
 
         const free=data.mensalLivreData||{};
         const freeRows=[["Mês","Tipo","Grupo","Item","Valor","Vencimento / previsto","Status","Data real"]];
+        const freeAulasRows=[["Mês","Grupo","Aluno / aula","Valor","Dia previsto","Recebido?","Data recebida"]];
         Object.entries(free).sort().forEach(([key,m])=>{
           const tipos=[['Receita','receitas'],['Despesa','despesas'],['Investimento','investimentos'],['Doação/Outro','doacoes']];
           tipos.forEach(([label,field])=>(m?.[field]||[]).forEach(i=>{
+            if(field==='receitas'&&i.subtipo==='aulas'&&Array.isArray(i.aulas)){
+              const soma=i.aulas.reduce((s,a)=>s+n(a.valor),0);
+              const recebidos=i.aulas.reduce((s,a)=>s+(a.pago?n(a.valor):0),0);
+              freeRows.push([key,'Receita','Aulas',i.nome||'Aulas',soma,'',`Recebido ${recebidos.toFixed(2)} de ${soma.toFixed(2)}`,'']);
+              i.aulas.forEach(a=>freeAulasRows.push([key,i.nome||'Aulas',a.nome,n(a.valor),a.vencimento||'',a.pago?'Sim':'Não',a.pagoEm||'']));
+              return;
+            }
             const grupo=i.grupo||'';
             const status=i.pago?(field==='receitas'?'Recebido':field==='investimentos'?'Aportado':'Pago'):(field==='receitas'?'A receber':field==='investimentos'?'A aportar':'A pagar');
             freeRows.push([key,label,grupo,i.nome,n(i.valor),i.vencimento||'',status,i.pagoEm||'']);
@@ -8628,7 +8930,8 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
             freeRows.push([key,'Doação/Outro','Dízimo','Dízimo automático',valor,'',m.dizimoPago?'Pago':'A pagar',m.dizimoPagoEm||'']);
           }
         });
-        appendSheet(wb,used,'Mensal Livre',freeRows,[12,18,22,34,16,20,16,16]);
+        appendSheet(wb,used,'Mensal Livre',freeRows,[12,18,22,34,16,20,20,16]);
+        if(freeAulasRows.length>1)appendSheet(wb,used,'Aulas Detalhadas',freeAulasRows,[12,22,34,16,18,14,18]);
 
         const sim=data.simulacao||{};
         appendSheet(wb,used,'Simulação',[["SIMULAÇÃO"],[],['Percentuais'],['Essencial',n(sim.essencial)],['Lazer/Luxo',n(sim.lazer)],['Investimento',n(sim.investimento)],[],['Tipo','Grupo','Item','Valor'],...(sim.receitas||[]).map(i=>['Receita','',i.nome,n(i.val)]),...(sim.despesas||[]).map(i=>['Despesa',i.grupo,i.nome,n(i.val)])],[20,20,34,16]);
