@@ -7165,6 +7165,7 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
   let livreDragAtual = null;
   const aulasAbertasLivre = new Set();
   const aulasMigracaoLivre = new Set();
+  const proventosAbertosLivre = new Set();
 
   const livreSortModes = {
     receitas:'manual',
@@ -7312,6 +7313,7 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
         if(typeof x.pagoEm!=='string')x.pagoEm='';
         normalizarGrupoLivre(t,x);
         if(t==='receitas'&&ehGrupoAulasLivre(x))sincronizarGrupoAulasLivre(x);
+        if(t==='receitas'&&ehProventoDetalhadoLivre(x))sincronizarProventoLivre(x);
       });
     });
 
@@ -7335,13 +7337,38 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
     return (item.aulas||[]).reduce((s,a)=>s+(Number(a.valor)||0),0);
   }
 
+  // Receitas comuns podem ter discriminação (salário, 13º, bônus, descontos etc.).
+  // O valor da receita passa a ser a soma líquida dos componentes, nunca um valor adicional.
+  function ehProventoDetalhadoLivre(item){
+    return !!item && !ehGrupoAulasLivre(item) && Array.isArray(item.componentesProvento);
+  }
+
+  function somaProventoLivre(item){
+    const bruto=(item.componentesProvento||[]).reduce((s,c)=>s+(c.natureza==='desconto'?0:(Math.max(0,Number(c.valor)||0))),0);
+    const descontos=(item.componentesProvento||[]).reduce((s,c)=>s+(c.natureza==='desconto'?Math.max(0,Number(c.valor)||0):0),0);
+    return Math.round(Math.max(0,bruto-descontos)*100)/100;
+  }
+
+  function sincronizarProventoLivre(item){
+    if(!ehProventoDetalhadoLivre(item))return;
+    item.componentesProvento.forEach(c=>{
+      if(!c.id)c.id=novoIdLivre();
+      c.descricao=String(c.descricao??'');
+      c.natureza=c.natureza==='desconto'?'desconto':'credito';
+      c.valor=Math.max(0,Number(c.valor)||0);
+    });
+    item.valor=somaProventoLivre(item);
+  }
+
   function totalItemLivre(item){
-    return ehGrupoAulasLivre(item)?somaAulasLivre(item):(Number(item?.valor)||0);
+    if(ehGrupoAulasLivre(item))return somaAulasLivre(item);
+    if(ehProventoDetalhadoLivre(item))return somaProventoLivre(item);
+    return Number(item?.valor)||0;
   }
 
   function recebidoItemLivre(item){
     if(ehGrupoAulasLivre(item))return (item.aulas||[]).reduce((s,a)=>s+(a.pago?(Number(a.valor)||0):0),0);
-    return item?.pago?(Number(item?.valor)||0):0;
+    return item?.pago?totalItemLivre(item):0;
   }
 
   function sincronizarGrupoAulasLivre(item){
@@ -7641,21 +7668,71 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
         ${renderIconLivre(tipo,x)}
 
         <div class="livre-main-cell">
-          <input class="livre-name-input" type="text" value="${escLivre(x.nome)}" placeholder="Nome do item"
-            oninput="updateLivreItem('${tipo}','${x.id}','nome',this.value)">
+          <div class="${tipo==='receitas'?'pf-provento-name-line':''}">
+            <input class="livre-name-input" type="text" value="${escLivre(x.nome)}" placeholder="Nome do item"
+              oninput="updateLivreItem('${tipo}','${x.id}','nome',this.value)">
+            ${tipo==='receitas'?`<button type="button" class="pf-provento-toggle ${ehProventoDetalhadoLivre(x)?'com-detalhes':''}"
+              aria-label="${proventosAbertosLivre.has(String(x.id))?'Fechar':'Abrir'} detalhes de ${escLivre(x.nome||'receita')}" title="${ehProventoDetalhadoLivre(x)?'Abrir ou fechar os componentes do provento':'Discriminar salário, bônus, 13º, férias e descontos'}"
+              aria-expanded="${proventosAbertosLivre.has(String(x.id))}"
+              onclick="alternarDetalheProventoLivre('${escLivre(x.id)}')">${proventosAbertosLivre.has(String(x.id))?'⌃':'▤'}</button>`:''}
+          </div>
         </div>
 
         ${renderDataChipLivre(tipo,x,statusAtivo)}
 
-        <div class="livre-money-wrap"><span>R$</span>
-          <input type="number" min="0" step="0.01" value="${Number(x.valor)||0}"
-            oninput="updateLivreItem('${tipo}','${x.id}','valor',this.value)">
+        <div class="livre-money-wrap ${tipo==='receitas'&&ehProventoDetalhadoLivre(x)?'pf-provento-total':''}"><span>R$</span>
+          <input type="number" min="0" step="0.01" value="${totalItemLivre(x)}"
+            ${tipo==='receitas'&&ehProventoDetalhadoLivre(x)?'readonly aria-label="Total calculado dos componentes" title="Total automático: edite os componentes abaixo"':'aria-label="Valor do lançamento"'}
+            ${tipo==='receitas'&&ehProventoDetalhadoLivre(x)?'':`oninput="updateLivreItem('${tipo}','${x.id}','valor',this.value)"`}>
         </div>
 
         ${check}
 
         <button class="livre-del" onclick="deleteLivreItem('${tipo}','${x.id}')" title="Excluir">×</button>
-      </div>`;
+      </div>
+      ${tipo==='receitas' && proventosAbertosLivre.has(String(x.id)) && ehProventoDetalhadoLivre(x)?renderDetalhamentoProventoLivre(x):''}`;
+  }
+
+  function renderDetalhamentoProventoLivre(x){
+    const id=escLivre(x.id);
+    const componentes=x.componentesProvento||[];
+    const credito=componentes.reduce((s,c)=>s+(c.natureza==='desconto'?0:(Number(c.valor)||0)),0);
+    const desconto=componentes.reduce((s,c)=>s+(c.natureza==='desconto'?(Number(c.valor)||0):0),0);
+    const linhas=componentes.map(c=>`
+      <div class="pf-provento-componente" data-pf-prov-comp="${escLivre(c.id)}">
+        <input class="pf-provento-descricao" type="text" aria-label="Descrição do componente" placeholder="Ex.: salário base, 13º, bônus..."
+          value="${escLivre(c.descricao)}" oninput="editarComponenteProventoLivre('${id}','${escLivre(c.id)}','descricao',this.value)">
+        <select aria-label="Entrada ou desconto" onchange="editarComponenteProventoLivre('${id}','${escLivre(c.id)}','natureza',this.value)">
+          <option value="credito" ${c.natureza==='desconto'?'':'selected'}>+ Entrada</option>
+          <option value="desconto" ${c.natureza==='desconto'?'selected':''}>− Desconto</option>
+        </select>
+        <label class="pf-provento-valor"><span>R$</span><input type="number" min="0" step="0.01" inputmode="decimal"
+          aria-label="Valor de ${escLivre(c.descricao||'componente')}" value="${Math.max(0,Number(c.valor)||0)}"
+          oninput="editarComponenteProventoLivre('${id}','${escLivre(c.id)}','valor',this.value)"></label>
+        <button class="pf-provento-apagar" type="button" title="Remover componente" aria-label="Remover componente"
+          onclick="removerComponenteProventoLivre('${id}','${escLivre(c.id)}')">×</button>
+      </div>`).join('');
+    return `<section class="pf-provento-detail-panel" data-pf-provento="${id}">
+      <div class="pf-provento-detail-top"><div><strong>🧾 Composição do provento</strong>
+        <small>Discrimine o que entrou e o que foi descontado. O total aparece uma única vez nas receitas.</small></div>
+        <button type="button" class="pf-provento-simple" onclick="voltarProventoSimplesLivre('${id}')" title="Manter apenas o valor total e remover a discriminação">Valor simples</button>
+      </div>
+      <div class="pf-provento-headings"><span>Descrição</span><span>Tipo</span><span>Valor</span><span></span></div>
+      ${linhas||'<p class="pf-provento-empty">Sem componentes. Adicione um salário, bônus ou outro valor abaixo.</p>'}
+      <div class="pf-provento-add">
+        <button type="button" onclick="adicionarComponenteProventoLivre('${id}','Salário base','credito')">+ Salário</button>
+        <button type="button" onclick="adicionarComponenteProventoLivre('${id}','Bônus','credito')">+ Bônus</button>
+        <button type="button" onclick="adicionarComponenteProventoLivre('${id}','13º salário','credito')">+ 13º</button>
+        <button type="button" onclick="adicionarComponenteProventoLivre('${id}','Férias','credito')">+ Férias</button>
+        <button type="button" onclick="adicionarComponenteProventoLivre('${id}','Desconto','desconto')">− Desconto</button>
+        <button type="button" onclick="adicionarComponenteProventoLivre('${id}','Outro adicional','credito')">+ Outro</button>
+      </div>
+      <div class="pf-provento-totais"><span>Bruto <b data-pf-prov-bruto>${moneyLivre(credito)}</b></span>
+        <span>Descontos <b data-pf-prov-desconto>${moneyLivre(desconto)}</b></span>
+        <strong>Líquido <b data-pf-prov-liquido>${moneyLivre(somaProventoLivre(x))}</b></strong>
+      </div>
+      ${desconto>credito?'<p class="pf-provento-warning">Os descontos superam os créditos. O valor da receita fica limitado a R$ 0,00.</p>':''}
+    </section>`;
   }
 
   function renderLivreStatusControl(){
@@ -7747,7 +7824,7 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
     sincronizarGrupoAulasLivre(x);
     const id=String(x.id), aberto=aulasAbertasLivre.has(id);
     const total=totalItemLivre(x), recebido=recebidoItemLivre(x);
-    const candidatos=getLivre().receitas.filter(r=>!ehGrupoAulasLivre(r));
+    const candidatos=getLivre().receitas.filter(r=>!ehGrupoAulasLivre(r)&&!ehProventoDetalhadoLivre(r));
     const checagem=statusAtivo?'<span>✓</span>':'';
     const rows=(x.aulas||[]).map(a=>`
       <div class="pf-aula-row" data-aula-id="${escLivre(a.id)}">
@@ -7901,10 +7978,18 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
           <span>🎓 ${escLivre(x.nome||'Aulas')} <small class="livre-item-meta-summary">${escLivre(meta)} · clicar para detalhar</small></span>
           <strong>${moneyLivre(totalItemLivre(x))}</strong></div>`;
       }
+      if(tipo==='receitas'&&ehProventoDetalhadoLivre(x)){
+        const tag=statusAtivo?` <small class="livre-status-tag ${x.pago?'ok':''}">${x.pago?'✓ Recebido':'○ A receber'}</small>`:'';
+        return `<div class="livre-resumo-item pf-livre-resumo-provento" role="button" tabindex="0"
+          onclick="abrirDetalheProventoLivre('${escLivre(x.id)}')"
+          onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();abrirDetalheProventoLivre('${escLivre(x.id)}')}">
+          <span>🧾 ${escLivre(x.nome||'Provento')}${tag}<small class="livre-item-meta-summary">${x.componentesProvento.length} componentes · clicar para detalhar</small></span>
+          <strong>${moneyLivre(totalItemLivre(x))}</strong></div>`;
+      }
       const tag=statusAtivo
         ? ` <small class="livre-status-tag ${x.pago?'ok':''}">${x.pago?'✓':'○'} ${statusLivreTexto(tipo,!!x.pago)}</small>`
         : '';
-      return `<div class="livre-resumo-item"><span>${escLivre(x.nome||'Sem nome')}${tag}${resumoMetaLivre(tipo,x)}</span><strong>${moneyLivre(x.valor)}</strong></div>`;
+      return `<div class="livre-resumo-item"><span>${escLivre(x.nome||'Sem nome')}${tag}${resumoMetaLivre(tipo,x)}</span><strong>${moneyLivre(totalItemLivre(x))}</strong></div>`;
     }).join('');
   }
 
@@ -8206,6 +8291,87 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
   };
 
 
+  window.alternarDetalheProventoLivre=function(id){
+    id=String(id);
+    const item=getLivre().receitas.find(x=>String(x.id)===id&&!ehGrupoAulasLivre(x));
+    if(!item)return;
+    if(proventosAbertosLivre.has(id)){
+      proventosAbertosLivre.delete(id);
+    }else{
+      if(!ehProventoDetalhadoLivre(item)){
+        item.componentesProvento=[{id:novoIdLivre(),descricao:'Valor principal',natureza:'credito',valor:Math.max(0,Number(item.valor)||0)}];
+        sincronizarProventoLivre(item);
+        autoSaveLivre();
+      }
+      proventosAbertosLivre.add(id);
+    }
+    renderListLivre('receitas');
+  };
+
+  window.abrirDetalheProventoLivre=function(id){
+    const item=getLivre().receitas.find(x=>String(x.id)===String(id)&&!ehGrupoAulasLivre(x));
+    if(!item)return;
+    if(!ehProventoDetalhadoLivre(item))window.alternarDetalheProventoLivre(id);
+    proventosAbertosLivre.add(String(id));
+    goToLivre('livre-lancamentos');
+    document.querySelector(`[data-pf-provento="${String(id)}"]`)?.scrollIntoView({behavior:'smooth',block:'center'});
+  };
+
+  window.adicionarComponenteProventoLivre=function(proventoId,descricao,natureza){
+    const x=getLivre().receitas.find(i=>String(i.id)===String(proventoId)&&ehProventoDetalhadoLivre(i));
+    if(!x)return;
+    const c={id:novoIdLivre(),descricao:String(descricao||'Outro adicional'),natureza:natureza==='desconto'?'desconto':'credito',valor:0};
+    x.componentesProvento.push(c);
+    sincronizarProventoLivre(x);
+    proventosAbertosLivre.add(String(proventoId));
+    renderListLivre('receitas');refreshLivreTotals();renderLivreDizimo();autoSaveLivre();
+    document.querySelector(`[data-pf-prov-comp="${c.id}"] .pf-provento-valor input`)?.focus();
+  };
+
+  window.editarComponenteProventoLivre=function(proventoId,componenteId,campo,valor){
+    const x=getLivre().receitas.find(i=>String(i.id)===String(proventoId)&&ehProventoDetalhadoLivre(i));
+    const c=x?.componentesProvento.find(i=>String(i.id)===String(componenteId));
+    if(!c)return;
+    if(campo==='descricao')c.descricao=String(valor||'');
+    else if(campo==='natureza')c.natureza=valor==='desconto'?'desconto':'credito';
+    else if(campo==='valor')c.valor=Math.max(0,Number(String(valor).replace(',','.'))||0);
+    sincronizarProventoLivre(x);
+    // Atualiza só os totais; não reconstrói os inputs enquanto o usuário digita.
+    const painel=document.querySelector(`[data-pf-provento="${String(proventoId)}"]`);
+    const row=document.querySelector(`[data-livre-id="${String(proventoId)}"]`);
+    const sum=row?.querySelector('.pf-provento-total input');
+    if(sum)sum.value=totalItemLivre(x);
+    const bruto=x.componentesProvento.reduce((s,i)=>s+(i.natureza==='desconto'?0:(Number(i.valor)||0)),0);
+    const desc=x.componentesProvento.reduce((s,i)=>s+(i.natureza==='desconto'?(Number(i.valor)||0):0),0);
+    const setValue=(selector,v)=>{const el=painel?.querySelector(selector);if(el)el.textContent=moneyLivre(v);};
+    setValue('[data-pf-prov-bruto]',bruto);
+    setValue('[data-pf-prov-desconto]',desc);
+    setValue('[data-pf-prov-liquido]',totalItemLivre(x));
+    const warn=painel?.querySelector('.pf-provento-warning');
+    if(warn)warn.style.display=desc>bruto?'':'none';
+    else if(desc>bruto && painel){const p=document.createElement('p');p.className='pf-provento-warning';p.textContent='Os descontos superam os créditos. O valor da receita fica limitado a R$ 0,00.';painel.appendChild(p);}
+    refreshLivreTotals();renderLivreDizimo();autoSaveLivre();
+  };
+
+  window.removerComponenteProventoLivre=function(proventoId,componenteId){
+    const x=getLivre().receitas.find(i=>String(i.id)===String(proventoId)&&ehProventoDetalhadoLivre(i));
+    if(!x)return;
+    x.componentesProvento=x.componentesProvento.filter(i=>String(i.id)!==String(componenteId));
+    sincronizarProventoLivre(x);
+    renderListLivre('receitas');refreshLivreTotals();renderLivreDizimo();autoSaveLivre();
+  };
+
+  window.voltarProventoSimplesLivre=function(proventoId){
+    const x=getLivre().receitas.find(i=>String(i.id)===String(proventoId)&&ehProventoDetalhadoLivre(i));
+    if(!x)return;
+    if(x.componentesProvento.length>1 && !confirm('Voltar ao valor simples? O total líquido será mantido, mas a lista de bônus, 13º e descontos deste provento será removida.'))return;
+    const liquido=somaProventoLivre(x);
+    delete x.componentesProvento;
+    x.valor=liquido;
+    proventosAbertosLivre.delete(String(proventoId));
+    renderListLivre('receitas');refreshLivreTotals();renderLivreDizimo();autoSaveLivre();
+  };
+
   window.adicionarGrupoAulasLivre=function(){
     const grupo=obterOuCriarGrupoAulasLivre();
     renderLivre();
@@ -8293,7 +8459,7 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
     const selecionados=new Set([...document.querySelectorAll('[data-pf-aula-migrar]')]
       .filter(el=>el.dataset.pfAulaMigrar===String(grupoId)&&el.checked).map(el=>String(el.value)));
     if(!selecionados.size){window.showToast?.('Marque ao menos um lançamento para mover.',true);return;}
-    const d=getLivre(), mover=d.receitas.filter(x=>!ehGrupoAulasLivre(x)&&selecionados.has(String(x.id)));
+    const d=getLivre(), mover=d.receitas.filter(x=>!ehGrupoAulasLivre(x)&&!ehProventoDetalhadoLivre(x)&&selecionados.has(String(x.id)));
     if(!mover.length)return;
     mover.forEach(x=>grupo.aulas.push({id:novoIdLivre(),nome:String(x.nome||''),valor:Number(x.valor)||0,
       pago:!!x.pago,vencimento:x.vencimento||'',pagoEm:x.pagoEm||''}));
@@ -8359,7 +8525,8 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
     if(!x)return;
 
     if(campo==='valor'){
-      const n=String(valor).replace(/\./g,'').replace(',','.');
+      // Inputs type=number já entregam decimais com ponto; não remover o separador decimal.
+      const n=String(valor).trim().replace(',','.');
       x[campo]=Math.max(0,Number(n)||0);
     }else{
       x[campo]=valor;
@@ -8391,6 +8558,10 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
       if(!confirm(`Excluir o grupo Aulas e os ${item.aulas.length} lançamentos dentro dele? Esta ação remove todos os valores do mês.`))return;
       aulasAbertasLivre.delete(String(id));
       aulasMigracaoLivre.delete(String(id));
+    }
+    if(ehProventoDetalhadoLivre(item)){
+      if(!confirm(`Excluir ${item.nome||'este provento'} e todos os seus componentes?`))return;
+      proventosAbertosLivre.delete(String(id));
     }
     d[tipo]=d[tipo].filter(i=>String(i.id)!==String(id));
     renderLivre();
@@ -8439,6 +8610,13 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
             pago:false,vencimento:moverDataMesLivre(a?.vencimento||'',livreAnoAtual,livreMesAtual),pagoEm:''
           }));
           sincronizarGrupoAulasLivre(novo);
+        }
+        if(tipo==='receitas'&&ehProventoDetalhadoLivre(item)){
+          novo.componentesProvento=item.componentesProvento.map(c=>({
+            id:novoIdLivre(),descricao:String(c?.descricao??''),
+            natureza:c?.natureza==='desconto'?'desconto':'credito',valor:Math.max(0,Number(c?.valor)||0)
+          }));
+          sincronizarProventoLivre(novo);
         }
         if(tipo==='despesas'){
           novo.grupo=LIVRE_GRUPOS_DESP[item?.grupo]?item.grupo:'outros';
@@ -8555,7 +8733,10 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
   window.coletarDados=function(){
     const base=typeof collectPrev==='function'?collectPrev():{};
     Object.values(mensalLivreData).forEach(d=>{
-      (d?.receitas||[]).forEach(x=>{if(ehGrupoAulasLivre(x))sincronizarGrupoAulasLivre(x);});
+      (d?.receitas||[]).forEach(x=>{
+        if(ehGrupoAulasLivre(x))sincronizarGrupoAulasLivre(x);
+        if(ehProventoDetalhadoLivre(x))sincronizarProventoLivre(x);
+      });
     });
     return {...base,mensalLivreData,livreNextId};
   };
@@ -8930,6 +9111,7 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
         const free=data.mensalLivreData||{};
         const freeRows=[["Mês","Tipo","Grupo","Item","Valor","Vencimento / previsto","Status","Data real"]];
         const freeAulasRows=[["Mês","Grupo","Aluno / aula","Valor","Dia previsto","Recebido?","Data recebida"]];
+        const freeProventosRows=[["Mês","Provento","Componente","Natureza","Valor","Valor líquido do provento"]];
         Object.entries(free).sort().forEach(([key,m])=>{
           const tipos=[['Receita','receitas'],['Despesa','despesas'],['Investimento','investimentos'],['Doação/Outro','doacoes']];
           tipos.forEach(([label,field])=>(m?.[field]||[]).forEach(i=>{
@@ -8940,9 +9122,12 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
               i.aulas.forEach(a=>freeAulasRows.push([key,i.nome||'Aulas',a.nome,n(a.valor),a.vencimento||'',a.pago?'Sim':'Não',a.pagoEm||'']));
               return;
             }
-            const grupo=i.grupo||'';
+            const detalhado=field==='receitas'&&Array.isArray(i.componentesProvento);
+            const liquido=detalhado?Math.max(0,i.componentesProvento.reduce((s,c)=>s+(c.natureza==='desconto'?-1:1)*Math.max(0,n(c.valor)),0)):n(i.valor);
+            const grupo=detalhado?'Provento discriminado':(i.grupo||'');
             const status=i.pago?(field==='receitas'?'Recebido':field==='investimentos'?'Aportado':'Pago'):(field==='receitas'?'A receber':field==='investimentos'?'A aportar':'A pagar');
-            freeRows.push([key,label,grupo,i.nome,n(i.valor),i.vencimento||'',status,i.pagoEm||'']);
+            freeRows.push([key,label,grupo,i.nome,liquido,i.vencimento||'',status,i.pagoEm||'']);
+            if(detalhado)i.componentesProvento.forEach(c=>freeProventosRows.push([key,i.nome,c.descricao,c.natureza==='desconto'?'Desconto':'Entrada',Math.max(0,n(c.valor)),liquido]));
           }));
           if(m?.dizimoAtivo){
             const base=(m.receitas||[]).reduce((s,i)=>s+n(i.valor),0);
@@ -8952,6 +9137,7 @@ body.dark .livre-row.investimentos.quitado{background:rgba(96,165,250,.05)}
         });
         appendSheet(wb,used,'Mensal Livre',freeRows,[12,18,22,34,16,20,20,16]);
         if(freeAulasRows.length>1)appendSheet(wb,used,'Aulas Detalhadas',freeAulasRows,[12,22,34,16,18,14,18]);
+        if(freeProventosRows.length>1)appendSheet(wb,used,'Proventos Detalhados',freeProventosRows,[12,28,30,14,16,20]);
 
         const sim=data.simulacao||{};
         appendSheet(wb,used,'Simulação',[["SIMULAÇÃO"],[],['Percentuais'],['Essencial',n(sim.essencial)],['Lazer/Luxo',n(sim.lazer)],['Investimento',n(sim.investimento)],[],['Tipo','Grupo','Item','Valor'],...(sim.receitas||[]).map(i=>['Receita','',i.nome,n(i.val)]),...(sim.despesas||[]).map(i=>['Despesa',i.grupo,i.nome,n(i.val)])],[20,20,34,16]);
@@ -12184,6 +12370,64 @@ body #app-shell .main{padding-bottom:38px}
   #sec-livre-lancamentos .pf-aula-row > .pf-aula-paid-placeholder {grid-area:pago !important}
   #sec-livre-lancamentos .pf-aula-row > .pf-aula-excluir {grid-area:del !important;justify-self:center}
 }
+</style>
+
+<style id="pf-livre-provento-componentes-css">
+/* Proventos detalháveis do Mensal Livre, sem alterar os campos ou regras do Geral. */
+#sec-livre-lancamentos .pf-provento-name-line{display:flex;align-items:center;gap:3px;min-width:0}
+#sec-livre-lancamentos .pf-provento-name-line .livre-name-input{flex:1 1 auto;width:0!important;min-width:0}
+#sec-livre-lancamentos .pf-provento-toggle{flex:0 0 26px;width:26px;height:28px;border:1px solid var(--bd2);border-radius:8px;background:var(--s1);color:var(--mu);font:800 14px/1 Inter,sans-serif;cursor:pointer;padding:0}
+#sec-livre-lancamentos .pf-provento-toggle:hover,#sec-livre-lancamentos .pf-provento-toggle.com-detalhes{border-color:var(--tbd);background:var(--tbg);color:var(--teal)}
+#sec-livre-lancamentos .pf-provento-total{border-color:var(--tbd)!important;background:var(--tbg)!important}
+#sec-livre-lancamentos .pf-provento-total input{cursor:default!important;pointer-events:none}
+#sec-livre-lancamentos .pf-provento-detail-panel{
+  margin:0 11px 8px 57px;padding:11px 12px 12px;
+  border:1px solid var(--tbd);border-left:3px solid var(--teal);border-radius:0 9px 9px 9px;
+  background:var(--s2);min-width:0;
+}
+#sec-livre-lancamentos .pf-provento-detail-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px}
+#sec-livre-lancamentos .pf-provento-detail-top strong{display:block;font:800 12px 'Space Grotesk',sans-serif;color:var(--tx)}
+#sec-livre-lancamentos .pf-provento-detail-top small{display:block;font:11px Inter,sans-serif;color:var(--mu);margin-top:4px;line-height:1.4}
+#sec-livre-lancamentos .pf-provento-simple{flex:0 0 auto;border:1px solid var(--bd2);background:var(--s1);border-radius:7px;padding:5px 8px;font:700 10px Inter,sans-serif;color:var(--mu);cursor:pointer}
+#sec-livre-lancamentos .pf-provento-headings,#sec-livre-lancamentos .pf-provento-componente{
+  display:grid;grid-template-columns:minmax(0,1fr) 93px 104px 30px;gap:7px;align-items:center;
+}
+#sec-livre-lancamentos .pf-provento-headings{padding:0 1px 5px;color:var(--mu);font:700 9px Inter,sans-serif;text-transform:uppercase}
+#sec-livre-lancamentos .pf-provento-componente{padding:7px 0;border-top:1px solid var(--bd)}
+#sec-livre-lancamentos .pf-provento-componente>input,#sec-livre-lancamentos .pf-provento-componente>select,
+#sec-livre-lancamentos .pf-provento-valor{
+  width:100%;min-width:0;height:34px;border:1px solid var(--bd2);border-radius:8px;background:var(--s1);color:var(--tx);font:500 11px Inter,sans-serif;outline:none;
+}
+#sec-livre-lancamentos .pf-provento-componente>input{padding:0 9px}
+#sec-livre-lancamentos .pf-provento-componente>select{padding:0 5px;cursor:pointer}
+#sec-livre-lancamentos .pf-provento-valor{display:flex;align-items:center;overflow:hidden;padding:0 4px 0 7px}
+#sec-livre-lancamentos .pf-provento-valor span{font:500 10px Inter,sans-serif;color:var(--mu);flex:0 0 auto}
+#sec-livre-lancamentos .pf-provento-valor input{width:100%;min-width:0;height:100%;border:0;background:transparent;color:var(--green);font:800 12px 'Space Grotesk',sans-serif;text-align:right;outline:none;padding:0 3px}
+#sec-livre-lancamentos .pf-provento-valor input::-webkit-inner-spin-button,#sec-livre-lancamentos .pf-provento-valor input::-webkit-outer-spin-button{-webkit-appearance:none}
+#sec-livre-lancamentos .pf-provento-apagar{position:static!important;inset:auto!important;display:flex;align-items:center;justify-content:center;width:30px;height:30px;padding:0;border:1px solid var(--bd2);border-radius:50%;background:var(--s1);color:var(--mu);font:700 17px Inter,sans-serif;cursor:pointer}
+#sec-livre-lancamentos .pf-provento-apagar:hover{border-color:var(--red);color:var(--red);background:rgba(220,38,38,.07)}
+#sec-livre-lancamentos .pf-provento-componente>input:focus,#sec-livre-lancamentos .pf-provento-componente>select:focus,#sec-livre-lancamentos .pf-provento-valor:focus-within{border-color:var(--teal);box-shadow:0 0 0 1px var(--tbd)}
+#sec-livre-lancamentos .pf-provento-componente input:focus-visible,#sec-livre-lancamentos .pf-provento-componente select:focus-visible{outline:none!important;outline-offset:0!important}
+#sec-livre-lancamentos .pf-provento-add{display:flex;flex-wrap:wrap;gap:6px;padding:10px 0}
+#sec-livre-lancamentos .pf-provento-add button{border:1px solid var(--tbd);border-radius:7px;background:var(--s1);color:var(--teal);font:700 10px Inter,sans-serif;padding:6px 9px;cursor:pointer}
+#sec-livre-lancamentos .pf-provento-add button:hover{background:var(--tbg)}
+#sec-livre-lancamentos .pf-provento-totais{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:12px;border-top:1px solid var(--bd);padding-top:10px;font:500 11px Inter,sans-serif;color:var(--mu)}
+#sec-livre-lancamentos .pf-provento-totais b{font:800 12px 'Space Grotesk',sans-serif;color:var(--tx)}
+#sec-livre-lancamentos .pf-provento-totais strong,#sec-livre-lancamentos .pf-provento-totais strong b{color:var(--green)}
+#sec-livre-lancamentos .pf-provento-warning{color:var(--red);font-size:11px;margin-top:9px}
+#sec-livre-lancamentos .pf-provento-empty{color:var(--mu);font-size:11px;padding:8px 0}
+.pf-livre-resumo-provento{cursor:pointer}
+.pf-livre-resumo-provento:hover{background:var(--tbg)}
+@media(max-width:760px){
+  #sec-livre-lancamentos .pf-provento-detail-panel{margin-left:8px;margin-right:8px;padding:9px 9px}
+  #sec-livre-lancamentos .pf-provento-headings{display:none}
+  #sec-livre-lancamentos .pf-provento-componente{grid-template-columns:minmax(0,1fr) 96px 30px;grid-template-areas:'descricao descricao apagar' 'natureza valor apagar';gap:6px}
+  #sec-livre-lancamentos .pf-provento-componente>.pf-provento-descricao{grid-area:descricao}
+  #sec-livre-lancamentos .pf-provento-componente>select{grid-area:natureza}
+  #sec-livre-lancamentos .pf-provento-componente>.pf-provento-valor{grid-area:valor}
+  #sec-livre-lancamentos .pf-provento-componente>.pf-provento-apagar{grid-area:apagar;justify-self:center}
+}
+@media(max-width:440px){#sec-livre-lancamentos .pf-provento-detail-top{flex-direction:column}#sec-livre-lancamentos .pf-provento-totais{justify-content:flex-start}}
 </style>
 </body>
 </html>
