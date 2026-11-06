@@ -12449,5 +12449,400 @@ body #app-shell .main{padding-bottom:38px}
 }
 @media(max-width:440px){#sec-livre-lancamentos .pf-provento-detail-top{flex-direction:column}#sec-livre-lancamentos .pf-provento-totais{justify-content:flex-start}}
 </style>
+<!-- PAINELFIN • MÓDULO ASSINATURAS • compatível com Geral / Real / Simulador -->
+<style id="pf-assinaturas-style">
+#sec-assinaturas{--sub-accent:#23889b;--sub-line:var(--bd)}
+#sec-assinaturas .sub-toolbar{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:0 0 14px}
+#sec-assinaturas .sub-month-box{display:flex;gap:9px;align-items:center;flex-wrap:wrap;background:var(--s1);border:1px solid var(--bd);border-radius:9px;padding:8px 10px}
+#sec-assinaturas .sub-month-name{font:700 15px 'Space Grotesk',sans-serif;color:var(--tx);min-width:158px;text-align:center;}
+#sec-assinaturas .sub-mini-btn{border:1px solid var(--bd2);background:var(--s1);border-radius:6px;padding:7px 10px;font:700 11px 'Inter',sans-serif;color:var(--mu);cursor:pointer;white-space:nowrap}
+#sec-assinaturas .sub-mini-btn:hover{color:var(--teal);border-color:var(--teal);background:var(--tbg)}
+#sec-assinaturas .sub-mini-btn.sub-danger:hover{color:var(--red);border-color:var(--red);background:rgba(220,38,38,.07)}
+#sec-assinaturas .sub-mini-btn.sub-accent{color:#fff;background:linear-gradient(#3bafb5,#237f98);border-color:#19758d}
+#sec-assinaturas .sub-mini-btn.sub-accent:hover{filter:brightness(1.08);color:#fff}
+#sec-assinaturas .sub-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin:14px 0}
+#sec-assinaturas .sub-stat{background:var(--s1);border:1px solid var(--bd);border-top:3px solid #78c9c3;border-radius:8px;padding:12px 14px;min-width:0}
+#sec-assinaturas .sub-stat:nth-child(2){border-top-color:#77b9e8}#sec-assinaturas .sub-stat:nth-child(3){border-top-color:#9a9ded}#sec-assinaturas .sub-stat:nth-child(4){border-top-color:#e3b073}
+#sec-assinaturas .sub-stat-label{font-size:11px;color:var(--mu);font-weight:600}
+#sec-assinaturas .sub-stat-val{font:700 clamp(15px,2vw,21px) 'Space Grotesk',sans-serif;color:var(--tx);margin:3px 0;overflow-wrap:anywhere}
+#sec-assinaturas .sub-stat-hint{font-size:10px;color:var(--di)}
+#sec-assinaturas .sub-panel{background:var(--s1);border:1px solid var(--bd);border-radius:9px;overflow:hidden;margin:12px 0}
+#sec-assinaturas .sub-panel-head{background:linear-gradient(90deg,rgba(44,158,176,.12),rgba(44,158,176,.03));border-bottom:1px solid var(--bd);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+#sec-assinaturas .sub-panel-head b{font-size:13px;color:var(--tx)}
+#sec-assinaturas .sub-panel-body{padding:13px 14px}
+#sec-assinaturas .sub-year-bar-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:7px;min-height:148px;align-items:end;padding:16px 1px 2px}
+#sec-assinaturas .sub-year-col{border:1px solid transparent;background:transparent;border-radius:7px;padding:4px 1px 2px;color:var(--mu);cursor:pointer;display:flex;align-items:center;flex-direction:column;gap:5px;min-width:0}
+#sec-assinaturas .sub-year-col:hover{background:var(--tbg);border-color:var(--tbd)}
+#sec-assinaturas .sub-year-col.selected{background:var(--tbg);border-color:var(--teal)}
+#sec-assinaturas .sub-bar-wrap{height:93px;min-height:93px;display:flex;align-items:flex-end;width:100%;background:var(--s2);border-radius:5px 5px 2px 2px;overflow:hidden}
+#sec-assinaturas .sub-bar{width:100%;border-radius:5px 5px 1px 1px;background:linear-gradient(180deg,#64c8cc,#278b9c);min-height:2px}
+#sec-assinaturas .sub-year-col.selected .sub-bar{background:linear-gradient(180deg,#3c92db,#1f62b9)}
+#sec-assinaturas .sub-year-col small{font:700 10px 'Inter',sans-serif}
+#sec-assinaturas .sub-year-col .sub-bar-amount{font-size:9px;color:var(--mu);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;width:100%;text-align:center}
+#sec-assinaturas .sub-list-tools{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+#sec-assinaturas input,#sec-assinaturas select,#sec-assinaturas textarea{font:500 12px 'Inter',sans-serif;color:var(--tx);background:var(--s1);border:1px solid var(--bd2);border-radius:6px;padding:9px 10px;min-width:0;max-width:100%;width:100%;outline:none}
+#sec-assinaturas input:focus,#sec-assinaturas select:focus,#sec-assinaturas textarea:focus{border-color:var(--teal);box-shadow:0 0 0 2px var(--tbg)}
+#sec-assinaturas .sub-list-tools input{flex:2 1 180px;width:auto}#sec-assinaturas .sub-list-tools select{flex:1 1 155px;width:auto}
+#sec-assinaturas .sub-row{border:1px solid var(--bd);border-radius:8px;padding:12px 13px;margin:9px 0;background:var(--s1);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;align-items:center}
+#sec-assinaturas .sub-row-name{font:700 13px 'Space Grotesk',sans-serif;color:var(--tx);overflow-wrap:anywhere}
+#sec-assinaturas .sub-row-meta{font-size:11px;color:var(--mu);margin-top:3px;overflow-wrap:anywhere}
+#sec-assinaturas .sub-amount{font:700 17px 'Space Grotesk',sans-serif;color:var(--tx);text-align:right;white-space:nowrap}
+#sec-assinaturas .sub-row-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;grid-column:1/-1;border-top:1px solid var(--bd);padding-top:9px}
+#sec-assinaturas .sub-pill{font-size:10px;font-weight:700;border-radius:20px;padding:3px 9px;background:var(--s2);border:1px solid var(--bd2);color:var(--mu)}
+#sec-assinaturas .sub-pill.paid{color:var(--green);background:rgba(38,160,99,.09);border-color:rgba(38,160,99,.3)}
+#sec-assinaturas .sub-pill.skipped{color:var(--amber);background:rgba(217,151,45,.09);border-color:rgba(217,151,45,.3)}
+#sec-assinaturas .sub-empty{text-align:center;color:var(--mu);padding:27px 15px;font-size:12px}
+#sec-assinaturas .sub-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+#sec-assinaturas .sub-field{display:flex;flex-direction:column;gap:5px;min-width:0}
+#sec-assinaturas .sub-field label{font-size:10px;color:var(--mu);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+#sec-assinaturas .sub-span-2{grid-column:span 2}#sec-assinaturas .sub-span-3{grid-column:span 3}
+#sec-assinaturas .sub-help{font-size:11px;color:var(--mu);line-height:1.5}
+#sec-assinaturas .sub-form-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px}
+#sec-assinaturas .sub-inline-toggle{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#sec-assinaturas .sub-cost-edit{display:flex;gap:7px;align-items:center;flex-wrap:wrap;grid-column:1/-1;border-top:1px dashed var(--bd);padding-top:9px}
+#sec-assinaturas .sub-cost-edit input{width:105px}
+#sec-assinaturas .sub-tip{font-size:11px;color:var(--di);margin:9px 0 0}
+#sec-assinaturas details.sub-panel>summary{list-style:none;cursor:pointer}
+#sec-assinaturas details.sub-panel>summary::-webkit-details-marker{display:none}
+#sec-assinaturas details.sub-panel>summary:hover{background:var(--tbg)}
+#sec-assinaturas .sub-library-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid var(--bd);flex-wrap:wrap}
+#sec-assinaturas .sub-library-row:last-child{border-bottom:none}
+#sec-assinaturas .sub-library-copy{flex:1 1 240px;min-width:0}
+#sec-assinaturas .sub-library-copy strong{display:block;font-size:12px;color:var(--tx)}
+#sec-assinaturas .sub-library-copy small{font-size:10px;color:var(--mu)}
+#sec-assinaturas .sub-library-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+#sec-assinaturas .sub-row-label{font-size:10px;color:var(--di);margin-bottom:2px}
+@media(max-width:830px){#sec-assinaturas .sub-summary{grid-template-columns:repeat(2,minmax(0,1fr))}#sec-assinaturas .sub-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#sec-assinaturas .sub-span-3{grid-column:span 2}}
+@media(max-width:520px){#sec-assinaturas .sub-summary{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}#sec-assinaturas .sub-stat{padding:9px}#sec-assinaturas .sub-grid{grid-template-columns:minmax(0,1fr)}#sec-assinaturas .sub-span-2,#sec-assinaturas .sub-span-3{grid-column:span 1}#sec-assinaturas .sub-year-bar-grid{gap:2px}#sec-assinaturas .sub-year-col .sub-bar-amount{display:none}#sec-assinaturas .sub-row{grid-template-columns:minmax(0,1fr)}#sec-assinaturas .sub-amount{text-align:left}#sec-assinaturas .sub-month-name{min-width:112px}}
+</style>
+<script id="pf-assinaturas-script">
+(function(){
+  'use strict';
+  const $=id=>document.getElementById(id);
+  const now=new Date();
+  const monthToday=()=>`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`;
+  const validMonth=s=>/^\d{4}-(0[1-9]|1[0-2])$/.test(String(s||''));
+  const monthOrdinal=s=>parseInt(String(s).slice(0,4),10)*12+parseInt(String(s).slice(5,7),10)-1;
+  const fromOrdinal=n=>`${Math.floor(n/12)}-${String((n%12+12)%12+1).padStart(2,'0')}`;
+  const moveMonth=(s,offset)=>fromOrdinal(monthOrdinal(s)+offset);
+  const brl=n=>Number(n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+  const fmtMonth=s=>validMonth(s)?new Date(+s.slice(0,4),+s.slice(5,7)-1,1).toLocaleDateString('pt-BR',{month:'long',year:'numeric'}):s;
+  const str=s=>String(s??'');
+  const esc=s=>str(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  const num=n=>{const x=Number(n);return Number.isFinite(x)?Math.max(0,Math.round(x*100)/100):0};
+  const cycles={1:'Mensal',2:'Bimestral',3:'Trimestral',6:'Semestral',12:'Anual'};
+  const categories=['Streaming','Música','Software / IA','Armazenamento','Educação','Academia / Saúde','Serviços','Outras'];
+  let db={items:[],nextId:1,selectedMonth:monthToday()};
+  let editingId=null, editingPriceId=null, showForm=false;
+  let categoryFilter='',statusFilter='',searchText='';
+  const ref=()=>db.selectedMonth;
+  const get=()=>Array.isArray(db.items)?db.items:[];
+  const genId=()=>{const ids=new Set(get().map(x=>String(x.id)));let id;do{id='sub'+db.nextId++;}while(ids.has(id));return id;};
+  function clean(obj){
+    const items=Array.isArray(obj?.items)?obj.items:[];
+    const normalized=items.filter(x=>x&&typeof x==='object').map((x,i)=>({
+      id:String(x.id||`sub${i+1}`),name:str(x.name||'Assinatura').slice(0,120),category:categories.includes(x.category)?x.category:'Outras',
+      amount:num(x.amount),everyMonths:cycles[Number(x.everyMonths)]?Number(x.everyMonths):1,
+      monthStart:validMonth(x.monthStart)?x.monthStart:monthToday(),monthEnd:validMonth(x.monthEnd)?x.monthEnd:'',
+      chargeDay:Math.min(31,Math.max(1,Math.round(Number(x.chargeDay)||1))),paymentMethod:str(x.paymentMethod||'').slice(0,80),notes:str(x.notes||'').slice(0,300),
+      paidMonths:x.paidMonths&&typeof x.paidMonths==='object'&&!Array.isArray(x.paidMonths)?{...x.paidMonths}:{},
+      skippedMonths:x.skippedMonths&&typeof x.skippedMonths==='object'&&!Array.isArray(x.skippedMonths)?{...x.skippedMonths}:{},
+      monthPrices:x.monthPrices&&typeof x.monthPrices==='object'&&!Array.isArray(x.monthPrices)?{...x.monthPrices}:{}
+    }));
+    const prev=Number(obj?.nextId)||1;
+    db={items:normalized,nextId:Math.max(prev,normalized.length+1),selectedMonth:validMonth(obj?.selectedMonth)?obj.selectedMonth:monthToday()};
+  }
+  function occurs(x,month){
+    if(!validMonth(month)||!validMonth(x.monthStart))return false;
+    const k=monthOrdinal(month)-monthOrdinal(x.monthStart);
+    if(k<0 ||(x.monthEnd&&monthOrdinal(month)>monthOrdinal(x.monthEnd)))return false;
+    return k%Number(x.everyMonths||1)===0;
+  }
+  function amt(x,month){
+    if(Object.prototype.hasOwnProperty.call(x.monthPrices||{},month))return num(x.monthPrices[month]);
+    return num(x.amount);
+  }
+  function rowsFor(month){return get().filter(x=>occurs(x,month)).map(x=>({item:x,paid:!!x.paidMonths?.[month],skipped:!!x.skippedMonths?.[month],amount:amt(x,month)}));}
+  function totalsFor(month){
+    const list=rowsFor(month),included=list.filter(x=>!x.skipped);
+    return {total:included.reduce((t,x)=>t+x.amount,0),paid:included.filter(x=>x.paid).reduce((t,x)=>t+x.amount,0),count:included.length,skipped:list.length-included.length};
+  }
+  function yearTotals(yr){return Array.from({length:12},(_,i)=>totalsFor(`${yr}-${String(i+1).padStart(2,'0')}`));}
+  function chargeDate(x,month){
+    const [y,m]=month.split('-').map(Number);
+    const last=new Date(y,m,0).getDate();
+    return `${String(Math.min(last,x.chargeDay)).padStart(2,'0')}/${String(m).padStart(2,'0')}`;
+  }
+  function edited(){return get().find(x=>x.id===editingId);}
+  function notify(s,isError=false){ if(typeof window.showToast==='function')window.showToast(s,isError); else if(isError)alert(s); }
+  function changed(){
+    // Integração: usa o salvamento já existente, sem alterar outros campos do orçamento.
+    if(typeof window.agendarAutoSave==='function')window.agendarAutoSave();
+    else notify('Alteração pronta. Clique em Salvar no topo.');
+  }
+  function injectNav(){
+    if($('nav-assinaturas'))return;
+    const nav=$('nav-geral');if(!nav)return;
+    const button=document.createElement('button');button.type='button';button.className='nav-item';button.id='nav-assinaturas';button.title='Assinaturas e cobranças recorrentes';
+    button.innerHTML='<span class="nav-icon">🔁</span><span>Assinaturas</span><span class="nav-status" id="dot-assinaturas"></span>';
+    button.addEventListener('click',()=>window.goTo('assinaturas'));
+    const next=$('nav-dividas')||$('nav-dizimo');
+    if(next)nav.insertBefore(button,next);else nav.appendChild(button);
+  }
+  function injectSection(){
+    if($('sec-assinaturas'))return;
+    const root=document.querySelector('.content');if(!root)return;
+    const div=document.createElement('div');div.id='sec-assinaturas';div.className='page-section';div.style.display='none';
+    div.innerHTML=`
+      <div class="section-header"><div class="section-eyebrow">Geral / controle de recorrências</div>
+        <h2 class="section-title">Assinaturas</h2>
+        <p class="section-desc">Tudo que renova automaticamente — valores, vencimentos, pagamentos e quanto custa por mês ou por ano.</p>
+      </div>
+      <div class="sub-toolbar">
+        <div class="sub-month-box">
+          <button type="button" class="sub-mini-btn" data-action="prev-month" title="Mês anterior">‹</button>
+          <div id="sub-month-label" class="sub-month-name"></div>
+          <button type="button" class="sub-mini-btn" data-action="next-month" title="Mês seguinte">›</button>
+          <button type="button" class="sub-mini-btn" data-action="today">Mês atual</button>
+        </div>
+        <div class="sub-inline-toggle">
+          <button type="button" class="sub-mini-btn" data-action="export-csv">↓ Exportar CSV</button>
+          <button type="button" class="sub-mini-btn sub-accent" data-action="add">+ Nova assinatura</button>
+        </div>
+      </div>
+      <div id="sub-stats" class="sub-summary"></div>
+      <section class="sub-panel"><div class="sub-panel-head"><b>📊 Mapa anual de cobranças</b>
+        <div class="sub-inline-toggle"><button type="button" class="sub-mini-btn" data-action="prev-year">‹</button>
+          <b id="sub-year-label"></b><button type="button" class="sub-mini-btn" data-action="next-year">›</button></div>
+      </div><div class="sub-panel-body"><div id="sub-year-chart" class="sub-year-bar-grid"></div><p class="sub-tip">Toque em qualquer mês para conferir as assinaturas. O gráfico mostra os valores previstos, inclusive os ainda não pagos.</p></div></section>
+      <section class="sub-panel" id="sub-form-panel" hidden><div class="sub-panel-head"><b id="sub-form-title">Nova assinatura</b><button type="button" class="sub-mini-btn" data-action="cancel-form">✕ Fechar</button></div>
+        <div class="sub-panel-body"><form id="sub-form"><div class="sub-grid">
+          <div class="sub-field sub-span-2"><label for="sub-name">Nome do serviço *</label><input id="sub-name" name="name" maxlength="120" placeholder="Ex.: Netflix, Spotify, ChatGPT..." required></div>
+          <div class="sub-field"><label for="sub-category">Categoria</label><select id="sub-category" name="category"></select></div>
+          <div class="sub-field"><label for="sub-amount">Valor por cobrança (R$) *</label><input id="sub-amount" name="amount" type="number" step="0.01" min="0" required placeholder="0,00"></div>
+          <div class="sub-field"><label for="sub-cycle">Periodicidade</label><select id="sub-cycle" name="everyMonths"></select></div>
+          <div class="sub-field"><label for="sub-day">Dia do vencimento</label><input id="sub-day" name="chargeDay" type="number" min="1" max="31" value="1" required></div>
+          <div class="sub-field"><label for="sub-start">Primeira cobrança</label><input id="sub-start" name="monthStart" type="month" required></div>
+          <div class="sub-field"><label for="sub-end">Última cobrança (opcional)</label><input id="sub-end" name="monthEnd" type="month"></div>
+          <div class="sub-field"><label for="sub-method">Pagamento por</label><input id="sub-method" name="paymentMethod" maxlength="80" placeholder="Ex.: Nubank, Pix, cartão..." ></div>
+          <div class="sub-field sub-span-3"><label for="sub-notes">Observações (opcional)</label><textarea id="sub-notes" name="notes" maxlength="300" rows="2" placeholder="Plano, acesso familiar, renovação, observações..."></textarea></div>
+        </div><div class="sub-form-actions"><button type="button" class="sub-mini-btn" data-action="cancel-form">Cancelar</button><button class="sub-mini-btn sub-accent" type="submit">✓ Salvar assinatura</button></div></form></div>
+      </section>
+      <section class="sub-panel"><div class="sub-panel-head"><b>🧾 Cobranças do mês</b><span class="sub-pill" id="sub-list-count"></span></div>
+        <div class="sub-panel-body"><div class="sub-list-tools"><input type="search" id="sub-search" placeholder="Buscar assinatura..." aria-label="Buscar assinatura">
+          <select id="sub-filter-cat" aria-label="Categoria"><option value="">Todas as categorias</option></select>
+          <select id="sub-filter-status" aria-label="Situação da cobrança"><option value="">Todos os pagamentos</option><option value="pendente">A pagar</option><option value="pago">Pagas</option><option value="pulado">Não cobradas</option></select></div>
+        <div id="sub-rows"></div></div></section>
+      <details class="sub-panel"><summary class="sub-panel-head"><b>📚 Todas as assinaturas cadastradas</b><span class="sub-pill" id="sub-library-count">0 assinaturas · clique para expandir</span></summary>
+        <div class="sub-panel-body" id="sub-library"></div></details>
+      <div class="sub-help">💡 <b>Sem cobrança duplicada:</b> esta guia é um controle independente. Nada é acrescentado automaticamente às despesas ou às faturas de cartão. Para usar a previsão do mês no diagnóstico, clique abaixo.</div>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="sub-mini-btn" data-action="copy-expense">↪ Aplicar valor deste mês à despesa “Assinaturas”</button><button type="button" class="sub-mini-btn" data-action="open-expenses">📋 Ir para Despesas</button></div>
+    `;
+    const dash=$('sec-dashboard');if(dash&&dash.parentElement===root)root.insertBefore(div,dash);else root.appendChild(div);
+    $('sub-category').innerHTML=categories.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
+    $('sub-cycle').innerHTML=Object.entries(cycles).map(([n,label])=>`<option value="${n}">${esc(label)}</option>`).join('');
+    $('sub-filter-cat').innerHTML+=categories.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
+    div.addEventListener('click',handleClick);
+    $('sub-form').addEventListener('submit',handleSubmit);
+    $('sub-search').addEventListener('input',e=>{searchText=e.target.value;renderRows()});
+    $('sub-filter-cat').addEventListener('change',e=>{categoryFilter=e.target.value;renderRows()});
+    $('sub-filter-status').addEventListener('change',e=>{statusFilter=e.target.value;renderRows()});
+  }
+  function render(){
+    if(!$('sec-assinaturas'))return;
+    $('sub-month-label').textContent=fmtMonth(ref());
+    $('sub-year-label').textContent=ref().slice(0,4);
+    const month=totalsFor(ref());
+    const annual=yearTotals(Number(ref().slice(0,4)));
+    const totalYear=annual.reduce((s,x)=>s+x.total,0),paidYear=annual.reduce((s,x)=>s+x.paid,0);
+    const active=get().filter(x=>occurs(x,ref())).length;
+    $('sub-stats').innerHTML=`
+      <div class="sub-stat"><div class="sub-stat-label">Previsto neste mês</div><div class="sub-stat-val">${brl(month.total)}</div><div class="sub-stat-hint">${month.count} cobrança(s), sem as puladas</div></div>
+      <div class="sub-stat"><div class="sub-stat-label">Pago no mês</div><div class="sub-stat-val" style="color:var(--green)">${brl(month.paid)}</div><div class="sub-stat-hint">Falta pagar: ${brl(Math.max(0,month.total-month.paid))}</div></div>
+      <div class="sub-stat"><div class="sub-stat-label">Previsto em ${ref().slice(0,4)}</div><div class="sub-stat-val">${brl(totalYear)}</div><div class="sub-stat-hint">Já pago no ano: ${brl(paidYear)}</div></div>
+      <div class="sub-stat"><div class="sub-stat-label">Assinaturas no mês</div><div class="sub-stat-val">${active}</div><div class="sub-stat-hint">${get().length} cadastro(s) · ${month.skipped} não cobrada(s)</div></div>`;
+    const mx=Math.max(1,...annual.map(x=>x.total));
+    $('sub-year-chart').innerHTML=annual.map((v,i)=>{
+      const m=`${ref().slice(0,4)}-${String(i+1).padStart(2,'0')}`;
+      const txt=new Date(+ref().slice(0,4),i,1).toLocaleDateString('pt-BR',{month:'short'}).replace('.','');
+      const pct=Math.max(v.total>0?3:0,(v.total/mx)*100);
+      return `<button class="sub-year-col ${m===ref()?'selected':''}" type="button" data-action="pick-month" data-month="${m}" title="${esc(fmtMonth(m))}: ${esc(brl(v.total))}"><span class="sub-bar-amount">${v.total?esc(brl(v.total).replace('R$ ','')):'—'}</span><span class="sub-bar-wrap"><span class="sub-bar" style="height:${pct.toFixed(2)}%"></span></span><small>${esc(txt)}</small></button>`;
+    }).join('');
+    renderRows();renderLibrary();
+  }
+  function renderLibrary(){
+    const el=$('sub-library');if(!el)return;
+    $('sub-library-count').textContent=`${get().length} assinaturas · clique para expandir`;
+    el.innerHTML=get().length?get().slice().sort((a,b)=>a.name.localeCompare(b.name,'pt-BR')).map(x=>{
+      const ended=x.monthEnd&&monthOrdinal(x.monthEnd)<monthOrdinal(monthToday());
+      const upcoming=x.monthStart&&monthOrdinal(x.monthStart)>monthOrdinal(ref())?'Agendada':'Ativa / recorrente';
+      return `<div class="sub-library-row"><div class="sub-library-copy"><strong>${esc(x.name)} <span class="sub-pill ${ended?'skipped':''}">${ended?'Encerrada':upcoming}</span></strong>
+        <small>${esc(x.category)} · ${esc(cycles[x.everyMonths])} · ${brl(x.amount)} · desde ${esc(fmtMonth(x.monthStart))}${x.monthEnd?' · até '+esc(fmtMonth(x.monthEnd)):''}</small></div>
+        <div class="sub-library-actions"><button type="button" class="sub-mini-btn" data-action="go-billing" data-id="${esc(x.id)}">📅 Ver cobrança</button>
+        <button type="button" class="sub-mini-btn" data-action="edit" data-id="${esc(x.id)}">✎ Editar</button></div></div>`;
+    }).join(''):'<div class="sub-empty">Ainda não há assinaturas cadastradas.</div>';
+  }
+  function renderRows(){
+    if(!$('sub-rows'))return;
+    let arr=rowsFor(ref());
+    if(categoryFilter)arr=arr.filter(r=>r.item.category===categoryFilter);
+    if(searchText.trim()){const q=searchText.trim().toLocaleLowerCase('pt-BR');arr=arr.filter(r=>(r.item.name+' '+r.item.notes+' '+r.item.paymentMethod).toLocaleLowerCase('pt-BR').includes(q));}
+    if(statusFilter==='pendente')arr=arr.filter(r=>!r.skipped&&!r.paid);
+    if(statusFilter==='pago')arr=arr.filter(r=>r.paid&&!r.skipped);
+    if(statusFilter==='pulado')arr=arr.filter(r=>r.skipped);
+    arr.sort((a,b)=>a.item.chargeDay-b.item.chargeDay || a.item.name.localeCompare(b.item.name,'pt-BR'));
+    $('sub-list-count').textContent=`${arr.length} de ${rowsFor(ref()).length} cobrança(s)`;
+    $('sub-rows').innerHTML=arr.length?arr.map(r=>{
+      const x=r.item,s=r.skipped?'skipped':r.paid?'paid':'',sText=r.skipped?'Não cobrada':r.paid?'Paga':'Pendente';
+      const over=Object.prototype.hasOwnProperty.call(x.monthPrices||{},ref());
+      return `<article class="sub-row">
+        <div><div class="sub-row-name">${esc(x.name)} <span class="sub-pill ${s}">${sText}</span></div>
+          <div class="sub-row-meta">${esc(x.category)} · ${esc(cycles[x.everyMonths])} · Vence ${esc(chargeDate(x,ref()))}${x.paymentMethod?' · '+esc(x.paymentMethod):''}</div>
+          ${x.notes?`<div class="sub-row-meta" title="Observações">${esc(x.notes)}</div>`:''}</div>
+        <div><div class="sub-row-label">Valor da cobrança</div><div class="sub-amount">${brl(r.amount)}</div>
+          ${over?'<div class="sub-row-label" style="text-align:right">ajuste só neste mês</div>':''}</div>
+        <div class="sub-row-actions">
+          <button type="button" class="sub-mini-btn" data-action="paid" data-id="${esc(x.id)}">${r.paid?'↶ Desfazer pago':'✓ Marcar pago'}</button>
+          <button type="button" class="sub-mini-btn" data-action="skip" data-id="${esc(x.id)}">${r.skipped?'↶ Voltar cobrança':'◌ Não cobrada'}</button>
+          <button type="button" class="sub-mini-btn" data-action="price" data-id="${esc(x.id)}">R$ Ajustar mês</button>
+          <button type="button" class="sub-mini-btn" data-action="edit" data-id="${esc(x.id)}">✎ Editar</button>
+          <button type="button" class="sub-mini-btn sub-danger" data-action="delete" data-id="${esc(x.id)}" aria-label="Excluir ${esc(x.name)}">× Excluir</button>
+        </div>
+        ${editingPriceId===x.id?`<form class="sub-cost-edit" data-price-form="${esc(x.id)}"><label for="sub-cost-${esc(x.id)}" class="sub-help">Valor em ${esc(fmtMonth(ref()))}:</label>
+          <input id="sub-cost-${esc(x.id)}" name="price" type="number" step="0.01" min="0" value="${r.amount}" required>
+          <button type="submit" class="sub-mini-btn sub-accent">Aplicar</button>
+          ${over?`<button type="button" class="sub-mini-btn" data-action="clear-price" data-id="${esc(x.id)}">Valor padrão</button>`:''}
+          <button type="button" class="sub-mini-btn" data-action="close-price">Cancelar</button></form>`:''}
+      </article>`;
+    }).join(''):`<div class="sub-empty">${get().length?'Nenhuma cobrança encontrada neste mês com os filtros atuais.':'Ainda não há assinaturas cadastradas. Clique em “+ Nova assinatura” para começar.'}</div>`;
+    $('sub-rows').querySelectorAll('form[data-price-form]').forEach(form=>form.addEventListener('submit',handlePrice));
+  }
+  function openForm(x){
+    editingId=x?.id||null;showForm=true;
+    const form=$('sub-form');form.reset();
+    $('sub-form-title').textContent=x?'Editar assinatura':'Cadastrar assinatura';
+    $('sub-name').value=x?.name||'';$('sub-category').value=x?.category||'Streaming';$('sub-amount').value=x?.amount??'';
+    $('sub-cycle').value=String(x?.everyMonths||1);$('sub-day').value=x?.chargeDay||1;
+    $('sub-start').value=x?.monthStart||ref();$('sub-end').value=x?.monthEnd||'';
+    $('sub-method').value=x?.paymentMethod||'';$('sub-notes').value=x?.notes||'';
+    $('sub-form-panel').hidden=false;
+    $('sub-form-panel').scrollIntoView({behavior:'smooth',block:'start'});
+    $('sub-name').focus({preventScroll:true});
+  }
+  function closeForm(){editingId=null;showForm=false;$('sub-form-panel').hidden=true;}
+  function handleSubmit(ev){
+    ev.preventDefault();const f=ev.currentTarget,form=new FormData(f);
+    const name=str(form.get('name')).trim(),amount=Number(form.get('amount'));
+    const start=str(form.get('monthStart')),end=str(form.get('monthEnd'));
+    if(!name||!Number.isFinite(amount)||amount<0||!validMonth(start)||end&&!validMonth(end)||end&&monthOrdinal(end)<monthOrdinal(start)){
+      notify('Verifique nome, valor, início e fim da cobrança.',true);return;
+    }
+    const old=edited();const newItem={
+      ...(old||{id:genId(),paidMonths:{},skippedMonths:{},monthPrices:{}}),
+      name,category:categories.includes(form.get('category'))?str(form.get('category')):'Outras',amount:num(amount),
+      everyMonths:cycles[Number(form.get('everyMonths'))]?Number(form.get('everyMonths')):1,
+      chargeDay:Math.min(31,Math.max(1,Math.round(Number(form.get('chargeDay'))||1))),monthStart:start,monthEnd:end,
+      paymentMethod:str(form.get('paymentMethod')).trim().slice(0,80),notes:str(form.get('notes')).trim().slice(0,300)
+    };
+    if(old)db.items=db.items.map(x=>x.id===old.id?newItem:x);else db.items.push(newItem);
+    closeForm();changed();render();notify(old?'Assinatura atualizada.':'Assinatura cadastrada.');
+  }
+  function handlePrice(ev){ev.preventDefault();const id=ev.currentTarget.dataset.priceForm,x=get().find(x=>x.id===id);
+    const raw=ev.currentTarget.elements.price.value,v=Number(raw);if(!x||raw===''||!Number.isFinite(v)||v<0){notify('Informe um valor válido.',true);return;}
+    x.monthPrices=x.monthPrices||{};x.monthPrices[ref()]=num(v);editingPriceId=null;changed();render();notify('Valor pontual do mês atualizado.');
+  }
+  function handleClick(e){
+    const btn=e.target.closest('button[data-action]');if(!btn)return;
+    const action=btn.dataset.action,id=btn.dataset.id;
+    const item=id?get().find(x=>x.id===id):null;
+    if(action==='prev-month'||action==='next-month'){db.selectedMonth=moveMonth(ref(),action==='prev-month'?-1:1);editingPriceId=null;changed();render();return;}
+    if(action==='today'){db.selectedMonth=monthToday();editingPriceId=null;changed();render();return;}
+    if(action==='prev-year'||action==='next-year'){db.selectedMonth=moveMonth(ref(),action==='prev-year'?-12:12);editingPriceId=null;changed();render();return;}
+    if(action==='pick-month'){if(validMonth(btn.dataset.month)){db.selectedMonth=btn.dataset.month;editingPriceId=null;changed();render();}return;}
+    if(action==='add'){openForm(null);return;}
+    if(action==='cancel-form'){closeForm();return;}
+    if(action==='edit'&&item){openForm(item);return;}
+    if(action==='go-billing'&&item){
+      let target=null;
+      const first=Math.max(monthOrdinal(ref()),monthOrdinal(item.monthStart));
+      for(let n=first;n<first+120;n++){const m=fromOrdinal(n);if(occurs(item,m)){target=m;break;}}
+      if(!target){target=item.monthEnd&&occurs(item,item.monthEnd)?item.monthEnd:item.monthStart;}
+      db.selectedMonth=target;editingPriceId=null;changed();render();$('sub-month-label')?.scrollIntoView({behavior:'smooth',block:'start'});return;
+    }
+    if(action==='delete'&&item){if(!confirm(`Excluir "${item.name}" e todo o histórico de pagamentos desta assinatura?`))return;
+      db.items=db.items.filter(x=>x.id!==id);if(editingId===id)closeForm();if(editingPriceId===id)editingPriceId=null;changed();render();notify('Assinatura excluída.');return;}
+    if(action==='paid'&&item){item.paidMonths=item.paidMonths||{};item.skippedMonths=item.skippedMonths||{};
+      if(item.paidMonths[ref()])delete item.paidMonths[ref()];else {item.paidMonths[ref()]=true;delete item.skippedMonths[ref()];}
+      changed();render();return;}
+    if(action==='skip'&&item){item.skippedMonths=item.skippedMonths||{};item.paidMonths=item.paidMonths||{};
+      if(item.skippedMonths[ref()])delete item.skippedMonths[ref()];else {item.skippedMonths[ref()]=true;delete item.paidMonths[ref()];}
+      changed();render();return;}
+    if(action==='price'&&item){editingPriceId=editingPriceId===item.id?null:item.id;renderRows();return;}
+    if(action==='close-price'){editingPriceId=null;renderRows();return;}
+    if(action==='clear-price'&&item){delete item.monthPrices[ref()];editingPriceId=null;changed();render();return;}
+    if(action==='copy-expense'){applyExpense();return;}
+    if(action==='open-expenses'){window.goTo?.('despesas');return;}
+    if(action==='export-csv'){exportCsv();return;}
+  }
+  function applyExpense(){
+    if(typeof state==='undefined'||!Array.isArray(state.expenses)){notify('Não foi possível localizar a lista de despesas do Geral.',true);return;}
+    const planned=totalsFor(ref()).total;
+    if(!confirm(`Usar ${brl(planned)} (cobranças previstas em ${fmtMonth(ref())}) como valor da despesa "Assinaturas" no Geral?\n\nO valor atual será SUBSTITUÍDO, não somado. Isso não muda faturas, dívidas nem lançamentos mensais.`))return;
+    let expense=state.expenses.find(x=>String(x.name||'').trim().toLocaleLowerCase('pt-BR')==='assinaturas');
+    if(!expense){expense={id:state.nextId++,name:'Assinaturas',cat:'lazer',icon:'📺',val:0};state.expenses.push(expense);}
+    expense.val=planned;
+    if(typeof window.renderExpenses==='function')window.renderExpenses();else if(typeof renderExpenses==='function')renderExpenses();
+    if(typeof window.calcular==='function')window.calcular();else if(typeof calcular==='function')calcular();
+    changed();notify('Despesa geral “Assinaturas” atualizada para '+brl(planned)+'.');
+  }
+  function exportCsv(){
+    const cols=['Assinatura','Categoria','Periodicidade','Valor padrão','Início','Fim','Dia','Forma de pagamento','Observações','Mês','Valor previsto','Situação'];
+    const rows=[cols];
+    for(const x of get()){
+      const begin=monthOrdinal(x.monthStart),end=x.monthEnd?monthOrdinal(x.monthEnd):monthOrdinal(ref())+11;
+      // Exporta até o último mês do ano seguinte à seleção; históricos antigos permanecem disponíveis.
+      for(let i=begin;i<=Math.min(end,monthOrdinal(ref())+11)&&i<begin+600;i++){
+        const k=fromOrdinal(i);if(!occurs(x,k))continue;
+        rows.push([x.name,x.category,cycles[x.everyMonths],x.amount.toFixed(2),x.monthStart,x.monthEnd,x.chargeDay,x.paymentMethod,x.notes,k,amt(x,k).toFixed(2),x.skippedMonths[k]?'Não cobrada':x.paidMonths[k]?'Paga':'Pendente']);
+      }
+    }
+    const csv='\ufeff'+rows.map(a=>a.map(x=>'"'+str(x).replace(/"/g,'""')+'"').join(';')).join('\r\n');
+    const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+    const a=document.createElement('a');a.href=url;a.download=`painelfin-assinaturas-${ref()}.csv`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);
+    notify('Planilha de assinaturas exportada.');
+  }
+  // Firebase: estende a corrente de salvar/aplicar dados; o caminho é selecionado pelo PainelFin.
+  const collectPrev=window.coletarDados;
+  if(typeof collectPrev==='function')window.coletarDados=function(){return {...collectPrev.apply(this,arguments),assinaturasData:db};};
+  const applyPrev=window.applyData;
+  if(typeof applyPrev==='function')window.applyData=function(data){applyPrev.apply(this,arguments);clean(data?.assinaturasData);render();};
+  // A guia é ligada ao modo GERAL; isolamento impede sobreposições no Mensal / Saúde.
+  const goPrev=window.goTo;
+  window.goTo=function(id){
+    injectNav();injectSection();
+    if(id==='assinaturas'){
+      if(typeof window.setMode==='function'&&typeof appMode!=='undefined'&&appMode!=='geral')window.setMode('geral');
+      document.body.dataset.pfMode='geral';
+      document.querySelectorAll('.page-section').forEach(x=>{x.style.display='none';x.classList.remove('active')});
+      const sec=$('sec-assinaturas');if(sec){sec.style.display='block';sec.classList.add('active');}
+      document.querySelectorAll('#nav-geral .nav-item').forEach(x=>x.classList.remove('active'));
+      $('nav-assinaturas')?.classList.add('active');
+      if($('topbar-title'))$('topbar-title').textContent='Assinaturas';
+      render();window.scrollTo(0,0);return;
+    }
+    const sec=$('sec-assinaturas');if(sec){sec.style.display='none';sec.classList.remove('active');}
+    return typeof goPrev==='function'?goPrev.apply(this,arguments):undefined;
+  };
+  const modePrev=window.setMode;
+  if(typeof modePrev==='function')window.setMode=function(mode){
+    const result=modePrev.apply(this,arguments);
+    if(mode!=='geral'){$('sec-assinaturas')?.classList.remove('active');if($('sec-assinaturas'))$('sec-assinaturas').style.display='none';}
+    return result;
+  };
+  injectNav();injectSection();render();
+  document.addEventListener('DOMContentLoaded',()=>{injectNav();injectSection();render();});
+})();
+</script>
+
 </body>
 </html>
