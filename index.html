@@ -12719,5 +12719,254 @@ body #app-shell .main{padding-bottom:38px}
   }
 }
 </style>
+
+<!-- PAINELFIN | CORREÇÃO DE LARGURA E RESPONSIVIDADE (nov/2026)
+     Apenas CSS: preserva dados, Firebase, funções e comportamentos existentes. -->
+<style id="pf-layout-fluid-responsive-2026">
+/* Estrutura: sidebar fixa e área de trabalho ocupando TODO o espaço restante. */
+:root { --pf-side-fluid: 240px; }
+html { width:100%; min-width:0; }
+body { width:100%; min-width:0; }
+#app-shell, #app-shell .app {
+  width:100% !important;
+  max-width:none !important;
+  min-width:0 !important;
+}
+#app-shell .app { display:flex; align-items:stretch; }
+#app-shell .sidebar { width:var(--pf-side-fluid) !important; }
+#app-shell .main {
+  box-sizing:border-box !important;
+  margin-left:var(--pf-side-fluid) !important;
+  width:calc(100% - var(--pf-side-fluid)) !important;
+  flex:1 1 auto !important;
+  min-width:0 !important;
+  max-width:none !important;
+}
+#app-shell .content {
+  box-sizing:border-box !important;
+  margin:0 !important;
+  width:100% !important;
+  max-width:none !important;
+  min-width:0 !important;
+  padding:clamp(18px,2vw,34px) clamp(18px,2.25vw,40px) 96px !important;
+}
+#app-shell .page-section {
+  width:100%; max-width:none; min-width:0;
+}
+#app-shell .topbar, #app-shell .retro-alertbar { box-sizing:border-box; width:100%; min-width:0; }
+#app-shell .topbar { padding:10px clamp(15px,2.2vw,34px); gap:10px 18px; flex-wrap:wrap; }
+#app-shell .topbar-title { flex:0 0 auto; }
+#app-shell .topbar-actions { min-width:0; flex:0 1 auto; flex-wrap:wrap; justify-content:flex-end; gap:7px; }
+#app-shell .retro-alertbar { padding-left:clamp(15px,2.2vw,34px); padding-right:clamp(15px,2.2vw,34px); }
+#app-shell .section-header { width:100%; }
+#app-shell .section-title { font-size:clamp(21px,1.5vw,26px); line-height:1.25; }
+#app-shell .section-desc { max-width:110ch; }
+/* Portal superior: três zonas sem texto invadindo os botões. */
+#app-shell #pf-portal {
+  display:grid; grid-template-columns:auto minmax(0,1fr) auto;
+  gap:12px; align-items:center; width:100%; max-width:100%;
+  padding:13px clamp(12px,1.6vw,23px);
+}
+#app-shell .pf-portal-copy, #app-shell .pf-portal-buttons { min-width:0; }
+#app-shell .pf-portal-buttons { justify-content:flex-end; }
+#app-shell .pf-portal-copy small { white-space:normal; line-height:1.5; }
+/* Cartões, tabelas e formulários se adaptam ao espaço do conteúdo. */
+#app-shell .card, #app-shell .db-section, #app-shell .mes-block,
+#app-shell .debt-card, #app-shell .debt-form-card,
+#app-shell .debt-filter-card, #app-shell .debt-items-list { max-width:100%; min-width:0; }
+#app-shell .form-grid { grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr)); }
+#app-shell .stats-grid, #app-shell .db-grid { grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr)); }
+#app-shell .resumo-ano-grid { grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr)); }
+#app-shell .db-2col, #app-shell .db-3col, #app-shell .livre-grid { min-width:0; }
+#app-shell .form-group, #app-shell .expense-item, #app-shell .db-card,
+#app-shell .goal-card, #app-shell .invest-card, #app-shell .stat-card { min-width:0; }
+#app-shell .plan-table { width:100%; }
+#app-shell input, #app-shell select, #app-shell textarea { max-width:100%; }
+/* As duas fontes de renda aparecem lado a lado em monitores grandes. */
+@media(min-width:1480px) {
+  #app-shell #rendas-list {
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:14px !important;
+    align-items:start;
+  }
+  #app-shell #rendas-list > .pf-income-card { min-width:0; margin:0 !important; }
+  #app-shell .db-3col { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  #app-shell .ano-grid { grid-template-columns:repeat(6,minmax(0,1fr)); }
+}
+/* No notebook, formulários continuam com largura confortável e a barra reorganiza. */
+@media(min-width:769px) and (max-width:1100px) {
+  :root { --pf-side-fluid:210px; }
+  #app-shell .content { padding:18px 20px 94px !important; }
+  #app-shell .topbar-actions { justify-content:flex-start; }
+  #app-shell #pf-portal { grid-template-columns:auto minmax(0,1fr); }
+  #app-shell #pf-portal .pf-portal-buttons { grid-column:1 / -1; justify-content:flex-start; }
+  #app-shell .db-3col { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media(min-width:769px) and (max-width:1479px) {
+  #app-shell #rendas-list { display:flex !important; flex-direction:column !important; gap:10px !important; }
+  #app-shell #rendas-list > .pf-income-card { width:100%; }
+}
+/* Celular e tablet: a sidebar permanece embaixo como um app, sem largura fixa. */
+@media(max-width:768px) {
+  :root { --pf-side-fluid:0px; }
+  html,body { max-width:100%; }
+  #app-shell .app { width:100%; display:block; }
+  #app-shell .sidebar {
+    width:100% !important;
+    max-width:100% !important;
+    height:calc(112px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-bottom:calc(7px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  #app-shell .main {
+    width:100% !important; max-width:100% !important;
+    margin-left:0 !important;
+    padding-bottom:calc(120px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  #app-shell .content { width:100% !important; max-width:none !important; padding:16px 13px 26px !important; }
+  #app-shell .topbar {
+    position:sticky; top:0; z-index:90;
+    display:flex; flex-direction:column; align-items:stretch;
+    width:100%; gap:7px; padding:10px 13px 9px !important;
+    overflow:visible !important;
+  }
+  #app-shell .topbar-title { width:100%; flex:auto; font-size:13px; }
+  #app-shell .topbar-actions {
+    display:flex; flex-wrap:wrap !important;
+    width:100%; max-width:100%; min-width:0 !important;
+    align-items:center; justify-content:flex-start;
+    gap:6px;
+  }
+  #app-shell .topbar .btn { min-height:32px; padding:6px 9px !important; }
+  #app-shell .retro-tools { flex:0 0 auto; }
+  #app-shell .retro-tools-pop { right:0; top:calc(100% + 8px); width:min(270px,calc(100vw - 26px)); }
+  #app-shell .retro-alertbar { padding:8px 13px; }
+  #app-shell #pf-portal {
+    grid-template-columns:auto minmax(0,1fr);
+    gap:10px; padding:11px 12px;
+  }
+  #app-shell .pf-portal-buttons {
+    grid-column:1 / -1;
+    width:100%; gap:6px;
+    display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+  #app-shell .pf-portal-buttons .pf-pixel-btn {
+    width:100%; padding:9px 4px; min-width:0;
+    font-size:10px; white-space:normal; line-height:1.25;
+  }
+  #app-shell #rendas-list { display:flex !important; flex-direction:column !important; gap:10px !important; }
+  #app-shell #rendas-list > div.pf-income-card {
+    display:block !important; width:100%; min-width:0;
+    grid-template-columns:none !important; padding:0 !important;
+  }
+  #app-shell #rendas-list .pf-income-line,
+  #app-shell .pf-monthly-income-card .pf-income-line { flex-wrap:wrap !important; }
+  #app-shell #rendas-list .pf-income-amounts,
+  #app-shell .pf-monthly-income-card .pf-income-amounts {
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:7px;
+  }
+  #app-shell #rendas-list .pf-income-box,
+  #app-shell .pf-monthly-income-card .pf-income-box { min-width:0; }
+  #app-shell .pf-income-money input { min-width:0 !important; }
+  #app-shell .form-grid, #app-shell .form-grid-2,
+  #app-shell .db-2col, #app-shell .db-3col,
+  #app-shell .goal-grid { grid-template-columns:1fr !important; }
+  #app-shell .db-grid, #app-shell .stats-grid, #app-shell .resumo-ano-grid {
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  }
+  #app-shell .card[style*="overflow:hidden"], #app-shell .db-section {
+    max-width:100%; overflow-x:auto;
+  }
+  #app-shell .sidebar .nav { min-width:0 !important; }
+  #app-shell .sidebar .nav .nav-item { flex-shrink:0 !important; }
+  #app-shell .section-title { font-size:21px; }
+}
+@media(max-width:520px) {
+  /* O botão clássico continua acessível em Ferramentas sem apertar a barra. */
+  #app-shell .topbar .pf-classic-switch { display:none !important; }
+  #app-shell .topbar-actions { justify-content:space-between; }
+  #app-shell .topbar .topbar-env { display:none; }
+  #app-shell .pf-portal-copy strong { font-size:12px; line-height:1.3; }
+  #app-shell .pf-portal-copy small { font-size:10px; }
+  #app-shell .db-grid, #app-shell .stats-grid, #app-shell .resumo-ano-grid {
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  }
+  #app-shell .stat-value, #app-shell .db-card-value { font-size:17px; overflow-wrap:anywhere; }
+  #app-shell .pf-income-switch { padding:7px 6px; }
+}
+@media(max-width:400px) {
+  #app-shell .content { padding:12px 10px 18px !important; }
+  #app-shell .topbar { padding:9px 10px !important; }
+  #app-shell .topbar-actions { gap:5px; }
+  #app-shell .topbar-actions .btn, #app-shell .retro-tools > summary { font-size:10px !important; }
+  #app-shell #pf-portal { grid-template-columns:1fr; }
+  #app-shell #pf-portal .pf-portal-avatar { display:none; }
+  #app-shell #rendas-list .pf-income-amounts,
+  #app-shell .pf-monthly-income-card .pf-income-amounts {
+    grid-template-columns:1fr !important;
+  }
+  #app-shell #rendas-list .pf-deduction-row,
+  #app-shell .pf-monthly-income-card .pf-deduction-row {
+    grid-template-columns:minmax(0,1fr) minmax(75px,95px) 26px !important;
+    gap:5px !important;
+  }
+  #app-shell .pf-portal-buttons .pf-pixel-btn { font-size:9px; }
+}
+/* Guias inferiores no celular: ícone + legenda, em vez de ícones sem contexto. */
+@media(max-width:768px) {
+  #app-shell .sidebar {
+    height:calc(132px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  #app-shell .main {
+    padding-bottom:calc(140px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  #app-shell .sidebar .mode-switcher {
+    height:43px !important; align-items:stretch !important;
+    gap:4px !important; padding:3px !important;
+  }
+  #app-shell .sidebar .mode-switcher .mode-btn {
+    width:0 !important; min-width:0 !important;
+    height:36px !important; flex:1 1 0 !important;
+    display:flex !important; flex-direction:row !important;
+    gap:5px !important; padding:4px 5px !important;
+  }
+  #app-shell .sidebar .mode-switcher .mode-btn .mode-ico {
+    display:inline-block !important; font-size:16px !important;
+  }
+  #app-shell .sidebar .mode-switcher .mode-btn .mode-label {
+    display:inline-block !important; font-size:10px !important;
+    line-height:1.1 !important; white-space:nowrap !important;
+  }
+  #app-shell .sidebar .nav {
+    min-height:60px !important; height:60px !important;
+    padding-bottom:2px !important; gap:5px !important;
+  }
+  #app-shell .sidebar .nav .nav-item {
+    display:flex !important; flex-direction:column !important;
+    align-items:center !important; justify-content:center !important;
+    gap:2px !important; flex:0 0 66px !important;
+    width:66px !important; min-width:66px !important; max-width:66px !important;
+    height:56px !important; padding:5px 2px !important;
+  }
+  #app-shell .sidebar .nav .nav-item .nav-icon {
+    font-size:20px !important; height:24px !important;
+  }
+  #app-shell .sidebar .nav .nav-item > span:not(.nav-icon):not(.nav-status) {
+    display:block !important;
+    font-size:9px !important; line-height:1.15 !important;
+    max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  #app-shell .sidebar .nav .nav-status { right:5px !important; top:4px !important; }
+}
+@media(max-width:360px) {
+  #app-shell .sidebar .mode-switcher .mode-btn .mode-ico { font-size:14px !important; }
+  #app-shell .sidebar .mode-switcher .mode-btn .mode-label { font-size:9px !important; }
+  #app-shell .sidebar .nav .nav-item { flex-basis:62px !important; width:62px !important; min-width:62px !important; max-width:62px !important; }
+}
+@media(prefers-reduced-motion:reduce) {
+  #app-shell .page-section.active { animation:none; }
+}
+</style>
+
 </body>
 </html>
