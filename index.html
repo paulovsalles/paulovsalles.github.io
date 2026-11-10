@@ -3,8 +3,17 @@
 <html lang="pt-BR"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PainelFin 2006 • Orkut, MSN, Real e Simulador</title>
+<title>Pouler Finance | Planejamento Financeiro</title>
 <meta name="theme-color" content="#8557b7">
+<meta name="description" content="Pouler Finance — planejamento financeiro pessoal.">
+<meta name="application-name" content="Pouler Finance">
+<meta name="apple-mobile-web-app-title" content="Pouler Finance">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/png" sizes="32x32" href="./pouler-finance-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="./pouler-finance-180.png">
+<link rel="manifest" href="./manifest.webmanifest">
 
 <!-- ══════════ FIREBASE SDK ══════════ -->
 <script type="module">
@@ -44,9 +53,9 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 const pluggyFunctions = getFunctions(app, 'southamerica-east1');
-// Chamada autenticada: nenhuma chave Pluggy fica neste HTML.
+// Banco somente leitura: credenciais da Pluggy nunca ficam no HTML/GitHub.
 window.pfPluggyRead = async (months = 6) => {
-  if (!auth.currentUser) throw new Error('Faça login no PainelFin primeiro.');
+  if (!auth.currentUser) throw new Error('Entre na sua conta do Pouler Finance.');
   const call = httpsCallable(pluggyFunctions, 'pluggySync', { timeout: 120000 });
   const response = await call({ months });
   return response.data;
@@ -1256,7 +1265,7 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
   <div class="nav" id="nav-geral">
     <button class="nav-item active" onclick="goTo(&#39;renda&#39;)" id="nav-renda">     <span class="nav-icon">💰</span><span>Renda</span>     <span class="nav-status active-dot" id="dot-renda"></span></button>
     <button class="nav-item" onclick="goTo(&#39;despesas&#39;)" id="nav-despesas">  <span class="nav-icon">📋</span><span>Despesas</span>  <span class="nav-status" id="dot-despesas"></span></button>
-    <button class="nav-item" onclick="pfPluggyBetaNavigate()" id="nav-pluggy-beta" title="Laboratório independente, sem alterar seus dados financeiros"><span class="nav-icon">🧪</span><span>Pluggy · BETA</span><span class="nav-status" id="dot-pluggy-beta"></span></button>
+    <button class="nav-item" onclick="pfPluggyBetaNavigate()" id="nav-pluggy-beta" title="Módulo de testes, sem alterar suas finanças"><span class="nav-icon">🧪</span><span>Pluggy · BETA</span><span class="nav-status" id="dot-pluggy-beta"></span></button>
     <button class="nav-item" onclick="goTo(&#39;dividas&#39;)" id="nav-dividas">   <span class="nav-icon">💳</span><span>Dívidas</span>    <span class="nav-status" id="dot-dividas"></span></button>
     <button class="nav-item" onclick="goTo(&#39;dizimo&#39;)" id="nav-dizimo">    <span class="nav-icon">🙏</span><span>Dízimo</span>    <span class="nav-status done" id="dot-dizimo"></span></button>
     <button class="nav-item" onclick="goTo(&#39;plano&#39;)" id="nav-plano">     <span class="nav-icon">📊</span><span>Plano</span>     <span class="nav-status" id="dot-plano"></span></button>
@@ -2261,6 +2270,24 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
   </div>
   <div id="dash-content"></div>
 </div>
+
+<!-- ════════════════════════════════════
+     DASHBOARD MENSAL
+════════════════════════════════════ -->
+<div class="page-section" id="sec-dash-mensal" style="display:none">
+  <div class="section-header">
+    <div class="section-eyebrow">análise mensal</div>
+    <div class="section-title" id="dash-mes-title">Dashboard do Mês</div>
+  </div>
+  <div class="mes-selector">
+    <button class="mes-nav" onclick="navMes(-1)">‹</button>
+    <div class="mes-label" id="dash-mes-label">—</div>
+    <div class="mes-status" id="dash-mes-badge">—</div>
+    <button class="mes-nav" onclick="navMes(+1)">›</button>
+  </div>
+  <div id="dash-mensal-content"></div>
+</div>
+
 <!-- ═══ LABORATÓRIO PLUGGY BETA: 100% separado do financeiro e do banco Firebase ═══ -->
 <div class="page-section" id="sec-pluggy-beta" style="display:none">
   <div class="pfbeta-hero">
@@ -2314,23 +2341,6 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
   </div>
 </div>
 
-
-<!-- ════════════════════════════════════
-     DASHBOARD MENSAL
-════════════════════════════════════ -->
-<div class="page-section" id="sec-dash-mensal" style="display:none">
-  <div class="section-header">
-    <div class="section-eyebrow">análise mensal</div>
-    <div class="section-title" id="dash-mes-title">Dashboard do Mês</div>
-  </div>
-  <div class="mes-selector">
-    <button class="mes-nav" onclick="navMes(-1)">‹</button>
-    <div class="mes-label" id="dash-mes-label">—</div>
-    <div class="mes-status" id="dash-mes-badge">—</div>
-    <button class="mes-nav" onclick="navMes(+1)">›</button>
-  </div>
-  <div id="dash-mensal-content"></div>
-</div>
 
 </div><!-- /content -->
 </div><!-- /main -->
@@ -13031,6 +13041,7 @@ body { width:100%; min-width:0; }
 }
 </style>
 
+<!-- ═══ MÓDULO ISOLADO: VALORES COM PLUGGY BETA ═══ -->
 <style id="pf-pluggy-beta-theme">
 /* Pluggy BETA: camada de interface independente, sem tocar no resto do PainelFin. */
 #sec-pluggy-beta,#sec-pluggy-beta *{box-sizing:border-box;min-width:0}
@@ -13086,7 +13097,6 @@ body { width:100%; min-width:0; }
 @media(max-width:460px){.pfbeta-hero-symbol{display:none}.pfbeta-hero h2{font-size:25px}.pfbeta-actions{display:grid;grid-template-columns:1fr 1fr}.pfbeta-actions .primary{grid-column:1/-1}.pfbeta-btn{font-size:11px}.pfbeta-metrics{gap:7px}.pfbeta-metric{padding:10px}.pfbeta-metric .value{font-size:17px}.pfbeta-tabs button{padding:9px 11px}.pfbeta-connection strong{font-size:12px}.pfbeta-cat-row{grid-template-columns:minmax(0,110px) 1fr auto;font-size:10px}.pfbeta-cat-amount{font-size:10px}}
 @media(prefers-reduced-motion:reduce){.pfbeta-led.is-loading{animation:none}}
 </style>
-
 
 <script id="pf-pluggy-beta-script">
 /*
@@ -13351,6 +13361,17 @@ body { width:100%; min-width:0; }
     const page=$('sec-pluggy-beta');if(page){page.style.display='none';page.classList.remove('active');}
     return typeof originalGoTo==='function'?originalGoTo.apply(this,arguments):undefined;
   };
+  // Ao mudar para Mensal ou Mensal livre, oculta sempre o laboratório.
+  // Mantém intacta a navegação anterior (inclusive Cartões e Assinaturas).
+  const previousSetMode=window.setMode;
+  if(typeof previousSetMode==='function')window.setMode=function(mode){
+    const result=previousSetMode.apply(this,arguments);
+    if(mode!=='geral'){
+      const page=$('sec-pluggy-beta');
+      if(page){page.style.display='none';page.classList.remove('active');}
+    }
+    return result;
+  };
   window.addEventListener('pf-retro-auth',e=>{
     const newUid=e.detail?.uid||null;
     if(verifiedUid&&newUid!==verifiedUid){data=null;source='';overrides=Object.create(null);lastRead=0;$('pfbeta-empty').hidden=false;$('pfbeta-workspace').hidden=true;$('pfbeta-clear').disabled=true;status('Laboratório vazio','','Nenhum dado carregado');showError('');}
@@ -13365,7 +13386,6 @@ body { width:100%; min-width:0; }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 </script>
-
 
 </body>
 </html>
