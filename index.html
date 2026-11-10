@@ -3,17 +3,8 @@
 <html lang="pt-BR"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pouler Finance | Planejamento Financeiro</title>
+<title>PainelFin 2006 • Orkut, MSN, Real e Simulador</title>
 <meta name="theme-color" content="#8557b7">
-<meta name="description" content="Pouler Finance — planejamento financeiro pessoal.">
-<meta name="application-name" content="Pouler Finance">
-<meta name="apple-mobile-web-app-title" content="Pouler Finance">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<link rel="icon" type="image/png" sizes="32x32" href="./pouler-finance-32.png">
-<link rel="apple-touch-icon" sizes="180x180" href="./pouler-finance-180.png">
-<link rel="manifest" href="./manifest.webmanifest">
 
 <!-- ══════════ FIREBASE SDK ══════════ -->
 <script type="module">
@@ -29,6 +20,7 @@ import {
   sendPasswordResetEmail,
   updateProfile
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
 import {
   getDatabase,
   ref,
@@ -51,6 +43,14 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
+const pluggyFunctions = getFunctions(app, 'southamerica-east1');
+// Chamada autenticada: nenhuma chave Pluggy fica neste HTML.
+window.pfPluggyRead = async (months = 6) => {
+  if (!auth.currentUser) throw new Error('Faça login no PainelFin primeiro.');
+  const call = httpsCallable(pluggyFunctions, 'pluggySync', { timeout: 120000 });
+  const response = await call({ months });
+  return response.data;
+};
 const provider = new GoogleAuthProvider();
 provider.setCustomParameters({ prompt: "select_account" });
 
@@ -1256,6 +1256,7 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
   <div class="nav" id="nav-geral">
     <button class="nav-item active" onclick="goTo(&#39;renda&#39;)" id="nav-renda">     <span class="nav-icon">💰</span><span>Renda</span>     <span class="nav-status active-dot" id="dot-renda"></span></button>
     <button class="nav-item" onclick="goTo(&#39;despesas&#39;)" id="nav-despesas">  <span class="nav-icon">📋</span><span>Despesas</span>  <span class="nav-status" id="dot-despesas"></span></button>
+    <button class="nav-item" onclick="pfPluggyBetaNavigate()" id="nav-pluggy-beta" title="Laboratório independente, sem alterar seus dados financeiros"><span class="nav-icon">🧪</span><span>Pluggy · BETA</span><span class="nav-status" id="dot-pluggy-beta"></span></button>
     <button class="nav-item" onclick="goTo(&#39;dividas&#39;)" id="nav-dividas">   <span class="nav-icon">💳</span><span>Dívidas</span>    <span class="nav-status" id="dot-dividas"></span></button>
     <button class="nav-item" onclick="goTo(&#39;dizimo&#39;)" id="nav-dizimo">    <span class="nav-icon">🙏</span><span>Dízimo</span>    <span class="nav-status done" id="dot-dizimo"></span></button>
     <button class="nav-item" onclick="goTo(&#39;plano&#39;)" id="nav-plano">     <span class="nav-icon">📊</span><span>Plano</span>     <span class="nav-status" id="dot-plano"></span></button>
@@ -2260,6 +2261,59 @@ body.dark .mode-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.4)}
   </div>
   <div id="dash-content"></div>
 </div>
+<!-- ═══ LABORATÓRIO PLUGGY BETA: 100% separado do financeiro e do banco Firebase ═══ -->
+<div class="page-section" id="sec-pluggy-beta" style="display:none">
+  <div class="pfbeta-hero">
+    <div class="pfbeta-hero-copy">
+      <div class="pfbeta-kicker">✳ LABORATÓRIO FINANCEIRO <span class="pfbeta-pill">BETA</span></div>
+      <h2>Valores com Pluggy</h2>
+      <p>Um espaço independente para explorar os números dos bancos conectados, experimentar categorias e conferir cálculos antes de integrar qualquer coisa ao seu planejamento.</p>
+    </div>
+    <div class="pfbeta-hero-symbol" aria-hidden="true">🏦<span>↗</span></div>
+  </div>
+  <div class="pfbeta-isolation" role="note">
+    <span class="pfbeta-lock">🔒</span>
+    <div><strong>Ambiente isolado · somente leitura</strong><p>Este módulo começa vazio, não salva transações no Firebase e não altera Renda, Despesas, Cartões, Assinaturas, REAL ou SIMULADOR. Categorias e exclusões experimentais ficam somente nesta aba e são apagadas ao recarregar.</p></div>
+  </div>
+  <section class="pfbeta-controls" aria-label="Controles do laboratório Pluggy">
+    <div class="pfbeta-controls-head">
+      <div class="pfbeta-connection"><span class="pfbeta-led" id="pfbeta-led"></span><div><strong id="pfbeta-status" role="status">Laboratório vazio</strong><small id="pfbeta-updated">Nenhum dado carregado</small></div></div>
+      <label class="pfbeta-history">Histórico
+        <select id="pfbeta-months" aria-label="Meses para consultar na Pluggy"><option value="3">3 meses</option><option value="6" selected>6 meses</option><option value="12">12 meses</option></select>
+      </label>
+    </div>
+    <div class="pfbeta-actions">
+      <button class="pfbeta-btn primary" type="button" id="pfbeta-sync">↻ Consultar meus bancos</button>
+      <button class="pfbeta-btn" type="button" id="pfbeta-demo">◈ Usar dados de exemplo</button>
+      <button class="pfbeta-btn danger" type="button" id="pfbeta-clear" disabled>✕ Zerar beta</button>
+    </div>
+    <div class="pfbeta-mini-options">
+      <label><input type="checkbox" id="pfbeta-auto"> Reconsultar a Pluggy a cada 30 min enquanto esta guia estiver aberta</label>
+      <small>A API consulta o último dado disponível; o banco não necessariamente atualiza a cada consulta.</small>
+    </div>
+    <div class="pfbeta-error" id="pfbeta-error" role="alert" hidden></div>
+  </section>
+  <div class="pfbeta-empty" id="pfbeta-empty">
+    <div class="pfbeta-empty-icon">📂</div>
+    <h3>Seu laboratório começa do zero.</h3>
+    <p>Nenhuma movimentação foi importada. Escolha <strong>Consultar meus bancos</strong> para ler os dados reais, ou <strong>Usar dados de exemplo</strong> para conhecer o módulo antes de configurar a integração.</p>
+    <div class="pfbeta-steps"><span>① Ler</span><span>② Conferir</span><span>③ Experimentar</span></div>
+  </div>
+  <div id="pfbeta-workspace" hidden>
+    <div class="pfbeta-source-line"><span class="pfbeta-source-badge" id="pfbeta-source-badge">—</span><span id="pfbeta-source-caption"></span><label>Referência <input id="pfbeta-month" type="month" aria-label="Mês de análise"></label></div>
+    <div class="pfbeta-metrics" id="pfbeta-metrics" aria-live="polite"></div>
+    <div class="pfbeta-tabs" id="pfbeta-tabs" role="tablist" aria-label="Seções do beta">
+      <button class="active" type="button" role="tab" aria-selected="true" data-pfbeta-tab="extrato">🧾 Movimentações</button>
+      <button type="button" role="tab" aria-selected="false" data-pfbeta-tab="contas">🏦 Contas</button>
+      <button type="button" role="tab" aria-selected="false" data-pfbeta-tab="cartoes">💳 Cartões</button>
+      <button type="button" role="tab" aria-selected="false" data-pfbeta-tab="categorias">📊 Categorias</button>
+      <button type="button" role="tab" aria-selected="false" data-pfbeta-tab="faturas">🗓 Faturas</button>
+    </div>
+    <div class="pfbeta-panel" id="pfbeta-panel"></div>
+    <div class="pfbeta-footer"><span>🧪 Cálculos para testes. Confira as classificações, a origem de cada valor e eventuais dados pendentes antes de usar os números em decisões reais.</span><button type="button" class="pfbeta-btn" id="pfbeta-export">↓ Exportar análise CSV</button></div>
+  </div>
+</div>
+
 
 <!-- ════════════════════════════════════
      DASHBOARD MENSAL
@@ -12976,6 +13030,342 @@ body { width:100%; min-width:0; }
   #app-shell .page-section.active { animation:none; }
 }
 </style>
+
+<style id="pf-pluggy-beta-theme">
+/* Pluggy BETA: camada de interface independente, sem tocar no resto do PainelFin. */
+#sec-pluggy-beta,#sec-pluggy-beta *{box-sizing:border-box;min-width:0}
+#sec-pluggy-beta{width:100%;max-width:none;color:var(--tx);}
+#sec-pluggy-beta button,#sec-pluggy-beta select,#sec-pluggy-beta input{font-family:inherit}
+#sec-pluggy-beta [hidden]{display:none!important}
+.pfbeta-hero{position:relative;display:flex;align-items:center;justify-content:space-between;gap:16px;background:linear-gradient(118deg,rgba(146,86,183,.15),rgba(255,255,255,.04) 64%),var(--s1);border:1px solid rgba(159,113,184,.36);border-radius:13px;padding:22px 25px;margin-bottom:12px;overflow:hidden}
+.pfbeta-kicker{display:flex;align-items:center;gap:7px;flex-wrap:wrap;color:#9a64b6;font-size:10px;font-weight:900;letter-spacing:.095em}
+.pfbeta-pill{display:inline-flex;align-items:center;background:#f0e3ff;border:1px solid #c9a4e0;color:#7846a0;border-radius:5px;padding:2px 6px;letter-spacing:.035em;font-size:9px;font-weight:900}
+.pfbeta-hero h2{font:800 clamp(24px,2.7vw,35px)/1.2 'Space Grotesk',sans-serif;margin:8px 0 7px;color:var(--tx)}
+.pfbeta-hero p{max-width:640px;font-size:13px;line-height:1.6;color:var(--mu)}
+.pfbeta-hero-symbol{display:flex;align-items:center;justify-content:center;position:relative;flex:none;width:92px;height:92px;border:1px solid #d9bde9;border-radius:21px;background:rgba(218,188,237,.36);font-size:42px;transform:rotate(-4deg)}
+.pfbeta-hero-symbol span{position:absolute;bottom:1px;right:7px;font-size:21px;color:#8b51b6}
+.pfbeta-isolation{display:flex;gap:11px;padding:12px 16px;border:1px solid rgba(43,150,133,.28);background:rgba(54,176,156,.055);border-radius:11px;margin-bottom:13px;align-items:flex-start}
+.pfbeta-lock{font-size:18px;line-height:1.4}
+.pfbeta-isolation strong{font-size:12px;color:var(--tx)}.pfbeta-isolation p{font-size:11px;line-height:1.6;color:var(--mu);margin:2px 0 0}
+.pfbeta-controls{padding:15px 17px;background:var(--s1);border:1px solid var(--bd2);border-radius:12px;margin-bottom:14px}
+.pfbeta-controls-head,.pfbeta-actions,.pfbeta-mini-options,.pfbeta-source-line{display:flex;flex-wrap:wrap;align-items:center;gap:11px}
+.pfbeta-controls-head{justify-content:space-between;margin-bottom:12px}
+.pfbeta-connection{display:flex;align-items:center;gap:9px}
+.pfbeta-connection strong{font-size:13px;display:block}.pfbeta-connection small{font-size:10px;color:var(--mu);display:block;margin-top:2px}
+.pfbeta-led{display:block;width:10px;height:10px;border-radius:50%;background:#d0becf;box-shadow:0 0 0 4px rgba(151,123,151,.1)}
+.pfbeta-led.is-demo{background:#b18be3;box-shadow:0 0 0 4px rgba(156,106,220,.13)}.pfbeta-led.is-live{background:#27aa82;box-shadow:0 0 0 4px rgba(20,169,122,.15)}.pfbeta-led.is-loading{background:#e8af44;animation:pulse .9s infinite}.pfbeta-led.is-error{background:#e06767}
+.pfbeta-history,#sec-pluggy-beta .pfbeta-source-line label{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--mu);font-weight:700}
+#sec-pluggy-beta input[type="month"],#sec-pluggy-beta input[type="search"],#sec-pluggy-beta select{padding:9px 11px;border-radius:8px;border:1px solid var(--bd2);background:var(--s2);color:var(--tx);max-width:100%;font-size:12px;outline-offset:2px}
+.pfbeta-actions{gap:8px}.pfbeta-btn{border:1px solid var(--bd2);background:var(--s2);color:var(--tx);font-weight:750;padding:10px 14px;font-size:12px;border-radius:8px;cursor:pointer;min-height:40px;white-space:normal;line-height:1.3}
+.pfbeta-btn.primary{background:#8553b1;color:#fff;border-color:#754b9c}.pfbeta-btn:hover:not(:disabled){filter:brightness(.97);border-color:#b28bca}.pfbeta-btn:disabled{opacity:.5;cursor:default}.pfbeta-btn.danger{color:#b94c61}
+.pfbeta-mini-options{justify-content:space-between;margin-top:12px;gap:6px;font-size:11px;color:var(--mu)}.pfbeta-mini-options label{display:flex;align-items:center;gap:6px;cursor:pointer}.pfbeta-mini-options small{font-size:10px}
+.pfbeta-error{margin-top:11px;border:1px solid rgba(220,72,91,.35);padding:11px;border-radius:8px;background:rgba(230,70,90,.06);font-size:11px;line-height:1.55;color:var(--tx)}
+.pfbeta-empty{background:var(--s1);border:1px dashed #cbb1d9;border-radius:14px;text-align:center;padding:clamp(24px,5vw,52px) 16px;margin-bottom:12px}
+.pfbeta-empty-icon{font-size:40px;line-height:1.1;margin-bottom:10px}.pfbeta-empty h3{font:800 19px 'Space Grotesk',sans-serif;margin-bottom:6px}.pfbeta-empty p{max-width:530px;margin:0 auto;font-size:12px;line-height:1.7;color:var(--mu)}.pfbeta-steps{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:19px}.pfbeta-steps span{border:1px solid var(--bd2);border-radius:20px;padding:6px 13px;color:var(--mu);font-size:11px;font-weight:750;background:var(--s2)}
+.pfbeta-source-line{justify-content:space-between;background:var(--s1);border:1px solid var(--bd);padding:11px 13px;border-radius:10px;margin-bottom:12px;font-size:11px;color:var(--mu)}
+.pfbeta-source-badge{display:inline-flex;align-items:center;flex:none;padding:5px 9px;border-radius:6px;background:#eadbf9;color:#704797;font-weight:850;font-size:10px;border:1px solid #d4b6e7}.pfbeta-source-badge.is-live{background:#e5f7f0;color:#18745b;border-color:#b6e6cf}
+.pfbeta-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.pfbeta-metric{background:var(--s1);border:1px solid var(--bd2);border-radius:11px;padding:14px;display:flex;flex-direction:column;gap:6px}
+.pfbeta-metric .label{color:var(--mu);font-size:11px;font-weight:750}.pfbeta-metric .value{font:800 clamp(16px,1.8vw,23px)/1.25 'Space Grotesk',sans-serif;overflow-wrap:anywhere}.pfbeta-metric small{font-size:10px;color:var(--mu);line-height:1.5}
+.pfbeta-tabs{display:flex;gap:5px;padding:5px;background:var(--s1);border:1px solid var(--bd2);border-radius:10px;margin-bottom:12px;overflow:auto}
+.pfbeta-tabs button{flex:1 0 auto;border:1px solid transparent;background:transparent;white-space:nowrap;padding:10px 12px;color:var(--mu);font-weight:750;font-size:11px;border-radius:7px;cursor:pointer}.pfbeta-tabs button.active{background:rgba(156,98,187,.14);border-color:rgba(156,98,187,.28);color:var(--tx)}
+.pfbeta-panel{min-height:150px}.pfbeta-panel-head{display:flex;align-items:center;justify-content:space-between;gap:9px;margin-bottom:10px}.pfbeta-panel-head h3{font:800 16px 'Space Grotesk',sans-serif}.pfbeta-panel-head small{color:var(--mu);font-size:11px}
+.pfbeta-filters{display:grid;grid-template-columns:minmax(120px,1.3fr) minmax(130px,1fr) minmax(130px,1fr);gap:9px;margin-bottom:11px}.pfbeta-filters>*{width:100%}
+.pfbeta-line-list{border:1px solid var(--bd2);border-radius:11px;overflow:hidden;background:var(--s1)}.pfbeta-line{display:grid;grid-template-columns:minmax(0,1fr) minmax(160px,.7fr) minmax(115px,.45fr);gap:11px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--bd)}.pfbeta-line:last-child{border-bottom:0}
+.pfbeta-line strong{display:block;font-size:12px;line-height:1.5;overflow-wrap:anywhere}.pfbeta-line small{display:block;color:var(--mu);font-size:10px;line-height:1.6;margin-top:1px}.pfbeta-line .money{font:800 14px 'Space Grotesk',sans-serif;text-align:right}.pfbeta-line .money.out{color:#c05265}.pfbeta-line .money.in{color:#158d6f}.pfbeta-line.is-excluded{opacity:.72}
+.pfbeta-line-edit{display:flex;align-items:center;flex-wrap:wrap;gap:5px}.pfbeta-line-edit select{width:100%;font-size:11px!important;padding:7px 5px!important}.pfbeta-ignore-btn{border:1px solid var(--bd2);border-radius:6px;background:var(--s2);color:var(--mu);font-size:10px;padding:6px 8px;cursor:pointer;white-space:nowrap}.pfbeta-ignore-btn.is-off{background:rgba(200,94,108,.1);color:#b95161}
+.pfbeta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(270px,100%),1fr));gap:10px}
+.pfbeta-item{border:1px solid var(--bd2);background:var(--s1);border-radius:11px;padding:15px}.pfbeta-item-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.pfbeta-item-head strong{font-size:13px;display:block}.pfbeta-item-head small{font-size:10px;color:var(--mu);display:block;margin-top:4px}
+.pfbeta-tag{font-size:10px;border:1px solid var(--bd2);padding:4px 7px;border-radius:30px;color:var(--mu);white-space:nowrap}.pfbeta-item .amount{font:800 23px 'Space Grotesk',sans-serif;margin:11px 0 5px;overflow-wrap:anywhere}.pfbeta-item .details{font-size:11px;color:var(--mu);line-height:1.8}
+.pfbeta-cat-row{display:grid;grid-template-columns:minmax(0,160px) minmax(55px,1fr) auto;align-items:center;gap:9px;padding:10px 0;border-bottom:1px solid var(--bd);font-size:11px}.pfbeta-cat-row:last-child{border:0}.pfbeta-cat-name{overflow-wrap:anywhere}.pfbeta-track{height:8px;border-radius:6px;background:var(--s3);overflow:hidden}.pfbeta-fill{height:100%;border-radius:6px;background:#9d72bd}.pfbeta-cat-amount{font-weight:800;white-space:nowrap}
+.pfbeta-empty-small{text-align:center;padding:24px 15px;border:1px dashed var(--bd2);background:var(--s1);color:var(--mu);font-size:12px;border-radius:9px}
+.pfbeta-footnotes{margin-top:11px;font-size:11px;line-height:1.65;color:var(--mu)}
+.pfbeta-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:14px 0 10px;padding:12px 14px;border-top:1px dashed var(--bd2)}.pfbeta-footer span{flex:1;min-width:200px;font-size:10px;color:var(--mu);line-height:1.6}
+@media(max-width:1100px){.pfbeta-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.pfbeta-hero{padding:17px}.pfbeta-hero-symbol{width:62px;height:62px;font-size:30px;border-radius:13px}.pfbeta-controls{padding:12px}.pfbeta-line{grid-template-columns:1fr auto;gap:7px}.pfbeta-line-edit{grid-column:1/-1;grid-row:2}.pfbeta-line-edit select{max-width:240px}.pfbeta-line .money{grid-column:2;grid-row:1}.pfbeta-filters{grid-template-columns:1fr 1fr}.pfbeta-filters input{grid-column:1/-1}}
+@media(max-width:460px){.pfbeta-hero-symbol{display:none}.pfbeta-hero h2{font-size:25px}.pfbeta-actions{display:grid;grid-template-columns:1fr 1fr}.pfbeta-actions .primary{grid-column:1/-1}.pfbeta-btn{font-size:11px}.pfbeta-metrics{gap:7px}.pfbeta-metric{padding:10px}.pfbeta-metric .value{font-size:17px}.pfbeta-tabs button{padding:9px 11px}.pfbeta-connection strong{font-size:12px}.pfbeta-cat-row{grid-template-columns:minmax(0,110px) 1fr auto;font-size:10px}.pfbeta-cat-amount{font-size:10px}}
+@media(prefers-reduced-motion:reduce){.pfbeta-led.is-loading{animation:none}}
+</style>
+
+
+<script id="pf-pluggy-beta-script">
+/*
+ * PainelFin · Valores com Pluggy BETA
+ * Todos os dados e ajustes ficam somente em memória nesta aba.
+ * Nunca chama coletarDados, applyData, salvarFirestore ou endpoints de escrita.
+ */
+(function () {
+  'use strict';
+  const $=id=>document.getElementById(id);
+  const safe=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const fmtMoney=(x,c='BRL')=>x==null||!Number.isFinite(Number(x))?'—':new Intl.NumberFormat('pt-BR',{style:'currency',currency:/^[A-Z]{3}$/.test(c)?c:'BRL'}).format(Number(x));
+  const brl=x=>fmtMoney(x);
+  const getMonth=()=>($('pfbeta-month')?.value||new Date().toISOString().slice(0,7));
+  const dt=x=>{if(!x)return '—';const d=new Date(x);return Number.isNaN(d.valueOf())?String(x).slice(0,16):new Intl.DateTimeFormat('pt-BR',{dateStyle:'short',timeStyle:'short'}).format(d)};
+  const categories=['Alimentação','Moradia','Transporte','Saúde','Educação','Assinaturas','Compras','Lazer','Impostos','Serviços','Salário','Transferência','Outros','A classificar'];
+  const demoNames=['Supermercado Exemplo','Pagamento de salário','Netflix Exemplo','Padaria Exemplo','Uber Exemplo','Pagamento fatura do cartão','Mercado Livre Exemplo','Farmácia Exemplo','Transferência entre minhas contas','Cinema Exemplo'];
+  let data=null,source='',activeTab='extrato',loading=false,verifiedUid=null,lastRead=0;
+  let overrides=Object.create(null);
+  let filters={search:'',account:'all',type:'all'};
+  const interval=30*60*1000;
+  const moneyPart=t=>Math.abs(Number(t.amount)||0);
+  const isCard=a=>a?.type==='CREDIT';
+  const accMap=()=>new Map((data?.accounts||[]).map(a=>[String(a.id),a]));
+  const normalize=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  const direction=(t,a)=>{
+    if(t.type==='DEBIT')return 'out';if(t.type==='CREDIT')return 'in';
+    if(isCard(a))return Number(t.amount)>=0?'out':'in';
+    return Number(t.amount)<0?'out':'in';
+  };
+  const autoExcluded=(t,a)=>{
+    const name=normalize(t.description),op=String(t.operationType||'').toUpperCase();
+    if(op==='TRANSFERENCIA_MESMA_INSTITUICAO')return true;
+    if(/transferencia (entre |para )?(minhas |proprias |mesmas )?contas/.test(name))return true;
+    if(isCard(a))return /(pagamento|quitacao) (de |da )?fatura/.test(name);
+    return /(pag(amento)?\.? ?(de |da )?(fat(ura)?|cartao|credito)|debito automatico.*cartao|fatura (cartao|credito))/.test(name);
+  };
+  function autoCategory(t){
+    const s=normalize(t.description);
+    const rules=[['Alimentação',/mercado|supermercado|padaria|restaurante|lanchonete|pizzaria|ifood|delivery|hortifruti|cafe/],
+      ['Transporte',/uber|99app|posto |gasolina|combustivel|pedagio|estacionamento|mecanica|oficina/],
+      ['Moradia',/aluguel|condominio|energia|cesan|agua|saneamento|internet|telefone|vivo|claro/],
+      ['Saúde',/farmacia|drogaria|hospital|consulta|clinica|laboratorio/],
+      ['Assinaturas',/netflix|spotify|prime video|disney|hbo|youtube premium|apple.com|google one/],
+      ['Educação',/escola|faculdade|curso|livraria|material escolar/],
+      ['Compras',/amazon|mercado livre|shopee|magalu|renner|shein/],
+      ['Lazer',/cinema|teatro|hotel|viagem|ingresso|show|parque/],
+      ['Salário',/salario|remuneracao|vencimentos/],
+      ['Transferência',/transferencia|pix enviado|pix recebido/]];
+    return rules.find(([,re])=>re.test(s))?.[0]||(
+      t.category&&categories.includes(String(t.category))?String(t.category):'A classificar');
+  }
+  function transactions(){
+    const amap=accMap(),seen=new Set();return(data?.transactions||[]).filter(t=>{
+      const k=String(t.accountId)+'|'+String(t.id);if(seen.has(k))return false;seen.add(k);return true;
+    }).map(t=>{
+      const a=amap.get(String(t.accountId)),key=String(t.accountId)+'|'+String(t.id),override=overrides[key]||{};
+      return {...t,_key:key,_account:a,_direction:direction(t,a),_category:override.category||autoCategory(t),
+        _autoExclude:autoExcluded(t,a),_excluded:Object.prototype.hasOwnProperty.call(override,'ignore')?override.ignore:autoExcluded(t,a)};
+    });
+  }
+  function monthlyTx(){return transactions().filter(t=>String(t.date||'').slice(0,7)===getMonth());}
+  const pending=t=>String(t.status||'').toUpperCase()==='PENDING';
+  const inBRL=t=>String(t.currencyCode||'BRL')==='BRL'&&String(t._account?.currencyCode||'BRL')==='BRL';
+  function totals(){
+    let income=0,out=0,bankOut=0,creditOut=0,pendingTotal=0,excluded=0;
+    const byCat=new Map();
+    for(const t of monthlyTx()){
+      if(!inBRL(t))continue;
+      if(pending(t)){pendingTotal+=moneyPart(t);continue;}
+      if(t._excluded){excluded+=moneyPart(t);continue;}
+      if(t._direction==='out'){
+        out+=moneyPart(t);if(isCard(t._account))creditOut+=moneyPart(t);else bankOut+=moneyPart(t);
+        byCat.set(t._category,(byCat.get(t._category)||0)+moneyPart(t));
+      }else if(!isCard(t._account))income+=moneyPart(t);
+    }
+    const accounts=(data?.accounts||[]),banks=accounts.filter(a=>a.type==='BANK'&&String(a.currencyCode||'BRL')==='BRL');
+    const cards=accounts.filter(a=>a.type==='CREDIT'&&String(a.currencyCode||'BRL')==='BRL');
+    const balance=banks.reduce((s,a)=>s+(Number(a.balance)||0),0);
+    const cardBalance=cards.reduce((s,a)=>s+Math.abs(Number(a.balance)||0),0);
+    return {balance,cardBalance,income,out,bankOut,creditOut,pendingTotal,excluded,banks:banks.length,cards:cards.length,byCat};
+  }
+  const status=(txt,kind='',detail='')=>{
+    const led=$('pfbeta-led');if(led)led.className='pfbeta-led '+(kind?'is-'+kind:'');
+    if($('pfbeta-status'))$('pfbeta-status').textContent=txt;
+    if($('pfbeta-updated'))$('pfbeta-updated').textContent=detail;
+  };
+  const showError=message=>{const el=$('pfbeta-error');if(el){el.hidden=!message;el.textContent=message||'';}};
+  const isShown=()=>Boolean($('sec-pluggy-beta')?.classList.contains('active'));
+  const accountName=t=>t._account?.name||t._account?.institution||'Conta desconhecida';
+  const option=(v,label,selected)=>`<option value="${safe(v)}" ${selected?'selected':''}>${safe(label)}</option>`;
+  function demoData(){
+    const m=getMonth(),on=day=>m+'-'+String(day).padStart(2,'0');
+    const a=[{id:'demo-bank-1',type:'BANK',name:'Conta Corrente Exemplo',institution:'Banco Ilustrativo',numberLast4:'0001',currencyCode:'BRL',balance:4250.90},
+      {id:'demo-bank-2',type:'BANK',name:'Conta Digital Exemplo',institution:'Banco de Teste',numberLast4:'0002',currencyCode:'BRL',balance:1210.50},
+      {id:'demo-credit-1',type:'CREDIT',name:'Cartão de Exemplo',institution:'Banco Ilustrativo',numberLast4:'1111',currencyCode:'BRL',balance:879.35,creditLimit:3000,availableCreditLimit:2120.65,balanceDueDate:on(18)}];
+    const rows=[
+      ['demo-bank-1',on(2),demoNames[1],3560,'CREDIT','POSTED'],
+      ['demo-bank-1',on(3),demoNames[0],-232.68,'DEBIT','POSTED'],
+      ['demo-bank-1',on(4),demoNames[5],-740.30,'DEBIT','POSTED'],
+      ['demo-credit-1',on(6),demoNames[2],-44.90,'DEBIT','POSTED'],
+      ['demo-credit-1',on(7),demoNames[6],-315.20,'DEBIT','POSTED'],
+      ['demo-bank-1',on(8),demoNames[8],-400,'DEBIT','POSTED'],
+      ['demo-bank-2',on(8),'Transferência entre minhas contas',400,'CREDIT','POSTED'],
+      ['demo-credit-1',on(9),demoNames[9],-48,'DEBIT','PENDING'],
+      ['demo-bank-2',on(10),demoNames[4],-32.80,'DEBIT','POSTED'],
+      ['demo-bank-1',on(11),demoNames[3],-25.70,'DEBIT','POSTED'],
+      ['demo-credit-1',on(12),demoNames[7],-61.45,'DEBIT','POSTED'],
+      ['demo-bank-2',on(13),'Compra não classificada',-79.90,'DEBIT','POSTED']
+    ].map((r,i)=>({id:'example-'+i,accountId:r[0],date:r[1],description:r[2],amount:r[3],type:r[4],status:r[5],currencyCode:'BRL',category:null}));
+    return {fetchedAt:new Date().toISOString(),accounts:a,transactions:rows,bills:[{id:'demo-bill',accountId:'demo-credit-1',dueDate:on(18),billClosingDate:on(11),totalAmount:879.35,minimumPaymentAmount:131.90,currencyCode:'BRL'}],warnings:[]};
+  }
+  function renderHead(){
+    if(!data)return;
+    const live=source==='live';$('pfbeta-empty').hidden=true;$('pfbeta-workspace').hidden=false;
+    $('pfbeta-clear').disabled=false;$('pfbeta-source-badge').textContent=live?'● DADOS DA PLUGGY':'◈ DADOS DE EXEMPLO';
+    $('pfbeta-source-badge').className='pfbeta-source-badge'+(live?' is-live':'');
+    $('pfbeta-source-caption').textContent=live?'Consulta bancária somente leitura • dados não são incorporados ao PainelFin':'Dados fictícios para conhecer as funções. Nenhum banco foi consultado.';
+    const v=totals();
+    const stats=[['Saldo das contas',brl(v.balance),v.banks+' conta(s) em BRL, sem cartões'],
+      ['Despesas do mês*',brl(v.out),'Débito '+brl(v.bankOut)+' · Crédito '+brl(v.creditOut)],
+      ['Entradas do mês',brl(v.income),'Créditos em conta bancária'],
+      ['Saldo dos cartões',brl(v.cardBalance),v.cards+' cartão(ões), valor de saldo informado']];
+    $('pfbeta-metrics').innerHTML=stats.map(([label,value,desc])=>`<div class="pfbeta-metric"><span class="label">${safe(label)}</span><span class="value">${safe(value)}</span><small>${safe(desc)}</small></div>`).join('');
+    for(const b of $('pfbeta-tabs').querySelectorAll('[data-pfbeta-tab]')){
+      const yes=b.dataset.pfbetaTab===activeTab;b.classList.toggle('active',yes);b.setAttribute('aria-selected',String(yes));
+    }
+  }
+  function render(){if(!data)return;renderHead();
+    if(activeTab==='extrato')renderExtrato();
+    else if(activeTab==='contas')renderAccounts('BANK');
+    else if(activeTab==='cartoes')renderAccounts('CREDIT');
+    else if(activeTab==='categorias')renderCategories();
+    else if(activeTab==='faturas')renderBills();
+  }
+  function renderExtrato(){
+    const acct=(data.accounts||[]).map(a=>option(a.id,a.name||a.institution,filters.account===a.id)).join('');
+    $('pfbeta-panel').innerHTML=`<div class="pfbeta-panel-head"><h3>Extrato do mês</h3><small>Revise as categorias e o que deve entrar nas contas</small></div>
+      <div class="pfbeta-filters"><input type="search" id="pfbeta-search" aria-label="Buscar movimentações" placeholder="Buscar estabelecimento ou categoria" value="${safe(filters.search)}">
+      <select id="pfbeta-account" aria-label="Filtrar banco ou cartão">${option('all','Todas as contas e cartões',filters.account==='all')}${acct}</select>
+      <select id="pfbeta-kind" aria-label="Tipo de movimentação">${[['all','Todos os tipos'],['out','Despesas'],['in','Entradas'],['card','Apenas cartão'],['unclassified','A classificar'],['excluded','Excluídas da soma']].map(([k,v])=>option(k,v,filters.type===k)).join('')}</select></div>
+      <div class="pfbeta-line-list" id="pfbeta-lines"></div><p class="pfbeta-footnotes" id="pfbeta-lines-footer"></p>`;
+    $('pfbeta-search').addEventListener('input',ev=>{filters.search=ev.target.value;renderLines();});
+    $('pfbeta-account').addEventListener('change',ev=>{filters.account=ev.target.value;renderLines();});
+    $('pfbeta-kind').addEventListener('change',ev=>{filters.type=ev.target.value;renderLines();});
+    renderLines();
+  }
+  function filteredTx(){
+    return monthlyTx().filter(t=>filters.account==='all'||String(t.accountId)===filters.account)
+      .filter(t=>filters.type==='all'||(filters.type==='out'&&t._direction==='out')||(filters.type==='in'&&t._direction==='in')||(filters.type==='card'&&isCard(t._account))||(filters.type==='unclassified'&&t._category==='A classificar')||(filters.type==='excluded'&&t._excluded))
+      .filter(t=>normalize(t.description+' '+t._category+' '+accountName(t)).includes(normalize(filters.search)))
+      .sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+  }
+  function renderLines(){
+    const box=$('pfbeta-lines');if(!box)return;const rows=filteredTx();
+    box.innerHTML=rows.length?rows.map(t=>{
+      const reasons=[t._excluded?'Não entra na soma':'Entra na soma',pending(t)?'Pendente':'',!inBRL(t)?'Moeda diferente de BRL':''].filter(Boolean).join(' · ');
+      return `<div class="pfbeta-line ${t._excluded?'is-excluded':''}">
+        <div><strong>${safe(t.description||'Movimentação')}</strong><small>${safe(String(t.date||'').slice(0,10))} · ${safe(accountName(t))} · ${safe(reasons)}</small></div>
+        <div class="pfbeta-line-edit"><select aria-label="Categoria da transação ${safe(t.description)}" data-pfbeta-category="${safe(t._key)}">${categories.map(c=>option(c,c,c===t._category)).join('')}</select><button type="button" class="pfbeta-ignore-btn ${t._excluded?'is-off':''}" data-pfbeta-toggle="${safe(t._key)}">${t._excluded?'↩ Incluir na soma':'⊘ Ignorar na soma'}</button></div>
+        <div class="money ${t._direction}">${t._direction==='out'?'−':'+'} ${safe(fmtMoney(moneyPart(t),t.currencyCode))}</div>
+      </div>`;
+    }).join(''):'<div class="pfbeta-empty-small">Não há movimentações correspondentes aos filtros.</div>';
+    $('pfbeta-lines-footer').textContent=`${rows.length} movimentação(ões) exibida(s). * Estimativa sem transferências e pagamentos de fatura identificados; pendentes e moedas diferentes de BRL ficam fora dos totais. Revise antes de usar.`;
+    box.querySelectorAll('[data-pfbeta-category]').forEach(el=>el.addEventListener('change',ev=>{
+      const k=ev.target.dataset.pfbetaCategory;overrides[k]={...(overrides[k]||{}),category:ev.target.value};render();
+    }));
+    box.querySelectorAll('[data-pfbeta-toggle]').forEach(el=>el.addEventListener('click',ev=>{
+      const k=ev.currentTarget.dataset.pfbetaToggle;
+      const tx=transactions().find(t=>t._key===k);if(!tx)return;
+      overrides[k]={...(overrides[k]||{}),ignore:!tx._excluded};render();
+    }));
+  }
+  function renderAccounts(type){
+    const arr=(data.accounts||[]).filter(a=>a.type===type);
+    const text=type==='CREDIT'?'Cartões de crédito':'Contas bancárias';
+    $('pfbeta-panel').innerHTML=`<div class="pfbeta-panel-head"><h3>${text}</h3><small>${arr.length} encontrado(s)</small></div>${arr.length?`<div class="pfbeta-grid">${arr.map(a=>{
+      const num=a.numberLast4?' •••• '+safe(a.numberLast4):'';
+      const info=type==='CREDIT'?`Limite total: ${safe(brl(a.creditLimit))}<br>Limite disponível: ${safe(brl(a.availableCreditLimit))}<br>Vencimento: ${safe(a.balanceDueDate||'Não informado')}`:'Saldo informado pela instituição. Não representa limite de crédito.';
+      return `<article class="pfbeta-item"><div class="pfbeta-item-head"><div><strong>${safe(a.name||'Conta')}</strong><small>${safe(a.institution||'Instituição')} ${num}</small></div><span class="pfbeta-tag">${type==='CREDIT'?'Crédito':'Conta'}</span></div><div class="amount">${safe(fmtMoney(a.balance,a.currencyCode))}</div><div class="details">${info}</div></article>`;
+    }).join('')}</div>`:'<div class="pfbeta-empty-small">Nenhum item dessa categoria foi retornado pela Pluggy.</div>'}
+    <p class="pfbeta-footnotes">No cartão, “saldo” é o valor apresentado pela instituição e não deve ser somado ao saldo disponível das contas.</p>`;
+  }
+  function renderCategories(){
+    const v=totals(),rows=[...v.byCat.entries()].sort((a,b)=>b[1]-a[1]);
+    $('pfbeta-panel').innerHTML=`<div class="pfbeta-panel-head"><h3>Distribuição dos gastos</h3><small>${safe(getMonth())} · somente valores incluídos na soma</small></div>
+      <div class="pfbeta-item">${rows.length?rows.map(([name,value])=>`<div class="pfbeta-cat-row"><strong class="pfbeta-cat-name">${safe(name)}</strong><div class="pfbeta-track"><div class="pfbeta-fill" style="width:${Math.min(100,v.out?100*value/v.out:0).toFixed(1)}%"></div></div><span class="pfbeta-cat-amount">${safe(brl(value))}</span></div>`).join(''):'<div class="pfbeta-empty-small">Nenhuma despesa incluída neste período.</div>'}</div>
+      <p class="pfbeta-footnotes">Excluídos manualmente ou por regra automática: ${safe(brl(v.excluded))}. Movimentações pendentes: ${safe(brl(v.pendingTotal))}. As categorias ajustadas são experimentais e não são salvas no banco de dados.</p>`;
+  }
+  function renderBills(){
+    const am=accMap(),arr=(data.bills||[]).filter(b=>String(b.dueDate||'').slice(0,7)===getMonth());
+    $('pfbeta-panel').innerHTML=`<div class="pfbeta-panel-head"><h3>Faturas do mês</h3><small>Somente quando o banco fornece essa informação</small></div>${arr.length?`<div class="pfbeta-grid">${arr.map(b=>{
+      const a=am.get(String(b.accountId));return `<article class="pfbeta-item"><div class="pfbeta-item-head"><div><strong>${safe(a?.name||'Cartão')}</strong><small>${safe(a?.institution||'Instituição')}</small></div><span class="pfbeta-tag">Fatura</span></div>
+      <div class="amount">${safe(fmtMoney(b.totalAmount,b.currencyCode))}</div><div class="details">Vencimento: ${safe(String(b.dueDate||'').slice(0,10))}<br>Fechamento: ${safe(String(b.billClosingDate||'Não informado').slice(0,10))}<br>Pagamento mínimo: ${safe(brl(b.minimumPaymentAmount))}</div></article>`;
+    }).join('')}</div>`:'<div class="pfbeta-empty-small">Nenhuma fatura retornada para este mês. O banco pode não disponibilizar este recurso na Pluggy.</div>'}
+    <p class="pfbeta-footnotes">A fatura é apresentada para conferência. Não é somada novamente às compras no cartão e não cria lançamentos no PainelFin.</p>`;
+  }
+  function load(payload,kind){
+    data=payload;source=kind;lastRead=kind==='live'?Date.now():0;activeTab='extrato';overrides=Object.create(null);filters={search:'',account:'all',type:'all'};
+    const warnings=(Array.isArray(data.warnings)?data.warnings:[]).slice();
+    if((data.accounts||[]).some(a=>a.currencyCode&&a.currencyCode!=='BRL'))warnings.push('Existem contas em outras moedas. Elas aparecem individualmente, mas não entram nos totais em BRL.');
+    showError(warnings.length?'Atenção: '+warnings.join(' | '):'');
+    status(kind==='live'?'Pluggy consultada · '+data.accounts.length+' conta(s)':'Exemplo carregado · dados fictícios',kind==='live'?'live':'demo',
+      'Carregado em '+dt(data.fetchedAt||new Date().toISOString()));
+    render();
+  }
+  async function sync(force=false){
+    if(loading)return;
+    if(!verifiedUid){showError('Entre na sua conta do PainelFin antes de consultar os dados bancários.');return;}
+    if(!force&&lastRead&&Date.now()-lastRead<interval)return;
+    if(typeof window.pfPluggyRead!=='function'){showError('A função Pluggy não está disponível neste HTML. Instale o pacote de integração Firebase indicado no guia.');return;}
+    loading=true;const syncBtn=$('pfbeta-sync');syncBtn.disabled=true;status('Consultando a Pluggy…','loading','Somente leitura: nenhum dado será salvo no PainelFin');showError('');
+    try{
+      const payload=await window.pfPluggyRead(Number($('pfbeta-months')?.value)||6);
+      if(!payload||!Array.isArray(payload.accounts)||!Array.isArray(payload.transactions))throw Error('Resposta inesperada da API Pluggy.');
+      load(payload,'live');
+    }catch(error){
+      const msg=String(error?.message||'Falha desconhecida');status('Consulta não realizada','error',data?'Os dados anteriores continuam visíveis neste beta':'O laboratório continua vazio');
+      showError('Não foi possível buscar seus dados: '+msg+'. Confira se a função pluggySync foi publicada, se você entrou com o UID autorizado e se os Item IDs e consentimentos estão ativos. Se ainda não configurou, experimente o modo de exemplo.');
+    }finally{loading=false;syncBtn.disabled=false;}
+  }
+  function clear(){
+    if(!data)return;if(!confirm('Zerar apenas os dados de teste da guia “Valores com Pluggy”? Isso não altera seus bancos, seu Firebase nem os ambientes REAL/SIMULADOR.'))return;
+    data=null;source='';activeTab='extrato';overrides=Object.create(null);filters={search:'',account:'all',type:'all'};lastRead=0;
+    $('pfbeta-empty').hidden=false;$('pfbeta-workspace').hidden=true;$('pfbeta-clear').disabled=true;showError('');status('Laboratório vazio','','Nenhum dado carregado');
+  }
+  function exportCSV(){
+    if(!data)return;
+    const column=['Data','Descrição','Instituição','Conta','Tipo','Valor BRL','Moeda','Categoria beta','Ignorado','Pendente','Origem'];
+    const rows=[column,...monthlyTx().map(t=>[String(t.date||'').slice(0,10),t.description||'',t._account?.institution||'',accountName(t),t._direction==='out'?'Saída':'Entrada',Number(t.amount)||0,t.currencyCode||'BRL',t._category,t._excluded?'Sim':'Não',pending(t)?'Sim':'Não',source==='live'?'Pluggy':'Exemplo'])];
+    // Protege Excel/LibreOffice contra fórmulas inseridas em descrições vindas de terceiros.
+    const escapeCell=v=>{
+      let s=String(v??'');if(/^[\s]*[=+@\-\t\r]/.test(s) && !/^[-+]?\d+(\.\d+)?$/.test(s))s="'"+s;
+      return '"'+s.replace(/"/g,'""')+'"';
+    };
+    const csv='\ufeff'+rows.map(r=>r.map(escapeCell).join(';')).join('\r\n');
+    const u=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=u;a.download='painelfin-pluggy-beta-'+getMonth()+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),10000);
+  }
+  function init(){
+    if($('pfbeta-month')){$('pfbeta-month').value=new Date().toISOString().slice(0,7);$('pfbeta-month').addEventListener('change',render);}
+    $('pfbeta-demo')?.addEventListener('click',()=>load(demoData(),'demo'));
+    $('pfbeta-sync')?.addEventListener('click',()=>sync(true));
+    $('pfbeta-clear')?.addEventListener('click',clear);
+    $('pfbeta-export')?.addEventListener('click',exportCSV);
+    $('pfbeta-months')?.addEventListener('change',()=>{lastRead=0;});
+    $('pfbeta-tabs')?.querySelectorAll('[data-pfbeta-tab]').forEach(b=>b.addEventListener('click',()=>{activeTab=b.dataset.pfbetaTab;render();}));
+  }
+  window.pfPluggyBetaNavigate=function(){
+    if(typeof window.setMode==='function')window.setMode('geral');
+    if(typeof window.goTo==='function')window.goTo('pluggy-beta');
+  };
+  const originalGoTo=window.goTo;
+  window.goTo=function(id){
+    if(id==='pluggy-beta'){
+      document.querySelectorAll('.page-section').forEach(el=>{el.style.display='none';el.classList.remove('active');});
+      const page=$('sec-pluggy-beta');if(page){page.style.display='block';page.classList.add('active');}
+      document.querySelectorAll('#nav-geral .nav-item').forEach(el=>el.classList.remove('active'));
+      $('nav-pluggy-beta')?.classList.add('active');
+      if($('topbar-title'))$('topbar-title').textContent='Valores com Pluggy · BETA';
+      window.scrollTo(0,0);return;
+    }
+    const page=$('sec-pluggy-beta');if(page){page.style.display='none';page.classList.remove('active');}
+    return typeof originalGoTo==='function'?originalGoTo.apply(this,arguments):undefined;
+  };
+  window.addEventListener('pf-retro-auth',e=>{
+    const newUid=e.detail?.uid||null;
+    if(verifiedUid&&newUid!==verifiedUid){data=null;source='';overrides=Object.create(null);lastRead=0;$('pfbeta-empty').hidden=false;$('pfbeta-workspace').hidden=true;$('pfbeta-clear').disabled=true;status('Laboratório vazio','','Nenhum dado carregado');showError('');}
+    verifiedUid=newUid;
+  });
+  document.addEventListener('visibilitychange',()=>{
+    if(!document.hidden&&verifiedUid&&source==='live'&&isShown()&&$('pfbeta-auto')?.checked)sync();
+  });
+  setInterval(()=>{
+    if(!document.hidden&&verifiedUid&&source==='live'&&isShown()&&$('pfbeta-auto')?.checked)sync();
+  },5*60*1000);
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+
 
 </body>
 </html>
