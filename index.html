@@ -10693,6 +10693,16 @@ body.wl-is-dragging,body.wl-is-dragging *{user-select:none!important;cursor:grab
 @media(max-width:700px){#sec-wishlist .wl-v2-header{align-items:flex-start}#sec-wishlist .wl-v2-title h2{font-size:21px}#sec-wishlist .wl-v2-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}#sec-wishlist .wl-stat{padding:11px}#sec-wishlist .wl-stat-value{font-size:16px}#sec-wishlist .wl-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#sec-wishlist .wl-filter-field:first-child{grid-column:1/-1}#sec-wishlist .wl-filter-grid>.wl-btn{grid-column:1/-1}#sec-wishlist .wl-filters-top{align-items:flex-start}#sec-wishlist .wl-owners{width:100%}#sec-wishlist .wl-board{grid-template-columns:repeat(var(--wl-cols,4),minmax(245px,82vw))}#sec-wishlist .wl-board-note{font-size:10px}#sec-wishlist .wl-modal{padding:15px}#sec-wishlist .wl-list-row{grid-template-columns:1fr auto;gap:7px}#sec-wishlist .wl-list-row .wl-row-money,#sec-wishlist .wl-list-row .wl-row-progress-wrap{display:none}#sec-wishlist .wl-list-row .wl-row-status{grid-column:1;grid-row:2}#sec-wishlist .wl-list-row .wl-row-controls{grid-column:2;grid-row:1 / span 2}#sec-wishlist .wl-modal-grid{grid-template-columns:1fr}#sec-wishlist .wl-modal-field.wide{grid-column:1}}
 @media(max-width:700px){#sec-wishlist .wl-stat:last-child{grid-column:1/-1}}
 @media(max-width:370px){#sec-wishlist .wl-owner-chip{padding:5px 8px;font-size:10px}#sec-wishlist .wl-v2-stats{grid-template-columns:1fr 1fr}}
+
+/* Arrastar por qualquer região livre do cartão no computador e pelo topo no celular. */
+#sec-wishlist .wl-board .wl-item{cursor:grab;touch-action:pan-y;user-select:none}
+#sec-wishlist .wl-board .wl-item-top{touch-action:none}
+#sec-wishlist .wl-board .wl-item:active{cursor:grabbing}
+#sec-wishlist .wl-board .wl-item button:not(.wl-grip),#sec-wishlist .wl-board .wl-item select{cursor:pointer}
+#sec-wishlist .wl-lane .wl-item.wl-drop-before{box-shadow:0 -4px 0 0 var(--wl-purple),0 2px 7px #51446d09}
+#sec-wishlist .wl-lane .wl-item.wl-drop-after{box-shadow:0 4px 0 0 var(--wl-purple),0 2px 7px #51446d09}
+#sec-wishlist .wl-board-scroll.wl-autoscroll{scroll-snap-type:none;scroll-behavior:auto}
+#sec-wishlist .wl-drag-ghost{pointer-events:none!important;touch-action:none}
 </style>
 
 <script id="pf-wishlist-v2-script">
@@ -10864,7 +10874,7 @@ body.wl-is-dragging,body.wl-is-dragging *{user-select:none!important;cursor:grab
     const target=f.alvo>0&&f.falta>0&&f.aporte<f.precisa?`<div class="wl-target-warning">🎯 Para ${f.alvo} meses: ${esc(fmt(f.precisa))}/mês</div>`:'';
     const line=item.comprado?'Comprado!':f.valor<=0?'Valor não informado':`Faltam ${fmt(f.falta)}`;
     return `<article class="wl-item" data-id="${esc(item.id)}">
-      <div class="wl-item-top"><button type="button" class="wl-grip" title="Arrastar para outra coluna ou reordenar" aria-label="Arrastar ${esc(item.nome)}">⠿</button><span class="wl-item-symbol">${cat}</span><div class="wl-item-title">${esc(item.nome)}</div><button type="button" class="wl-small-action" data-wla="edit" data-id="${esc(item.id)}" title="Editar">✎</button></div>
+      <div class="wl-item-top"><button type="button" class="wl-grip" title="Arraste este cartão ou use Alt + setas para mover" aria-label="Arrastar ${esc(item.nome)}">⠿</button><span class="wl-item-symbol">${cat}</span><div class="wl-item-title">${esc(item.nome)}</div><button type="button" class="wl-small-action" data-wla="edit" data-id="${esc(item.id)}" title="Editar">✎</button></div>
       <div class="wl-item-labels"><span class="wl-tag wl-tag-prio" style="--tag-color:${p.color}">${p.icon} ${p.label}</span><span class="wl-tag">${OWNERS[item.dono]}</span></div>
       <div class="wl-item-money">${f.valor>0?fmt(f.valor):'<span class="wl-zero">Valor a definir</span>'}</div>
       <div class="wl-item-money-caption">${esc(line)}</div>
@@ -10920,7 +10930,7 @@ body.wl-is-dragging,body.wl-is-dragging *{user-select:none!important;cursor:grab
     const stats=el('wishlist-stats'),group=el('wishlist-groups'),note=el('wl-board-note');if(!stats||!group||!note)return;
     const items=visibleItems();
     stats.innerHTML=statsHTML();
-    note.innerHTML=ui.view==='board'?`<span>↔ Arraste pelo ícone ⠿ para trocar de coluna ou mudar a ordem. No celular, também use o seletor do cartão.</span><span>${items.length} ${items.length===1?'item encontrado':'itens encontrados'}</span>`:`<span>☷ Visualização compacta · escolha como agrupar seus desejos.</span><span>${items.length} ${items.length===1?'item encontrado':'itens encontrados'}</span>`;
+    note.innerHTML=ui.view==='board'?`<span>↔ Segure e arraste o cartão para outra coluna ou para mudar a ordem. No celular, arraste pelo topo ou use o seletor de status.</span><span>${items.length} ${items.length===1?'item encontrado':'itens encontrados'}</span>`:`<span>☷ Visualização compacta · escolha como agrupar seus desejos.</span><span>${items.length} ${items.length===1?'item encontrado':'itens encontrados'}</span>`;
     group.innerHTML=items.length?(ui.view==='board'?boardHTML(items):listHTML(items)):emptyHTML();
     const dot=el('dot-wishlist');if(dot)dot.className='nav-status '+(wishlistData.some(i=>!i.comprado)?'done':'');
   };
@@ -10991,40 +11001,111 @@ body.wl-is-dragging,body.wl-is-dragging *{user-select:none!important;cursor:grab
     sec.addEventListener('submit',(e)=>{if(e.target===el('wl-form')){e.preventDefault();submitEditor(e.target);}});
     el('wl-modal').addEventListener('click',(e)=>{if(e.target===el('wl-modal'))closeEditor();});
     document.addEventListener('keydown',(e)=>{if(e.key==='Escape'&&el('wl-modal')&&!el('wl-modal').hidden)closeEditor();});
-    // Pointer Events: permite arrastar no desktop e com o dedo no celular.
+    // Arraste pelo cartão inteiro, sem interferir nos botões/selects de edição.
+    // Captura global para não perder o gesto quando o ponteiro sai da coluna.
+    const dragExcluded='button:not(.wl-grip), select, input, textarea, a, label, [contenteditable="true"]';
+    let dragRAF=0;
+    function dragHit(p){
+      const node=document.elementFromPoint(p.x,p.y);
+      const lane=node?.closest('.wl-lane');
+      let target=node?.closest('.wl-item');
+      if(target===p.card)target=null;
+      return {lane,target};
+    }
+    function highlightDrop(p){
+      const {lane,target}=dragHit(p);
+      sec.querySelectorAll('.wl-lane').forEach(l=>{if(l===lane)l.dataset.drop='true';else delete l.dataset.drop;});
+      sec.querySelectorAll('.wl-item.wl-drop-before,.wl-item.wl-drop-after').forEach(c=>c.classList.remove('wl-drop-before','wl-drop-after'));
+      if(target){
+        const rect=target.getBoundingClientRect();
+        target.classList.add(p.y<rect.top+rect.height/2?'wl-drop-before':'wl-drop-after');
+      }
+    }
+    function scrollWhileDragging(){
+      if(!pointer?.active){dragRAF=0;return;}
+      const p=pointer,scroll=el('wl-board-scroll');
+      if(scroll){
+        const r=scroll.getBoundingClientRect(),edge=74;
+        if(p.y>=r.top-22&&p.y<=r.bottom+22){
+          let dx=0;
+          if(p.x>r.right-edge&&p.x<r.right+16)dx=Math.min(13,Math.max(0,(p.x-(r.right-edge))/edge)*14);
+          else if(p.x<r.left+edge&&p.x>r.left-16)dx=-Math.min(13,Math.max(0,((r.left+edge)-p.x)/edge)*14);
+          if(dx){scroll.scrollLeft+=dx;highlightDrop(p);}
+        }
+      }
+      dragRAF=requestAnimationFrame(scrollWhileDragging);
+    }
+    function cleanupDrag(){
+      if(dragRAF){cancelAnimationFrame(dragRAF);dragRAF=0;}
+      const p=pointer;
+      if(!p)return null;
+      if(p.ghost)p.ghost.remove();
+      if(p.card?.isConnected)delete p.card.dataset.dragging;
+      const scroll=el('wl-board-scroll');if(scroll)scroll.classList.remove('wl-autoscroll');
+      sec.querySelectorAll('.wl-lane[data-drop]').forEach(l=>delete l.dataset.drop);
+      sec.querySelectorAll('.wl-item.wl-drop-before,.wl-item.wl-drop-after').forEach(c=>c.classList.remove('wl-drop-before','wl-drop-after'));
+      document.body.classList.remove('wl-is-dragging');
+      pointer=null;
+      return p;
+    }
     sec.addEventListener('pointerdown',(e)=>{
-      const grip=e.target.closest('.wl-grip');if(!grip||e.button!==0||ui.view!=='board')return;
-      const card=grip.closest('.wl-item');if(!card)return;
-      pointer={id:card.dataset.id,grip,card,startX:e.clientX,startY:e.clientY,x:e.clientX,y:e.clientY,rect:card.getBoundingClientRect(),active:false,ghost:null,pid:e.pointerId};
-      try{grip.setPointerCapture(e.pointerId);}catch(_){}
-      e.preventDefault();
+      if(ui.view!=='board'||pointer||!e.isPrimary||e.button!==0)return;
+      const card=e.target.closest('.wl-item');
+      if(!card||!card.closest('#wl-board-scroll'))return;
+      if(e.target.closest(dragExcluded))return;
+      pointer={id:card.dataset.id,card,startX:e.clientX,startY:e.clientY,x:e.clientX,y:e.clientY,rect:card.getBoundingClientRect(),active:false,ghost:null,pid:e.pointerId};
+      try{card.setPointerCapture(e.pointerId);}catch(_){}
+      if(e.pointerType==='touch'||e.target.closest('.wl-grip'))e.preventDefault();
     });
-    sec.addEventListener('pointermove',(e)=>{
+    document.addEventListener('pointermove',(e)=>{
       if(!pointer||pointer.pid!==e.pointerId)return;
       const p=pointer;p.x=e.clientX;p.y=e.clientY;
       if(!p.active&&Math.hypot(p.x-p.startX,p.y-p.startY)>7){
-        p.active=true;p.ghost=p.card.cloneNode(true);p.ghost.classList.add('wl-drag-ghost');p.ghost.style.width=p.rect.width+'px';p.ghost.style.height=p.rect.height+'px';sec.appendChild(p.ghost);p.card.dataset.dragging='true';document.body.classList.add('wl-is-dragging');
+        p.active=true;
+        p.ghost=p.card.cloneNode(true);
+        p.ghost.classList.add('wl-drag-ghost');
+        p.ghost.style.width=p.rect.width+'px';
+        p.ghost.style.height=p.rect.height+'px';
+        p.ghost.style.left=p.rect.left+'px';
+        p.ghost.style.top=p.rect.top+'px';
+        document.body.appendChild(p.ghost);
+        p.card.dataset.dragging='true';
+        document.body.classList.add('wl-is-dragging');
+        el('wl-board-scroll')?.classList.add('wl-autoscroll');
+        scrollWhileDragging();
       }
       if(!p.active)return;
-      p.ghost.style.left=(p.rect.left+p.x-p.startX)+'px';p.ghost.style.top=(p.rect.top+p.y-p.startY)+'px';
-      const scroll=el('wl-board-scroll');if(scroll){const r=scroll.getBoundingClientRect();if(p.x>r.right-33&&p.x<r.right+5)scroll.scrollLeft+=22;else if(p.x<r.left+33&&p.x>r.left-5)scroll.scrollLeft-=22;}
-      const lane=document.elementFromPoint(p.x,p.y)?.closest('.wl-lane');
-      sec.querySelectorAll('.wl-lane').forEach(l=>l.dataset.drop=String(l===lane));
-    });
-    function pointerFinish(e){
+      if(e.cancelable)e.preventDefault();
+      p.ghost.style.left=(p.rect.left+p.x-p.startX)+'px';
+      p.ghost.style.top=(p.rect.top+p.y-p.startY)+'px';
+      highlightDrop(p);
+    },{passive:false});
+    document.addEventListener('pointerup',(e)=>{
       if(!pointer||pointer.pid!==e.pointerId)return;
-      const p=pointer;
-      const hit=document.elementFromPoint(p.x,p.y);
-      const lane=hit?.closest('.wl-lane');
-      const target=hit?.closest('.wl-item');
-      const after=target?(p.y>target.getBoundingClientRect().top+target.getBoundingClientRect().height/2):false;
-      if(p.ghost)p.ghost.remove();
-      if(p.card?.isConnected)delete p.card.dataset.dragging;
-      sec.querySelectorAll('.wl-lane').forEach(l=>delete l.dataset.drop);
-      document.body.classList.remove('wl-is-dragging');pointer=null;
-      if(p.active&&lane){move(p.id,lane.dataset.stage,{targetId:target?.dataset.id,after});}
-    }
-    sec.addEventListener('pointerup',pointerFinish);sec.addEventListener('pointercancel',pointerFinish);
+      pointer.x=e.clientX;pointer.y=e.clientY;
+      const p=pointer,hit=p.active?dragHit(p):null;
+      cleanupDrag();
+      if(p.active&&hit?.lane){move(p.id,hit.lane.dataset.stage,{targetId:hit.target?.dataset.id,after:hit.target? p.y>hit.target.getBoundingClientRect().top+hit.target.getBoundingClientRect().height/2:false});}
+    });
+    document.addEventListener('pointercancel',(e)=>{if(pointer?.pid===e.pointerId)cleanupDrag();});
+    window.addEventListener('blur',cleanupDrag);
+    // Acessibilidade: Alt + setas muda de coluna ou a posição do desejo.
+    sec.addEventListener('keydown',(e)=>{
+      const grip=e.target.closest('.wl-grip');
+      if(!grip||!e.altKey||ui.view!=='board')return;
+      const card=grip.closest('.wl-item'),item=find(card?.dataset.id);
+      if(!item)return;
+      const stageIndex=STAGES.findIndex(s=>s.id===item.status);
+      if(e.key==='ArrowRight'||e.key==='ArrowLeft'){
+        const next=STAGES[stageIndex+(e.key==='ArrowRight'?1:-1)];
+        if(next){e.preventDefault();move(item.id,next.id);show('Cartão movido para '+next.label+'.');}
+      }else if(e.key==='ArrowUp'||e.key==='ArrowDown'){
+        const col=sortItems(wishlistData.filter(i=>i.status===item.status));
+        const index=col.findIndex(i=>i.id===item.id),offset=e.key==='ArrowUp'?-1:1;
+        const adjacent=col[index+offset];
+        if(adjacent){e.preventDefault();move(item.id,item.status,{targetId:adjacent.id,after:offset>0});show('Ordem atualizada.');}
+      }
+    });
   }
   // Mantém os nomes do payload que o PainelFin já usa no Firebase.
   const collectPrev=window.coletarDados;
