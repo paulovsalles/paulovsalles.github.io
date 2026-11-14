@@ -10585,304 +10585,461 @@ body[data-pf-mode="livre"] #sec-dash-mensal{display:none!important}
 </script>
 
 <!-- ═══════════════════════════════════════════════════════════════
-     WISHLIST / COMPRAS PLANEJADAS — adicionado ao PainelFin
+     WISHLIST 2.0 — KANBAN / PESSOAS / PRIORIDADES — PAINELFIN
+     Substitui somente o módulo Wishlist; mantém Firebase do app.
 ════════════════════════════════════════════════════════════════ -->
-<style>
-/* ─── WISHLIST ─── */
-.wl-form-card{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:15px 16px;margin-bottom:14px}
-.wl-form-title{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--di);margin-bottom:11px}
-.wl-form-grid{display:grid;grid-template-columns:1.35fr 1fr 1fr 1fr 1fr 1fr auto;gap:9px;align-items:end}
-.wl-field{display:flex;flex-direction:column;gap:5px;min-width:0}
-.wl-field label{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--di)}
-.wl-field input,.wl-field select,.wl-toolbar select{height:38px;border:1px solid var(--bd);background:var(--s2);color:var(--tx);border-radius:9px;padding:0 10px;font-family:'Inter',sans-serif;font-size:12px;outline:none;min-width:0}
-.wl-field input:focus,.wl-field select:focus,.wl-toolbar select:focus{border-color:var(--tbd)}
-.wl-help{margin-top:10px;font-size:11px;color:var(--mu);line-height:1.5}
-.wl-toolbar{display:flex;align-items:end;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:11px 13px;margin-bottom:14px}
-.wl-toolbar-left{display:flex;gap:8px;align-items:end;flex-wrap:wrap}
-.wl-toolbar-box{display:flex;flex-direction:column;gap:4px}
-.wl-toolbar-box label{font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--di)}
-.wl-priority-group{margin-bottom:15px}
-.wl-priority-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;padding:0 2px}
-.wl-priority-title{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
-.wl-priority-total{font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;color:var(--mu)}
-.wl-list{display:flex;flex-direction:column;gap:9px}
-.wl-card{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:13px 14px;transition:border-color .15s,opacity .15s}
-.wl-card:hover{border-color:var(--tbd)}
-.wl-card.done{opacity:.65;background:rgba(74,222,128,.035)}
-.wl-card-top{display:grid;grid-template-columns:minmax(180px,1fr) 145px auto;gap:9px;align-items:center;margin-bottom:11px}
-.wl-name-input{width:100%;border:none;background:transparent;outline:none;color:var(--tx);font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;padding:2px 0}
-.wl-priority-select{height:32px;border:1px solid var(--bd);background:var(--s2);color:var(--tx);border-radius:8px;padding:0 8px;font-size:11px;outline:none}
-.wl-actions{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
-.wl-mini-btn{border:1px solid var(--bd);background:var(--s2);color:var(--mu);border-radius:7px;padding:5px 8px;font-size:10.5px;font-weight:700;cursor:pointer;white-space:nowrap}
-.wl-mini-btn:hover{border-color:var(--tbd);color:var(--teal)}
-.wl-mini-btn.ok:hover{border-color:rgba(74,222,128,.35);color:var(--green)}
-.wl-mini-btn.danger:hover{border-color:rgba(248,113,113,.35);color:var(--red)}
-.wl-metrics{display:grid;grid-template-columns:repeat(4,minmax(100px,1fr));gap:8px;margin-bottom:10px}
-.wl-metric{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:8px 10px;min-width:0}
-.wl-metric label{display:block;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--di);margin-bottom:4px}
-.wl-money-input{display:flex;align-items:center;background:var(--s3);border:1px solid var(--bd);border-radius:7px;overflow:hidden}
-.wl-money-input span{padding-left:7px;font-size:10px;color:var(--di)}
-.wl-money-input input,.wl-month-input{width:100%;height:28px;border:none;background:transparent;outline:none;color:var(--tx);font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;padding:0 7px}
-.wl-month-input{border:1px solid var(--bd);background:var(--s3);border-radius:7px}
-.wl-progress-bg{height:6px;background:var(--bd);border-radius:5px;overflow:hidden;margin-bottom:7px}
-.wl-progress-fg{height:6px;border-radius:5px;background:var(--teal);transition:width .35s}
-.wl-bottom{display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:11px;color:var(--mu);flex-wrap:wrap}
-.wl-forecast{font-weight:700;color:var(--teal)}
-.wl-target-note{font-size:10px;color:var(--di)}
-.wl-empty{background:var(--s1);border:1px dashed var(--bd2);border-radius:14px;padding:28px;text-align:center;color:var(--mu);font-size:13px}
-.wl-badge{display:inline-flex;align-items:center;gap:5px;border:1px solid;border-radius:999px;padding:3px 8px;font-size:10px;font-weight:800}
-@media(max-width:1050px){.wl-form-grid{grid-template-columns:1fr 1fr 1fr}.wl-form-grid .btn{grid-column:1/-1}.wl-card-top{grid-template-columns:1fr 150px}.wl-actions{grid-column:1/-1;justify-content:flex-start}.wl-metrics{grid-template-columns:1fr 1fr}}
-@media(max-width:640px){.wl-form-grid,.wl-card-top,.wl-metrics{grid-template-columns:1fr}.wl-toolbar-left{width:100%}.wl-toolbar-box{flex:1;min-width:120px}.wl-toolbar select{width:100%}}
+<style id="pf-wishlist-v2-styles">
+#sec-wishlist{--wl-purple:#8656b9;--wl-lilac:#b690d8;--wl-blue:#5b91db;--wl-red:#e67a83;--wl-gold:#c79232;--wl-green:#36996e;--wl-ink:var(--tx,#2e2c42);--wl-muted:var(--mu,#79738f);--wl-surface:var(--s1,#fff);--wl-soft:var(--s2,#f7f4fc);--wl-outline:var(--bd,#ddd1e8);min-width:0}
+#sec-wishlist *{box-sizing:border-box}
+#sec-wishlist .wl-v2-header{display:flex;gap:14px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+#sec-wishlist .wl-v2-title{display:flex;align-items:center;gap:11px;margin-bottom:4px}
+#sec-wishlist .wl-v2-title .wl-hero-icon{display:grid;place-items:center;background:linear-gradient(135deg,#b692e6,#8157b5);color:white;border-radius:13px;width:43px;height:43px;font-size:22px;box-shadow:0 5px 16px #8551ac30}
+#sec-wishlist .wl-v2-title h2{font-family:'Space Grotesk',Inter,Arial,sans-serif;font-size:25px;letter-spacing:-.045em;line-height:1.05;margin:0;color:var(--wl-ink)}
+#sec-wishlist .wl-v2-subtitle{font-size:12px;color:var(--wl-muted);margin:0;line-height:1.5}
+#sec-wishlist .wl-v2-head-buttons{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+#sec-wishlist .wl-btn{font:700 12px Inter,Arial,sans-serif;min-height:36px;padding:8px 12px;border:1px solid var(--wl-outline);border-radius:9px;background:var(--wl-surface);color:var(--wl-ink);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;transition:background .15s,border-color .15s,transform .15s}
+#sec-wishlist .wl-btn:hover{border-color:var(--wl-lilac);background:var(--wl-soft)}
+#sec-wishlist .wl-btn:focus-visible,#sec-wishlist input:focus-visible,#sec-wishlist select:focus-visible,#sec-wishlist textarea:focus-visible{outline:2px solid var(--wl-purple);outline-offset:2px}
+#sec-wishlist .wl-btn-primary{background:linear-gradient(135deg,#a371d6,#8052ad);color:#fff;border-color:#8052ad;box-shadow:0 4px 13px #7c4ab525}
+#sec-wishlist .wl-btn-primary:hover{background:linear-gradient(135deg,#9667c6,#70449e);color:#fff}
+#sec-wishlist .wl-btn-active{border-color:#b58ad8;background:color-mix(in srgb,var(--wl-purple) 13%,var(--wl-surface));color:var(--wl-purple)}
+#sec-wishlist .wl-btn-mini{font-size:11px;min-height:28px;padding:5px 8px;border-radius:7px}
+#sec-wishlist .wl-v2-stats{display:grid;grid-template-columns:repeat(5,minmax(125px,1fr));gap:9px;margin-bottom:14px}
+#sec-wishlist .wl-stat{background:var(--wl-surface);border:1px solid var(--wl-outline);border-radius:13px;padding:12px 13px;min-width:0;position:relative;overflow:hidden}
+#sec-wishlist .wl-stat:before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent,#9e72cb)}
+#sec-wishlist .wl-stat-name{font-size:10px;color:var(--wl-muted);font-weight:700;margin-bottom:7px}
+#sec-wishlist .wl-stat-value{font-family:'Space Grotesk',Inter,Arial,sans-serif;font-size:18px;line-height:1.1;font-weight:800;letter-spacing:-.035em;color:var(--wl-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#sec-wishlist .wl-stat-sub{color:var(--wl-muted);font-size:10px;margin-top:7px}
+#sec-wishlist .wl-control-panel{border:1px solid var(--wl-outline);background:var(--wl-surface);border-radius:14px;padding:12px 13px;margin-bottom:14px}
+#sec-wishlist .wl-filters-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+#sec-wishlist .wl-owners{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+#sec-wishlist .wl-owner-chip{display:inline-flex;gap:6px;align-items:center;min-height:32px;background:var(--wl-soft);color:var(--wl-muted);border:1px solid var(--wl-outline);border-radius:999px;padding:6px 11px;font-weight:750;font-size:11px;cursor:pointer}
+#sec-wishlist .wl-owner-chip[data-active="true"]{background:color-mix(in srgb,var(--wl-purple) 12%,var(--wl-surface));color:var(--wl-purple);border-color:var(--wl-lilac)}
+#sec-wishlist .wl-owner-chip small{font-size:9px;opacity:.7}
+#sec-wishlist .wl-view-toggle{display:flex;background:var(--wl-soft);padding:3px;border:1px solid var(--wl-outline);border-radius:10px;gap:3px}
+#sec-wishlist .wl-view-toggle .wl-btn{border:none;box-shadow:none;background:transparent;min-height:29px}
+#sec-wishlist .wl-view-toggle .wl-btn-active{background:var(--wl-surface);color:var(--wl-purple);box-shadow:0 1px 4px #68518919}
+#sec-wishlist .wl-filter-grid{display:grid;grid-template-columns:minmax(160px,1.5fr) repeat(4,minmax(110px,1fr)) auto;gap:8px;align-items:end}
+#sec-wishlist .wl-filter-field{display:flex;flex-direction:column;gap:4px;min-width:0}
+#sec-wishlist .wl-filter-field>label{color:var(--wl-muted);font-size:9px;text-transform:uppercase;letter-spacing:.07em;font-weight:850}
+#sec-wishlist .wl-input,#sec-wishlist .wl-select,#sec-wishlist .wl-textarea{width:100%;border:1px solid var(--wl-outline);border-radius:8px;min-height:36px;padding:8px 10px;background:var(--wl-soft);color:var(--wl-ink);font-family:Inter,Arial,sans-serif;font-size:12px;outline:none}
+#sec-wishlist .wl-textarea{min-height:75px;resize:vertical}
+#sec-wishlist .wl-quick-line{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:9px}
+#sec-wishlist .wl-quick-label{font-weight:750;color:var(--wl-muted);font-size:10px;margin-right:2px}
+#sec-wishlist .wl-quick-pill{background:transparent;color:var(--wl-muted);border:1px dashed var(--wl-outline);border-radius:999px;padding:5px 9px;font-size:10px;cursor:pointer}
+#sec-wishlist .wl-quick-pill[data-active="true"]{background:color-mix(in srgb,var(--wl-purple) 10%,var(--wl-surface));border:1px solid var(--wl-lilac);color:var(--wl-purple)}
+#sec-wishlist .wl-board-note{color:var(--wl-muted);font-size:11px;margin:0 0 9px;display:flex;align-items:center;justify-content:space-between;gap:9px;flex-wrap:wrap}
+#sec-wishlist .wl-board-scroll{overflow-x:auto;max-width:100%;padding:2px 0 14px;scrollbar-color:#c6a8e0 transparent;scroll-snap-type:x proximity;overscroll-behavior-x:contain}
+#sec-wishlist .wl-board{display:grid;grid-template-columns:repeat(var(--wl-cols,4),minmax(258px,1fr));gap:11px;align-items:stretch;min-height:330px}
+#sec-wishlist .wl-lane{min-width:0;display:flex;flex-direction:column;border:1px solid var(--wl-outline);border-radius:14px;background:color-mix(in srgb,var(--wl-purple) 3%,var(--wl-soft));scroll-snap-align:start;transition:border-color .13s,background .13s}
+#sec-wishlist .wl-lane[data-drop="true"]{border:2px dashed var(--wl-purple);background:color-mix(in srgb,var(--wl-purple) 14%,var(--wl-soft))}
+#sec-wishlist .wl-lane-head{padding:12px 12px 10px;border-bottom:1px solid var(--wl-outline)}
+#sec-wishlist .wl-lane-head-top{display:flex;align-items:center;gap:7px;justify-content:space-between}
+#sec-wishlist .wl-lane-label{font-size:12px;font-weight:850;color:var(--wl-ink);display:flex;align-items:center;gap:8px}
+#sec-wishlist .wl-dot{width:9px;height:9px;border-radius:50%;background:var(--stage-color);display:inline-block;box-shadow:0 0 0 3px color-mix(in srgb,var(--stage-color) 15%,transparent)}
+#sec-wishlist .wl-lane-count{border:1px solid var(--wl-outline);border-radius:8px;padding:2px 7px;font-weight:800;font-size:10px;color:var(--wl-muted);background:var(--wl-surface)}
+#sec-wishlist .wl-lane-sub{font-size:10px;color:var(--wl-muted);margin-top:7px}
+#sec-wishlist .wl-lane-body{display:flex;flex-direction:column;gap:9px;min-height:230px;padding:10px;flex:1}
+#sec-wishlist .wl-lane-empty{text-align:center;color:var(--wl-muted);font-size:11px;border:1px dashed var(--wl-outline);border-radius:10px;padding:19px 10px;line-height:1.6}
+#sec-wishlist .wl-item{background:var(--wl-surface);border:1px solid var(--wl-outline);border-radius:12px;padding:11px;box-shadow:0 2px 7px #51446d09;min-width:0;transition:border-color .12s,transform .12s,opacity .12s}
+#sec-wishlist .wl-item:hover{border-color:#b68dde}
+#sec-wishlist .wl-item[data-dragging="true"]{opacity:.3}
+#sec-wishlist .wl-item-top{display:flex;gap:7px;align-items:flex-start}
+#sec-wishlist .wl-grip{cursor:grab;border:none;background:transparent;color:var(--wl-muted);padding:1px 4px;line-height:1.4;font-size:17px;touch-action:none;user-select:none;flex:0 0 auto;border-radius:5px}
+#sec-wishlist .wl-grip:active{cursor:grabbing;background:var(--wl-soft)}
+#sec-wishlist .wl-item-title{min-width:0;flex:1;color:var(--wl-ink);font-weight:850;font-size:12px;line-height:1.4;overflow-wrap:anywhere}
+#sec-wishlist .wl-item-symbol{font-size:18px;line-height:1.1}
+#sec-wishlist .wl-item-labels{display:flex;flex-wrap:wrap;gap:4px;margin:9px 0}
+#sec-wishlist .wl-tag{font-size:9px;font-weight:750;line-height:1.4;display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:99px;background:var(--wl-soft);color:var(--wl-muted);border:1px solid var(--wl-outline)}
+#sec-wishlist .wl-tag-prio{background:color-mix(in srgb,var(--tag-color) 11%,var(--wl-surface));color:var(--tag-color);border-color:color-mix(in srgb,var(--tag-color) 35%,var(--wl-outline))}
+#sec-wishlist .wl-item-money{font-family:'Space Grotesk',Inter,Arial,sans-serif;color:var(--wl-ink);font-size:20px;letter-spacing:-.045em;font-weight:850;margin-top:8px}
+#sec-wishlist .wl-item-money-caption{font-size:9px;color:var(--wl-muted);margin-top:2px}
+#sec-wishlist .wl-progress-line{height:7px;border-radius:100px;background:var(--wl-outline);overflow:hidden;margin:10px 0 6px}
+#sec-wishlist .wl-progress-fill{height:100%;background:linear-gradient(90deg,#b390dc,#8755c0);border-radius:100px;transition:width .2s}
+#sec-wishlist .wl-progress-info{display:flex;align-items:center;justify-content:space-between;font-size:10px;color:var(--wl-muted);gap:8px}
+#sec-wishlist .wl-item-foot{display:flex;justify-content:space-between;gap:6px;align-items:center;padding-top:9px;margin-top:9px;border-top:1px solid var(--wl-outline)}
+#sec-wishlist .wl-small-action{background:var(--wl-soft);border:1px solid var(--wl-outline);border-radius:7px;min-height:28px;padding:5px 8px;font:750 10px Inter,Arial,sans-serif;color:var(--wl-ink);cursor:pointer;white-space:nowrap}
+#sec-wishlist .wl-small-action:hover{color:var(--wl-purple);border-color:#b390d3}
+#sec-wishlist .wl-mini-select{background:var(--wl-soft);border:1px solid var(--wl-outline);border-radius:7px;font:700 10px Inter,Arial,sans-serif;color:var(--wl-ink);min-height:28px;padding:4px 6px;max-width:135px;width:100%;min-width:0}
+#sec-wishlist .wl-card-actions{display:flex;gap:5px;align-items:center;flex:1;min-width:0}
+#sec-wishlist .wl-target-warning{font-size:9px;color:var(--wl-gold);line-height:1.5;margin-top:6px}
+#sec-wishlist .wl-zero{color:var(--wl-muted);font-size:11px}
+#sec-wishlist .wl-list-section{margin:0 0 13px;border:1px solid var(--wl-outline);border-radius:13px;background:var(--wl-surface);overflow:hidden}
+#sec-wishlist .wl-list-heading{padding:12px 14px;display:flex;justify-content:space-between;gap:10px;align-items:center;border-bottom:1px solid var(--wl-outline);font-weight:850;color:var(--wl-ink);font-size:12px;background:var(--wl-soft)}
+#sec-wishlist .wl-list-row{display:grid;grid-template-columns:minmax(200px,2fr) minmax(110px,1fr) minmax(125px,1fr) minmax(140px,1.3fr) auto;gap:12px;align-items:center;padding:12px 14px;border-top:1px solid var(--wl-outline)}
+#sec-wishlist .wl-list-row:first-child{border-top:none}
+#sec-wishlist .wl-row-title{font-weight:800;color:var(--wl-ink);font-size:12px;line-height:1.4}
+#sec-wishlist .wl-row-secondary{font-size:10px;color:var(--wl-muted);margin-top:5px}
+#sec-wishlist .wl-row-money{font-weight:800;font-size:13px;color:var(--wl-ink)}
+#sec-wishlist .wl-row-progress{font-size:10px;color:var(--wl-muted)}
+#sec-wishlist .wl-empty-global{padding:36px 18px;text-align:center;background:var(--wl-surface);border:1px dashed var(--wl-outline);border-radius:13px;font-size:13px;color:var(--wl-muted)}
+#sec-wishlist .wl-empty-global strong{display:block;color:var(--wl-ink);font-size:16px;margin:7px 0}
+#sec-wishlist .wl-modal-backdrop[hidden]{display:none!important}
+#sec-wishlist .wl-modal-backdrop{position:fixed;inset:0;z-index:25000;background:rgba(28,20,45,.55);display:flex;align-items:center;justify-content:center;padding:15px;overflow-y:auto;backdrop-filter:blur(3px)}
+#sec-wishlist .wl-modal{background:var(--wl-surface);border:1px solid var(--wl-outline);border-radius:17px;width:min(670px,100%);max-height:min(92vh,850px);overflow-y:auto;box-shadow:0 25px 70px #150b2540;padding:20px}
+#sec-wishlist .wl-modal-top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:15px}
+#sec-wishlist .wl-modal-top h3{font-family:'Space Grotesk',Inter,Arial,sans-serif;color:var(--wl-ink);font-size:19px;margin:0}
+#sec-wishlist .wl-modal-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+#sec-wishlist .wl-modal-field{display:flex;flex-direction:column;gap:5px;min-width:0}
+#sec-wishlist .wl-modal-field label{font-size:10px;font-weight:800;color:var(--wl-muted)}
+#sec-wishlist .wl-modal-field.wide{grid-column:1/-1}
+#sec-wishlist .wl-modal-actions{display:flex;justify-content:space-between;gap:9px;align-items:center;flex-wrap:wrap;margin-top:17px;padding-top:14px;border-top:1px solid var(--wl-outline)}
+#sec-wishlist .wl-modal-actions>div{display:flex;gap:8px}
+#sec-wishlist .wl-delete{color:#d65567!important}
+#sec-wishlist .wl-drag-ghost{position:fixed;z-index:28000;pointer-events:none;opacity:.94;transform:rotate(1.4deg);box-shadow:0 14px 35px #2513404c;max-height:310px;overflow:hidden}
+body.wl-is-dragging,body.wl-is-dragging *{user-select:none!important;cursor:grabbing!important}
+@media(max-width:1400px){#sec-wishlist .wl-v2-stats{grid-template-columns:repeat(3,minmax(0,1fr))}#sec-wishlist .wl-filter-grid{grid-template-columns:minmax(180px,2fr) repeat(3,minmax(120px,1fr))}#sec-wishlist .wl-filter-grid>.wl-filter-field:nth-child(5){grid-column:auto}}
+@media(max-width:1050px){#sec-wishlist .wl-board{grid-template-columns:repeat(var(--wl-cols,4),minmax(266px,78vw))}#sec-wishlist .wl-list-row{grid-template-columns:minmax(170px,2fr) 1fr 1fr auto}#sec-wishlist .wl-row-progress-wrap{display:none}}
+@media(max-width:700px){#sec-wishlist .wl-v2-header{align-items:flex-start}#sec-wishlist .wl-v2-title h2{font-size:21px}#sec-wishlist .wl-v2-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}#sec-wishlist .wl-stat{padding:11px}#sec-wishlist .wl-stat-value{font-size:16px}#sec-wishlist .wl-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#sec-wishlist .wl-filter-field:first-child{grid-column:1/-1}#sec-wishlist .wl-filter-grid>.wl-btn{grid-column:1/-1}#sec-wishlist .wl-filters-top{align-items:flex-start}#sec-wishlist .wl-owners{width:100%}#sec-wishlist .wl-board{grid-template-columns:repeat(var(--wl-cols,4),minmax(245px,82vw))}#sec-wishlist .wl-board-note{font-size:10px}#sec-wishlist .wl-modal{padding:15px}#sec-wishlist .wl-list-row{grid-template-columns:1fr auto;gap:7px}#sec-wishlist .wl-list-row .wl-row-money,#sec-wishlist .wl-list-row .wl-row-progress-wrap{display:none}#sec-wishlist .wl-list-row .wl-row-status{grid-column:1;grid-row:2}#sec-wishlist .wl-list-row .wl-row-controls{grid-column:2;grid-row:1 / span 2}#sec-wishlist .wl-modal-grid{grid-template-columns:1fr}#sec-wishlist .wl-modal-field.wide{grid-column:1}}
+@media(max-width:700px){#sec-wishlist .wl-stat:last-child{grid-column:1/-1}}
+@media(max-width:370px){#sec-wishlist .wl-owner-chip{padding:5px 8px;font-size:10px}#sec-wishlist .wl-v2-stats{grid-template-columns:1fr 1fr}}
 </style>
 
-<script>
+<script id="pf-wishlist-v2-script">
 (function(){
-  const WL_PRIORITIES = {
-    necessidade:{label:'Necessidade', icon:'🚨', color:'var(--red)',    bg:'rgba(248,113,113,.10)', rank:0},
-    importante: {label:'Importante',  icon:'⭐', color:'var(--amber)',  bg:'rgba(251,191,36,.10)',  rank:1},
-    desejo:     {label:'Desejo',      icon:'💙', color:'var(--blue)',   bg:'rgba(96,165,250,.10)',  rank:2},
-    sonho:      {label:'Sonho',       icon:'✨', color:'var(--purple)', bg:'rgba(167,139,250,.10)', rank:3}
+  'use strict';
+  const PRIORITIES={
+    necessidade:{label:'Necessidade',icon:'🚨',color:'#d56b75',rank:0},
+    importante:{label:'Importante',icon:'⭐',color:'#c59236',rank:1},
+    desejo:{label:'Desejo',icon:'💜',color:'#8a67c5',rank:2},
+    sonho:{label:'Sonho',icon:'✨',color:'#568ad1',rank:3}
   };
-
-  let wishlistData = [];
-  let nextWishlistId = 1;
-
-  function num(v){ return Math.max(0, Number(String(v ?? '').replace(',','.')) || 0); }
-  function money(v){
-    try { return typeof fmt === 'function' ? fmt(v) : new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(num(v)); }
-    catch(e){ return 'R$ ' + Math.round(num(v)).toLocaleString('pt-BR'); }
+  const STAGES=[
+    {id:'desejo',label:'Na lista',icon:'💭',color:'#9773bf',description:'Ideias e vontades'},
+    {id:'planejando',label:'Planejando',icon:'📋',color:'#5d94d4',description:'Pesquisando e organizando'},
+    {id:'juntando',label:'Juntando',icon:'💰',color:'#c89139',description:'Reservando dinheiro'},
+    {id:'comprado',label:'Comprado',icon:'✅',color:'#3e9c72',description:'Conquistas realizadas'}
+  ];
+  const CATEGORIES={outros:'🎁',casa:'🏡',tecnologia:'💻',carro:'🚗',viagem:'✈️',saude:'🩺',lazer:'🎮',estudo:'📚'};
+  const OWNERS={paulo:'👤 Paulo',lais:'👩 Laís',ambos:'💞 Ambos',nao_definido:'❔ Sem dono'};
+  let wishlistData=[];
+  let nextWishlistId=1;
+  const ui={owner:'',priority:'',status:'',sort:'manual',search:'',quick:'',view:'board',group:'status'};
+  let pointer=null;
+  let modalReturnFocus=null;
+  const el=(id)=>document.getElementById(id);
+  const num=(v)=>Math.max(0,Number(String(v??'').replace(',','.'))||0);
+  const fmt=(v)=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:2}).format(num(v));
+  const esc=(v)=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
+  const numericDate=(v)=>{const x=Date.parse(v||'');return Number.isFinite(x)?x:0;};
+  const show=(msg,err=false)=>{if(typeof window.showToast==='function')window.showToast(msg,err);};
+  const save=()=>{if(typeof window.agendarAutoSave==='function')window.agendarAutoSave(650);};
+  function normalizeItem(raw,index){
+    const i=raw&&typeof raw==='object'?raw:{};
+    let status=STAGES.some(s=>s.id===i.status)?i.status:(i.comprado?'comprado':num(i.guardado)>0||num(i.aporte)>0?'juntando':'planejando');
+    if(i.comprado)status='comprado';
+    const dono=Object.hasOwn(OWNERS,i.dono)?i.dono:'nao_definido';
+    return {...i,id:String(i.id||('w'+(index+1))),nome:String(i.nome||'Novo desejo'),prioridade:PRIORITIES[i.prioridade]?i.prioridade:'desejo',valor:num(i.valor),guardado:num(i.guardado),aporte:num(i.aporte),prazoMeses:Math.max(0,Math.floor(num(i.prazoMeses))),status,comprado:status==='comprado',dono,categoria:Object.hasOwn(CATEGORIES,i.categoria)?i.categoria:'outros',ordem:Number.isFinite(Number(i.ordem))?Number(i.ordem):index,obs:String(i.obs||''),criadoEm:i.criadoEm||new Date().toISOString()};
   }
-  function esc(v){ return String(v ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;'); }
-  function attr(v){ return esc(v); }
-  function saveSoon(){ if(typeof window.agendarAutoSave === 'function') window.agendarAutoSave(650); }
-  function activeItems(){ return wishlistData.filter(i=>!i.comprado); }
-
-  function forecast(item){
-    const valor=num(item.valor), guardado=Math.min(valor,num(item.guardado)), falta=Math.max(0,valor-guardado), aporte=num(item.aporte), alvo=Math.max(0,parseInt(item.prazoMeses||0,10)||0);
-    const pct=valor>0?Math.min(100,guardado/valor*100):0;
-    const meses=falta<=0?0:(aporte>0?Math.ceil(falta/aporte):null);
-    let previsao='';
-    if(item.comprado) previsao='✅ Comprado';
-    else if(falta<=0) previsao='✅ Valor já disponível';
-    else if(meses!==null){
-      const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()+meses);
-      const nome=d.toLocaleDateString('pt-BR',{month:'short',year:'numeric'}).replace('.','');
-      previsao=`${meses} ${meses===1?'mês':'meses'} · ${nome}`;
-    } else previsao='Defina um aporte mensal';
-    const necessarioAlvo=alvo>0?falta/alvo:0;
-    return {valor,guardado,falta,aporte,alvo,pct,meses,previsao,necessarioAlvo};
+  function calc(item){
+    const valor=num(item.valor),guardado=Math.min(valor,num(item.guardado)),falta=Math.max(0,valor-guardado),aporte=num(item.aporte),alvo=Math.floor(num(item.prazoMeses));
+    const pct=valor>0?Math.min(100,100*guardado/valor):0;
+    const meses=item.comprado?0:(valor<=0?null:falta===0?0:aporte>0?Math.ceil(falta/aporte):null);
+    let previsao=valor<=0?'Preço a definir':falta===0?'Já tem o valor':meses===null?'Sem previsão':meses===0?'Disponível':meses+' '+(meses===1?'mês':'meses');
+    if(item.comprado)previsao='Conquistado!';
+    const precisa=alvo>0&&falta>0?falta/alvo:0;
+    return {valor,guardado,falta,aporte,pct,meses,alvo,precisa,previsao};
   }
-
-  function injectNav(){
-    if(document.getElementById('nav-wishlist')) return;
-    const navInvest=document.getElementById('nav-investir');
-    const navGeral=document.getElementById('nav-geral');
-    if(!navGeral) return;
-    const btn=document.createElement('button');
-    btn.className='nav-item'; btn.id='nav-wishlist';
-    btn.setAttribute('onclick',"goTo('wishlist');renderWishlist()");
-    btn.innerHTML='<span class="nav-icon">💖</span><span>Wishlist</span><span class="nav-status" id="dot-wishlist"></span>';
-    if(navInvest) navGeral.insertBefore(btn,navInvest); else navGeral.appendChild(btn);
+  function find(id){return wishlistData.find(i=>String(i.id)===String(id));}
+  function stageOf(item){return item.status||'planejando';}
+  function sortItems(list){
+    const a=[...list];
+    const byManual=(x,y)=>Number(x.ordem)-Number(y.ordem)||numericDate(x.criadoEm)-numericDate(y.criadoEm);
+    const mode=ui.sort;
+    if(mode==='maior')return a.sort((x,y)=>num(y.valor)-num(x.valor)||byManual(x,y));
+    if(mode==='menor')return a.sort((x,y)=>num(x.valor)-num(y.valor)||byManual(x,y));
+    if(mode==='falta')return a.sort((x,y)=>calc(x).falta-calc(y).falta||byManual(x,y));
+    if(mode==='progresso')return a.sort((x,y)=>calc(y).pct-calc(x).pct||byManual(x,y));
+    if(mode==='prioridade')return a.sort((x,y)=>PRIORITIES[x.prioridade].rank-PRIORITIES[y.prioridade].rank||byManual(x,y));
+    if(mode==='az')return a.sort((x,y)=>x.nome.localeCompare(y.nome,'pt-BR',{sensitivity:'base'}));
+    if(mode==='recente')return a.sort((x,y)=>numericDate(y.criadoEm)-numericDate(x.criadoEm)||byManual(x,y));
+    if(mode==='prazo')return a.sort((x,y)=>(calc(x).meses??1e9)-(calc(y).meses??1e9)||calc(x).falta-calc(y).falta||byManual(x,y));
+    return a.sort(byManual);
   }
-
-  function injectSection(){
-    if(document.getElementById('sec-wishlist')) return;
-    const sec=document.createElement('div');
-    sec.className='page-section'; sec.id='sec-wishlist';
-    sec.innerHTML=`
-      <div class="section-header">
-        <div class="section-eyebrow">compras planejadas</div>
-        <div class="section-title">Wishlist</div>
-        <div class="section-desc">Organize o que precisa ou quer comprar por prioridade, valor e prazo. O PainelFin calcula quanto falta e em quanto tempo você consegue comprar.</div>
-      </div>
-
-      <div class="stats-grid" id="wishlist-stats"></div>
-
-      <div class="wl-form-card">
-        <div class="wl-form-title">＋ Adicionar à wishlist</div>
-        <div class="wl-form-grid">
-          <div class="wl-field"><label>Item</label><input id="wl-name" type="text" placeholder="ex: notebook, pneu, viagem"></div>
-          <div class="wl-field"><label>Prioridade</label><select id="wl-priority">
-            <option value="necessidade">🚨 Necessidade</option><option value="importante">⭐ Importante</option><option value="desejo" selected>💙 Desejo</option><option value="sonho">✨ Sonho</option>
-          </select></div>
-          <div class="wl-field"><label>Valor total</label><input id="wl-value" type="number" min="0" step="0.01" placeholder="2500"></div>
-          <div class="wl-field"><label>Já guardado</label><input id="wl-saved" type="number" min="0" step="0.01" placeholder="0"></div>
-          <div class="wl-field"><label>Aporte / mês</label><input id="wl-monthly" type="number" min="0" step="0.01" placeholder="300"></div>
-          <div class="wl-field"><label>Prazo desejado</label><input id="wl-target" type="number" min="0" step="1" placeholder="meses"></div>
-          <button class="btn btn-primary" style="height:38px" onclick="addWishlistItem()">Adicionar</button>
-        </div>
-        <div class="wl-help">O <strong>aporte/mês</strong> calcula a previsão real da compra. O <strong>prazo desejado</strong> é opcional e mostra quanto seria necessário guardar por mês para cumprir aquela meta.</div>
-      </div>
-
-      <div class="wl-toolbar">
-        <div class="wl-toolbar-left">
-          <div class="wl-toolbar-box"><label>Prioridade</label><select id="wl-filter-priority" onchange="renderWishlist()"><option value="">Todas</option><option value="necessidade">Necessidade</option><option value="importante">Importante</option><option value="desejo">Desejo</option><option value="sonho">Sonho</option></select></div>
-          <div class="wl-toolbar-box"><label>Status</label><select id="wl-filter-status" onchange="renderWishlist()"><option value="ativos">Pendentes</option><option value="todos">Todos</option><option value="comprados">Comprados</option></select></div>
-          <div class="wl-toolbar-box"><label>Ordenar dentro da prioridade</label><select id="wl-sort" onchange="renderWishlist()"><option value="prazo">Compra mais próxima</option><option value="maior">Maior valor</option><option value="menor">Menor valor</option><option value="az">A → Z</option></select></div>
-        </div>
-        <button class="btn btn-sm" onclick="clearWishlistFilters()">Limpar filtros</button>
-      </div>
-
-      <div id="wishlist-groups"></div>
-    `;
-    const invest=document.getElementById('sec-investir');
-    const content=document.querySelector('.content');
-    if(invest?.parentNode) invest.parentNode.insertBefore(sec,invest); else content?.appendChild(sec);
-  }
-
-  function ensureNavigation(){
-    try { if(typeof SECS_G!=='undefined' && !SECS_G.includes('sec-wishlist')) SECS_G.push('sec-wishlist'); } catch(e){}
-    try { if(typeof TITLES_G!=='undefined') TITLES_G.wishlist='Wishlist'; } catch(e){}
-  }
-
-  window.addWishlistItem=function(){
-    const nome=(document.getElementById('wl-name')?.value||'').trim();
-    const prioridade=document.getElementById('wl-priority')?.value||'desejo';
-    const valor=num(document.getElementById('wl-value')?.value);
-    const guardado=num(document.getElementById('wl-saved')?.value);
-    const aporte=num(document.getElementById('wl-monthly')?.value);
-    const prazoMeses=Math.max(0,parseInt(document.getElementById('wl-target')?.value||'0',10)||0);
-    if(!nome){ window.showToast?.('Informe o nome do item.',true); return; }
-    if(valor<=0){ window.showToast?.('Informe o valor da compra.',true); return; }
-    wishlistData.push({id:'w'+nextWishlistId++,nome,prioridade,valor,guardado,aporte,prazoMeses,comprado:false,criadoEm:new Date().toISOString()});
-    ['wl-name','wl-value','wl-saved','wl-monthly','wl-target'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
-    renderWishlist(); saveSoon(); window.showToast?.('💖 Item adicionado à wishlist!');
-  };
-
-  window.updateWishlist=function(id,campo,valor){
-    const item=wishlistData.find(x=>String(x.id)===String(id)); if(!item)return;
-    if(['valor','guardado','aporte'].includes(campo)) item[campo]=num(valor);
-    else if(campo==='prazoMeses') item[campo]=Math.max(0,parseInt(valor||'0',10)||0);
-    else item[campo]=valor;
-    renderWishlist(); saveSoon();
-  };
-
-  window.toggleWishlistBought=function(id){
-    const item=wishlistData.find(x=>String(x.id)===String(id)); if(!item)return;
-    item.comprado=!item.comprado;
-    item.compradoEm=item.comprado?new Date().toISOString():null;
-    renderWishlist(); saveSoon();
-    window.showToast?.(item.comprado?'✅ Marcado como comprado.':'↩ Item voltou para pendentes.');
-  };
-
-  window.deleteWishlistItem=function(id){
-    const item=wishlistData.find(x=>String(x.id)===String(id)); if(!item)return;
-    if(!confirm(`Remover "${item.nome}" da wishlist?`))return;
-    wishlistData=wishlistData.filter(x=>String(x.id)!==String(id));
-    renderWishlist(); saveSoon();
-  };
-
-  window.clearWishlistFilters=function(){
-    const p=document.getElementById('wl-filter-priority'),s=document.getElementById('wl-filter-status'),o=document.getElementById('wl-sort');
-    if(p)p.value=''; if(s)s.value='ativos'; if(o)o.value='prazo'; renderWishlist();
-  };
-
-  function sortItems(items,mode){
-    const a=[...items];
-    if(mode==='maior') return a.sort((x,y)=>num(y.valor)-num(x.valor));
-    if(mode==='menor') return a.sort((x,y)=>num(x.valor)-num(y.valor));
-    if(mode==='az') return a.sort((x,y)=>(x.nome||'').localeCompare(y.nome||'','pt-BR',{sensitivity:'base'}));
-    return a.sort((x,y)=>{
-      const fx=forecast(x),fy=forecast(y);
-      const mx=fx.meses===null?99999:fx.meses,my=fy.meses===null?99999:fy.meses;
-      return mx-my || fx.falta-fy.falta;
+  function visibleItems(){
+    const term=ui.search.trim().toLocaleLowerCase('pt-BR');
+    return wishlistData.filter(i=>{
+      if(ui.owner&&i.dono!==ui.owner)return false;
+      if(ui.priority&&i.prioridade!==ui.priority)return false;
+      if(ui.status&&stageOf(i)!==ui.status)return false;
+      if(term&&!([i.nome,i.obs,i.categoria,OWNERS[i.dono]].join(' ')).toLocaleLowerCase('pt-BR').includes(term))return false;
+      const f=calc(i);
+      if(ui.quick==='sem_aporte'&&(i.comprado||f.aporte>0))return false;
+      if(ui.quick==='quase'&&(i.comprado||f.valor<=0||f.pct<70))return false;
+      if(ui.quick==='pronto'&&(i.comprado||f.valor<=0||f.falta>0))return false;
+      return true;
     });
   }
-
-  function itemHTML(item){
-    const p=WL_PRIORITIES[item.prioridade]||WL_PRIORITIES.desejo;
-    const f=forecast(item);
-    let alvo='';
-    if(!item.comprado && f.alvo>0 && f.falta>0){
-      const diff=Math.max(0,f.necessarioAlvo-f.aporte);
-      alvo = diff>0
-        ? `Prazo de ${f.alvo} meses: precisa guardar ${money(f.necessarioAlvo)}/mês (${money(diff)}/mês acima do aporte atual).`
-        : `Seu aporte atual atende ao prazo desejado de ${f.alvo} meses.`;
-    }
-    return `<div class="wl-card ${item.comprado?'done':''}" style="border-left:3px solid ${p.color}">
-      <div class="wl-card-top">
-        <input class="wl-name-input" value="${attr(item.nome)}" onchange="updateWishlist('${attr(item.id)}','nome',this.value)">
-        <select class="wl-priority-select" onchange="updateWishlist('${attr(item.id)}','prioridade',this.value)">
-          ${Object.entries(WL_PRIORITIES).map(([k,v])=>`<option value="${k}" ${k===item.prioridade?'selected':''}>${v.icon} ${v.label}</option>`).join('')}
-        </select>
-        <div class="wl-actions">
-          <button class="wl-mini-btn ok" onclick="toggleWishlistBought('${attr(item.id)}')">${item.comprado?'↩ Reabrir':'✅ Comprado'}</button>
-          <button class="wl-mini-btn danger" onclick="deleteWishlistItem('${attr(item.id)}')">× Remover</button>
+  function injectNav(){
+    if(el('nav-wishlist'))return;
+    const navInvest=el('nav-investir'),navGeral=el('nav-geral');
+    if(!navGeral)return;
+    const btn=document.createElement('button');btn.className='nav-item';btn.id='nav-wishlist';
+    btn.setAttribute('onclick',"goTo('wishlist');renderWishlist()");
+    btn.innerHTML='<span class="nav-icon">💖</span><span>Wishlist</span><span class="nav-status" id="dot-wishlist"></span>';
+    if(navInvest)navGeral.insertBefore(btn,navInvest);else navGeral.appendChild(btn);
+  }
+  function injectSection(){
+    if(el('sec-wishlist'))return;
+    const sec=document.createElement('div');sec.className='page-section';sec.id='sec-wishlist';
+    sec.innerHTML=`
+      <div class="wl-v2-header">
+        <div><div class="wl-v2-title"><span class="wl-hero-icon">💝</span><h2>Wishlist</h2></div>
+          <p class="wl-v2-subtitle">Os sonhos do casal, organizados do primeiro desejo à conquista.</p></div>
+        <div class="wl-v2-head-buttons">
+          <button class="wl-btn wl-btn-primary" type="button" data-wla="new">＋ Novo desejo</button>
         </div>
       </div>
-      <div class="wl-metrics">
-        <div class="wl-metric"><label>Valor total</label><div class="wl-money-input"><span>R$</span><input type="number" min="0" step="0.01" value="${item.valor||''}" onchange="updateWishlist('${attr(item.id)}','valor',this.value)"></div></div>
-        <div class="wl-metric"><label>Já guardado</label><div class="wl-money-input"><span>R$</span><input type="number" min="0" step="0.01" value="${item.guardado||''}" onchange="updateWishlist('${attr(item.id)}','guardado',this.value)"></div></div>
-        <div class="wl-metric"><label>Aporte mensal</label><div class="wl-money-input"><span>R$</span><input type="number" min="0" step="0.01" value="${item.aporte||''}" onchange="updateWishlist('${attr(item.id)}','aporte',this.value)"></div></div>
-        <div class="wl-metric"><label>Prazo desejado (meses)</label><input class="wl-month-input" type="number" min="0" step="1" value="${item.prazoMeses||''}" placeholder="opcional" onchange="updateWishlist('${attr(item.id)}','prazoMeses',this.value)"></div>
+      <div class="wl-v2-stats" id="wishlist-stats"></div>
+      <div class="wl-control-panel">
+        <div class="wl-filters-top">
+          <div class="wl-owners" id="wl-owner-filters"></div>
+          <div class="wl-view-toggle" role="group" aria-label="Tipo de visualização">
+            <button type="button" class="wl-btn wl-btn-active" data-wla="view" data-value="board" id="wl-view-board">▥ Quadro</button>
+            <button type="button" class="wl-btn" data-wla="view" data-value="list" id="wl-view-list">☷ Lista</button>
+          </div>
+        </div>
+        <div class="wl-filter-grid">
+          <div class="wl-filter-field"><label for="wl-search">Buscar</label><input class="wl-input" id="wl-search" type="search" placeholder="🔎 Buscar desejos, observações..."></div>
+          <div class="wl-filter-field"><label for="wl-filter-priority">Prioridade</label><select class="wl-select" id="wl-filter-priority"><option value="">Todas</option><option value="necessidade">🚨 Necessidade</option><option value="importante">⭐ Importante</option><option value="desejo">💜 Desejo</option><option value="sonho">✨ Sonho</option></select></div>
+          <div class="wl-filter-field"><label for="wl-filter-status">Status</label><select class="wl-select" id="wl-filter-status"><option value="">Todos</option>${STAGES.map(s=>`<option value="${s.id}">${s.icon} ${s.label}</option>`).join('')}</select></div>
+          <div class="wl-filter-field"><label for="wl-sort">Ordenar</label><select class="wl-select" id="wl-sort"><option value="manual">Minha ordem</option><option value="prioridade">Mais prioritário</option><option value="prazo">Compra mais próxima</option><option value="maior">Maior valor</option><option value="menor">Menor valor</option><option value="falta">Menor valor faltante</option><option value="progresso">Mais avançado</option><option value="recente">Mais recente</option><option value="az">Nome A–Z</option></select></div>
+          <div class="wl-filter-field" id="wl-group-field" style="display:none"><label for="wl-group">Agrupar lista</label><select class="wl-select" id="wl-group"><option value="status">Por status</option><option value="priority">Por prioridade</option><option value="owner">Por pessoa</option><option value="category">Por categoria</option></select></div>
+          <button type="button" class="wl-btn" data-wla="reset">↺ Limpar</button>
+        </div>
+        <div class="wl-quick-line"><span class="wl-quick-label">Atalhos:</span>
+          <button type="button" class="wl-quick-pill" data-wla="quick" data-value="sem_aporte">💤 Sem aporte</button>
+          <button type="button" class="wl-quick-pill" data-wla="quick" data-value="quase">🚀 70% ou mais</button>
+          <button type="button" class="wl-quick-pill" data-wla="quick" data-value="pronto">✅ Valor completo</button>
+        </div>
       </div>
-      <div class="wl-progress-bg"><div class="wl-progress-fg" style="width:${f.pct.toFixed(1)}%;background:${item.comprado?'var(--green)':p.color}"></div></div>
-      <div class="wl-bottom">
-        <div><strong style="color:${p.color}">${money(f.guardado)}</strong> de ${money(f.valor)} · falta <strong style="color:var(--tx)">${money(f.falta)}</strong></div>
-        <div class="wl-forecast">${esc(f.previsao)}</div>
-      </div>
-      ${alvo?`<div class="wl-target-note" style="margin-top:5px">🎯 ${esc(alvo)}</div>`:''}
-    </div>`;
+      <div class="wl-board-note" id="wl-board-note"></div>
+      <div id="wishlist-groups"></div>
+      <div class="wl-modal-backdrop" id="wl-modal" hidden role="presentation">
+        <div class="wl-modal" role="dialog" aria-modal="true" aria-labelledby="wl-dialog-title">
+          <div class="wl-modal-top"><h3 id="wl-dialog-title">Novo desejo</h3><button type="button" class="wl-btn wl-btn-mini" data-wla="close" aria-label="Fechar janela">✕</button></div>
+          <form id="wl-form">
+            <input type="hidden" name="id">
+            <div class="wl-modal-grid">
+              <div class="wl-modal-field wide"><label for="wl-edit-nome">O que você quer comprar? *</label><input id="wl-edit-nome" class="wl-input" name="nome" required maxlength="140" placeholder="Ex.: consertar a chave do carro"></div>
+              <div class="wl-modal-field"><label for="wl-edit-dono">De quem é o desejo?</label><select id="wl-edit-dono" class="wl-select" name="dono"><option value="paulo">👤 Paulo</option><option value="lais">👩 Laís</option><option value="ambos">💞 Ambos</option><option value="nao_definido">❔ Não definido</option></select></div>
+              <div class="wl-modal-field"><label for="wl-edit-prioridade">Prioridade</label><select id="wl-edit-prioridade" class="wl-select" name="prioridade"><option value="necessidade">🚨 Necessidade</option><option value="importante">⭐ Importante</option><option value="desejo">💜 Desejo</option><option value="sonho">✨ Sonho</option></select></div>
+              <div class="wl-modal-field"><label for="wl-edit-status">Status</label><select id="wl-edit-status" class="wl-select" name="status">${STAGES.map(s=>`<option value="${s.id}">${s.icon} ${s.label}</option>`).join('')}</select></div>
+              <div class="wl-modal-field"><label for="wl-edit-categoria">Categoria</label><select id="wl-edit-categoria" class="wl-select" name="categoria">${Object.entries(CATEGORIES).map(([k,emoji])=>`<option value="${k}">${emoji} ${k[0].toUpperCase()+k.slice(1)}</option>`).join('')}</select></div>
+              <div class="wl-modal-field"><label for="wl-edit-valor">Valor estimado (R$)</label><input id="wl-edit-valor" class="wl-input" type="number" name="valor" step="0.01" min="0" placeholder="Ex.: 2500"></div>
+              <div class="wl-modal-field"><label for="wl-edit-guardado">Já guardado (R$)</label><input id="wl-edit-guardado" class="wl-input" type="number" name="guardado" step="0.01" min="0" placeholder="0"></div>
+              <div class="wl-modal-field"><label for="wl-edit-aporte">Aporte mensal (R$)</label><input id="wl-edit-aporte" class="wl-input" type="number" name="aporte" step="0.01" min="0" placeholder="Ex.: 200"></div>
+              <div class="wl-modal-field"><label for="wl-edit-prazo">Prazo desejado (meses)</label><input id="wl-edit-prazo" class="wl-input" type="number" name="prazoMeses" step="1" min="0" placeholder="Opcional"></div>
+              <div class="wl-modal-field wide"><label for="wl-edit-obs">Observações / link / detalhes</label><textarea id="wl-edit-obs" class="wl-textarea" name="obs" maxlength="500" placeholder="Modelo, loja, motivo, link do produto ou qualquer lembrete..."></textarea></div>
+            </div>
+            <div class="wl-modal-actions"><button type="button" class="wl-btn wl-delete" data-wla="delete-in-modal" id="wl-delete-modal" hidden>🗑 Excluir</button><div><button type="button" class="wl-btn" data-wla="close">Cancelar</button><button type="submit" class="wl-btn wl-btn-primary">💾 Salvar desejo</button></div></div>
+          </form>
+        </div>
+      </div>`;
+    const invest=el('sec-investir'),content=document.querySelector('.content');
+    if(invest?.parentNode)invest.parentNode.insertBefore(sec,invest);else content?.appendChild(sec);
+    attachEvents(sec);
   }
-
+  function ensureNavigation(){
+    try{if(typeof SECS_G!=='undefined'&&!SECS_G.includes('sec-wishlist'))SECS_G.push('sec-wishlist');}catch(e){}
+    try{if(typeof TITLES_G!=='undefined')TITLES_G.wishlist='Wishlist';}catch(e){}
+  }
+  function allOwners(){
+    const counts={paulo:0,lais:0,ambos:0,nao_definido:0};
+    wishlistData.forEach(i=>{if(!i.comprado&&Object.hasOwn(counts,i.dono))counts[i.dono]++;});
+    const buttons=[['','✨ Todos',wishlistData.filter(i=>!i.comprado).length],...Object.entries(OWNERS).map(([k,v])=>[k,v,counts[k]])];
+    return buttons.map(([k,label,count])=>`<button type="button" class="wl-owner-chip" data-wla="owner" data-value="${k}" data-active="${ui.owner===k}" aria-pressed="${ui.owner===k}">${label} <small>${count}</small></button>`).join('');
+  }
+  function statsHTML(){
+    const items=visibleItems().filter(i=>!i.comprado);
+    const planned=items.reduce((a,i)=>a+num(i.valor),0);
+    const saved=items.reduce((a,i)=>a+calc(i).guardado,0);
+    const missing=items.reduce((a,i)=>a+calc(i).falta,0);
+    const monthly=items.reduce((a,i)=>a+num(i.aporte),0);
+    const met=[['Desejos pendentes',String(items.length),'nesta seleção','#9066bd'],['Valor planejado',fmt(planned),'compras pendentes','#658bdf'],['Já guardado',fmt(saved),planned?((saved/planned)*100).toFixed(1)+'% do total':'0% do total','#389c72'],['Ainda falta',fmt(missing),'para realizar os desejos','#d87179'],['Aporte mensal',fmt(monthly),'planejado por mês','#c39241']];
+    return met.map(([n,v,s,c])=>`<div class="wl-stat" style="--accent:${c}"><div class="wl-stat-name">${n}</div><div class="wl-stat-value" title="${esc(v)}">${esc(v)}</div><div class="wl-stat-sub">${s}</div></div>`).join('');
+  }
+  function cardHTML(item){
+    const f=calc(item),p=PRIORITIES[item.prioridade],cat=CATEGORIES[item.categoria]||'🎁';
+    const target=f.alvo>0&&f.falta>0&&f.aporte<f.precisa?`<div class="wl-target-warning">🎯 Para ${f.alvo} meses: ${esc(fmt(f.precisa))}/mês</div>`:'';
+    const line=item.comprado?'Comprado!':f.valor<=0?'Valor não informado':`Faltam ${fmt(f.falta)}`;
+    return `<article class="wl-item" data-id="${esc(item.id)}">
+      <div class="wl-item-top"><button type="button" class="wl-grip" title="Arrastar para outra coluna ou reordenar" aria-label="Arrastar ${esc(item.nome)}">⠿</button><span class="wl-item-symbol">${cat}</span><div class="wl-item-title">${esc(item.nome)}</div><button type="button" class="wl-small-action" data-wla="edit" data-id="${esc(item.id)}" title="Editar">✎</button></div>
+      <div class="wl-item-labels"><span class="wl-tag wl-tag-prio" style="--tag-color:${p.color}">${p.icon} ${p.label}</span><span class="wl-tag">${OWNERS[item.dono]}</span></div>
+      <div class="wl-item-money">${f.valor>0?fmt(f.valor):'<span class="wl-zero">Valor a definir</span>'}</div>
+      <div class="wl-item-money-caption">${esc(line)}</div>
+      <div class="wl-progress-line"><div class="wl-progress-fill" style="width:${f.pct.toFixed(1)}%;background:${item.comprado?'#42a378':'linear-gradient(90deg,#b390dc,#8755c0)'}"></div></div>
+      <div class="wl-progress-info"><span>${f.pct.toFixed(0)}% guardado</span><span>${esc(f.previsao)}</span></div>
+      ${target}
+      <div class="wl-item-foot"><div class="wl-card-actions"><select class="wl-mini-select" data-wla="change-status" data-id="${esc(item.id)}" aria-label="Mudar status de ${esc(item.nome)}" title="Mover cartão de coluna">${STAGES.map(s=>`<option value="${s.id}" ${item.status===s.id?'selected':''}>${s.icon} ${s.label}</option>`).join('')}</select></div><button type="button" class="wl-small-action" data-wla="${item.comprado?'reopen':'finish'}" data-id="${esc(item.id)}">${item.comprado?'↩ Reabrir':'✓ Comprei'}</button></div>
+    </article>`;
+  }
+  function boardHTML(items){
+    const stages=STAGES.filter(s=>!ui.status||ui.status===s.id);
+    return `<div class="wl-board-scroll" id="wl-board-scroll"><div class="wl-board" style="--wl-cols:${stages.length}">${stages.map(stage=>{
+      const arr=sortItems(items.filter(i=>stageOf(i)===stage.id));
+      const missing=arr.reduce((a,i)=>a+calc(i).falta,0);
+      return `<section class="wl-lane" data-stage="${stage.id}" style="--stage-color:${stage.color}">
+        <div class="wl-lane-head"><div class="wl-lane-head-top"><span class="wl-lane-label"><i class="wl-dot"></i>${stage.icon} ${stage.label}</span><span class="wl-lane-count">${arr.length}</span></div>
+        <div class="wl-lane-sub">${stage.id==='comprado'?arr.length+' conquistas':stage.description+' · '+fmt(missing)+' faltando'}</div></div>
+        <div class="wl-lane-body">${arr.length?arr.map(cardHTML).join(''):'<div class="wl-lane-empty">Arraste um cartão para cá<br>ou crie um novo desejo ✨</div>'}</div></section>`;
+    }).join('')}</div></div>`;
+  }
+  function groupLabel(k,type){
+    if(type==='status')return STAGES.find(s=>s.id===k)?.icon+' '+STAGES.find(s=>s.id===k)?.label;
+    if(type==='priority')return (PRIORITIES[k]?.icon||'')+' '+(PRIORITIES[k]?.label||k);
+    if(type==='owner')return OWNERS[k]||k;
+    return (CATEGORIES[k]||'🎁')+' '+k[0].toUpperCase()+k.slice(1);
+  }
+  function listHTML(items){
+    const type=ui.group;
+    const val=(i)=>type==='status'?i.status:type==='priority'?i.prioridade:type==='owner'?i.dono:i.categoria;
+    let keys=type==='status'?STAGES.map(s=>s.id):type==='priority'?Object.keys(PRIORITIES):type==='owner'?Object.keys(OWNERS):Object.keys(CATEGORIES);
+    keys=keys.filter(k=>items.some(i=>val(i)===k));
+    if(!keys.length)return emptyHTML();
+    return keys.map(k=>{
+      const arr=sortItems(items.filter(i=>val(i)===k));
+      return `<section class="wl-list-section"><div class="wl-list-heading"><span>${esc(groupLabel(k,type))} <span style="opacity:.6">· ${arr.length}</span></span><span>${fmt(arr.reduce((a,i)=>a+calc(i).falta,0))} faltando</span></div>
+      ${arr.map(i=>{const f=calc(i),p=PRIORITIES[i.prioridade];return `<div class="wl-list-row" data-id="${esc(i.id)}"><div><div class="wl-row-title">${CATEGORIES[i.categoria]||'🎁'} ${esc(i.nome)}</div><div class="wl-row-secondary">${OWNERS[i.dono]} · ${p.icon} ${p.label}</div></div><div class="wl-row-money">${f.valor?fmt(f.valor):'Sem valor'}</div><div class="wl-row-progress-wrap"><div class="wl-progress-line" style="margin:0 0 5px"><div class="wl-progress-fill" style="width:${f.pct.toFixed(1)}%"></div></div><div class="wl-row-progress">${f.pct.toFixed(0)}% · ${esc(f.previsao)}</div></div><div class="wl-row-status"><select class="wl-mini-select" data-wla="change-status" data-id="${esc(i.id)}" aria-label="Status de ${esc(i.nome)}">${STAGES.map(s=>`<option value="${s.id}" ${i.status===s.id?'selected':''}>${s.icon} ${s.label}</option>`).join('')}</select></div><div class="wl-row-controls"><button type="button" class="wl-btn wl-btn-mini" data-wla="edit" data-id="${esc(i.id)}">✎ Editar</button></div></div>`}).join('')}
+      </section>`;
+    }).join('');
+  }
+  function emptyHTML(){return `<div class="wl-empty-global"><div style="font-size:31px">💫</div><strong>Nada por aqui ainda</strong><div>Crie um novo desejo ou altere os filtros para encontrar seus cartões.</div><button class="wl-btn wl-btn-primary" type="button" data-wla="new" style="margin-top:15px">＋ Adicionar desejo</button></div>`;}
+  function syncControls(){
+    const filters={ 'wl-filter-priority':ui.priority,'wl-filter-status':ui.status,'wl-sort':ui.sort,'wl-search':ui.search,'wl-group':ui.group};
+    Object.entries(filters).forEach(([id,v])=>{if(el(id)&&el(id).value!==v)el(id).value=v;});
+    el('wl-owner-filters').innerHTML=allOwners();
+    el('wl-view-board')?.classList.toggle('wl-btn-active',ui.view==='board');
+    el('wl-view-list')?.classList.toggle('wl-btn-active',ui.view==='list');
+    if(el('wl-group-field'))el('wl-group-field').style.display=ui.view==='list'?'flex':'none';
+    document.querySelectorAll('#sec-wishlist .wl-quick-pill').forEach(b=>b.dataset.active=String(b.dataset.value===ui.quick));
+  }
   window.renderWishlist=function(){
-    const stats=document.getElementById('wishlist-stats'),groups=document.getElementById('wishlist-groups');
-    if(!stats||!groups)return;
-    const ativos=activeItems();
-    const total=ativos.reduce((s,i)=>s+num(i.valor),0);
-    const guardado=ativos.reduce((s,i)=>s+Math.min(num(i.valor),num(i.guardado)),0);
-    const falta=ativos.reduce((s,i)=>s+forecast(i).falta,0);
-    const aporte=ativos.reduce((s,i)=>s+num(i.aporte),0);
-    stats.innerHTML=`
-      <div class="stat-card"><div class="stat-label">Itens pendentes</div><div class="stat-value" style="color:var(--teal)">${ativos.length}</div><div class="stat-sub">na wishlist</div></div>
-      <div class="stat-card"><div class="stat-label">Valor planejado</div><div class="stat-value" style="color:var(--tx)">${money(total)}</div><div class="stat-sub">soma das compras pendentes</div></div>
-      <div class="stat-card"><div class="stat-label">Já guardado</div><div class="stat-value" style="color:var(--green)">${money(guardado)}</div><div class="stat-sub">${total>0?(guardado/total*100).toFixed(1):'0.0'}% do total</div></div>
-      <div class="stat-card"><div class="stat-label">Ainda falta</div><div class="stat-value" style="color:var(--red)">${money(falta)}</div><div class="stat-sub">para comprar tudo</div></div>
-      <div class="stat-card"><div class="stat-label">Aporte planejado</div><div class="stat-value" style="color:var(--amber)">${money(aporte)}</div><div class="stat-sub">por mês</div></div>`;
-
-    const prio=document.getElementById('wl-filter-priority')?.value||'';
-    const status=document.getElementById('wl-filter-status')?.value||'ativos';
-    const sort=document.getElementById('wl-sort')?.value||'prazo';
-    let items=wishlistData.filter(i=>!prio||i.prioridade===prio);
-    if(status==='ativos')items=items.filter(i=>!i.comprado);
-    if(status==='comprados')items=items.filter(i=>i.comprado);
-
-    if(!items.length){
-      groups.innerHTML='<div class="wl-empty">💖 Nenhum item nessa visualização.<br><span style="font-size:11px">Adicione uma compra acima ou altere os filtros.</span></div>';
-    } else {
-      groups.innerHTML=Object.entries(WL_PRIORITIES).sort((a,b)=>a[1].rank-b[1].rank).map(([key,p])=>{
-        const arr=sortItems(items.filter(i=>(i.prioridade||'desejo')===key),sort);
-        if(!arr.length)return'';
-        const soma=arr.reduce((s,i)=>s+forecast(i).falta,0);
-        return `<div class="wl-priority-group"><div class="wl-priority-head"><div class="wl-priority-title" style="color:${p.color}"><span>${p.icon}</span>${p.label}<span class="wl-badge" style="color:${p.color};background:${p.bg};border-color:${p.color}">${arr.length}</span></div><div class="wl-priority-total">falta ${money(soma)}</div></div><div class="wl-list">${arr.map(itemHTML).join('')}</div></div>`;
-      }).join('');
-    }
-    const dot=document.getElementById('dot-wishlist'); if(dot) dot.className='nav-status '+(ativos.length?'done':'');
+    if(!el('sec-wishlist'))return;
+    syncControls();
+    const stats=el('wishlist-stats'),group=el('wishlist-groups'),note=el('wl-board-note');if(!stats||!group||!note)return;
+    const items=visibleItems();
+    stats.innerHTML=statsHTML();
+    note.innerHTML=ui.view==='board'?`<span>↔ Arraste pelo ícone ⠿ para trocar de coluna ou mudar a ordem. No celular, também use o seletor do cartão.</span><span>${items.length} ${items.length===1?'item encontrado':'itens encontrados'}</span>`:`<span>☷ Visualização compacta · escolha como agrupar seus desejos.</span><span>${items.length} ${items.length===1?'item encontrado':'itens encontrados'}</span>`;
+    group.innerHTML=items.length?(ui.view==='board'?boardHTML(items):listHTML(items)):emptyHTML();
+    const dot=el('dot-wishlist');if(dot)dot.className='nav-status '+(wishlistData.some(i=>!i.comprado)?'done':'');
   };
-
-  // Inclui a wishlist no objeto salvo no Firebase sem quebrar as extensões já existentes.
+  function openEditor(item){
+    modalReturnFocus=document.activeElement;
+    const f=el('wl-form');if(!f)return;
+    f.reset();
+    const defaults={id:item?.id||'',nome:item?.nome||'',dono:item?.dono||'paulo',prioridade:item?.prioridade||'desejo',status:item?.status||'desejo',categoria:item?.categoria||'outros',valor:item?.valor??'',guardado:item?.guardado??'',aporte:item?.aporte??'',prazoMeses:item?.prazoMeses||'',obs:item?.obs||''};
+    for(const [k,v] of Object.entries(defaults)){const field=f.elements.namedItem(k);if(field)field.value=v;}
+    el('wl-dialog-title').textContent=item?'Editar desejo':'Novo desejo';
+    el('wl-delete-modal').hidden=!item;
+    el('wl-modal').hidden=false;
+    el('wl-edit-nome')?.focus();
+  }
+  function closeEditor(){el('wl-modal').hidden=true;if(modalReturnFocus?.isConnected)modalReturnFocus.focus();}
+  function submitEditor(form){
+    const fd=new FormData(form),nome=String(fd.get('nome')||'').trim();
+    if(!nome){show('Informe o nome do desejo.',true);return;}
+    const id=String(fd.get('id')||'');
+    const current=id?find(id):null;
+    const status=STAGES.some(s=>s.id===fd.get('status'))?String(fd.get('status')):'desejo';
+    const input={nome,prioridade:PRIORITIES[fd.get('prioridade')]?String(fd.get('prioridade')):'desejo',dono:Object.hasOwn(OWNERS,fd.get('dono'))?String(fd.get('dono')):'nao_definido',categoria:Object.hasOwn(CATEGORIES,fd.get('categoria'))?String(fd.get('categoria')):'outros',status,comprado:status==='comprado',valor:num(fd.get('valor')),guardado:num(fd.get('guardado')),aporte:num(fd.get('aporte')),prazoMeses:Math.floor(num(fd.get('prazoMeses'))),obs:String(fd.get('obs')||'').trim()};
+    if(current){Object.assign(current,input);current.compradoEm=current.comprado?(current.compradoEm||new Date().toISOString()):null;}
+    else wishlistData.push({...input,id:'w'+nextWishlistId++,ordem:1+Math.max(0,...wishlistData.filter(i=>i.status===status).map(i=>num(i.ordem))),criadoEm:new Date().toISOString(),compradoEm:input.comprado?new Date().toISOString():null});
+    closeEditor();window.renderWishlist();save();show(current?'✏️ Desejo atualizado!':'💖 Desejo adicionado!');
+  }
+  function move(id,status,placement){
+    const item=find(id);if(!item||!STAGES.some(s=>s.id===status))return;
+    const others=wishlistData.filter(i=>i.status===status&&i.id!==item.id).sort((a,b)=>num(a.ordem)-num(b.ordem));
+    let pos=others.length;
+    if(placement?.targetId){const j=others.findIndex(i=>i.id===placement.targetId);if(j>=0)pos=j+(placement.after?1:0);}
+    item.status=status;item.comprado=status==='comprado';item.compradoEm=item.comprado?(item.compradoEm||new Date().toISOString()):null;
+    others.splice(pos,0,item);others.forEach((i,k)=>i.ordem=k+1);
+    ui.sort='manual';window.renderWishlist();save();
+  }
+  function remove(id){const item=find(id);if(!item)return;if(!window.confirm('Excluir "'+item.nome+'" da sua Wishlist?'))return;wishlistData=wishlistData.filter(i=>i.id!==item.id);closeEditor();window.renderWishlist();save();show('Desejo removido.');}
+  window.addWishlistItem=()=>openEditor(null);
+  window.updateWishlist=(id,campo,valor)=>{const i=find(id);if(!i)return;if(['valor','guardado','aporte','prazoMeses'].includes(campo))i[campo]=num(valor);else i[campo]=valor;if(campo==='status'){i.comprado=valor==='comprado';}window.renderWishlist();save();};
+  window.toggleWishlistBought=(id)=>{const i=find(id);if(i)move(id,i.comprado?'planejando':'comprado');};
+  window.deleteWishlistItem=remove;
+  window.clearWishlistFilters=()=>{Object.assign(ui,{owner:'',priority:'',status:'',sort:'manual',search:'',quick:'',group:'status'});window.renderWishlist();};
+  function attachEvents(sec){
+    sec.addEventListener('click',(e)=>{
+      const b=e.target.closest('[data-wla]');if(!b)return;
+      const action=b.dataset.wla,id=b.dataset.id;
+      if(action==='new'){openEditor(null);return;}
+      if(action==='edit'){openEditor(find(id));return;}
+      if(action==='close'){closeEditor();return;}
+      if(action==='delete-in-modal'){remove(el('wl-form').elements.namedItem('id').value);return;}
+      if(action==='reset'){window.clearWishlistFilters();return;}
+      if(action==='finish'){move(id,'comprado');show('✅ Mais um desejo realizado!');return;}
+      if(action==='reopen'){move(id,'planejando');return;}
+      if(action==='view'){ui.view=b.dataset.value==='list'?'list':'board';window.renderWishlist();return;}
+      if(action==='owner'){ui.owner=b.dataset.value||'';window.renderWishlist();return;}
+      if(action==='quick'){ui.quick=ui.quick===b.dataset.value?'':b.dataset.value;window.renderWishlist();return;}
+    });
+    sec.addEventListener('input',(e)=>{if(e.target.id==='wl-search'){ui.search=e.target.value;window.renderWishlist();el('wl-search')?.focus();}});
+    sec.addEventListener('change',(e)=>{
+      const t=e.target;
+      if(t.dataset.wla==='change-status'){move(t.dataset.id,t.value);return;}
+      if(t.id==='wl-filter-priority')ui.priority=t.value;
+      else if(t.id==='wl-filter-status')ui.status=t.value;
+      else if(t.id==='wl-sort')ui.sort=t.value;
+      else if(t.id==='wl-group')ui.group=t.value;
+      else return;
+      window.renderWishlist();
+    });
+    sec.addEventListener('submit',(e)=>{if(e.target===el('wl-form')){e.preventDefault();submitEditor(e.target);}});
+    el('wl-modal').addEventListener('click',(e)=>{if(e.target===el('wl-modal'))closeEditor();});
+    document.addEventListener('keydown',(e)=>{if(e.key==='Escape'&&el('wl-modal')&&!el('wl-modal').hidden)closeEditor();});
+    // Pointer Events: permite arrastar no desktop e com o dedo no celular.
+    sec.addEventListener('pointerdown',(e)=>{
+      const grip=e.target.closest('.wl-grip');if(!grip||e.button!==0||ui.view!=='board')return;
+      const card=grip.closest('.wl-item');if(!card)return;
+      pointer={id:card.dataset.id,grip,card,startX:e.clientX,startY:e.clientY,x:e.clientX,y:e.clientY,rect:card.getBoundingClientRect(),active:false,ghost:null,pid:e.pointerId};
+      try{grip.setPointerCapture(e.pointerId);}catch(_){}
+      e.preventDefault();
+    });
+    sec.addEventListener('pointermove',(e)=>{
+      if(!pointer||pointer.pid!==e.pointerId)return;
+      const p=pointer;p.x=e.clientX;p.y=e.clientY;
+      if(!p.active&&Math.hypot(p.x-p.startX,p.y-p.startY)>7){
+        p.active=true;p.ghost=p.card.cloneNode(true);p.ghost.classList.add('wl-drag-ghost');p.ghost.style.width=p.rect.width+'px';p.ghost.style.height=p.rect.height+'px';sec.appendChild(p.ghost);p.card.dataset.dragging='true';document.body.classList.add('wl-is-dragging');
+      }
+      if(!p.active)return;
+      p.ghost.style.left=(p.rect.left+p.x-p.startX)+'px';p.ghost.style.top=(p.rect.top+p.y-p.startY)+'px';
+      const scroll=el('wl-board-scroll');if(scroll){const r=scroll.getBoundingClientRect();if(p.x>r.right-33&&p.x<r.right+5)scroll.scrollLeft+=22;else if(p.x<r.left+33&&p.x>r.left-5)scroll.scrollLeft-=22;}
+      const lane=document.elementFromPoint(p.x,p.y)?.closest('.wl-lane');
+      sec.querySelectorAll('.wl-lane').forEach(l=>l.dataset.drop=String(l===lane));
+    });
+    function pointerFinish(e){
+      if(!pointer||pointer.pid!==e.pointerId)return;
+      const p=pointer;
+      const hit=document.elementFromPoint(p.x,p.y);
+      const lane=hit?.closest('.wl-lane');
+      const target=hit?.closest('.wl-item');
+      const after=target?(p.y>target.getBoundingClientRect().top+target.getBoundingClientRect().height/2):false;
+      if(p.ghost)p.ghost.remove();
+      if(p.card?.isConnected)delete p.card.dataset.dragging;
+      sec.querySelectorAll('.wl-lane').forEach(l=>delete l.dataset.drop);
+      document.body.classList.remove('wl-is-dragging');pointer=null;
+      if(p.active&&lane){move(p.id,lane.dataset.stage,{targetId:target?.dataset.id,after});}
+    }
+    sec.addEventListener('pointerup',pointerFinish);sec.addEventListener('pointercancel',pointerFinish);
+  }
+  // Mantém os nomes do payload que o PainelFin já usa no Firebase.
   const collectPrev=window.coletarDados;
-  if(typeof collectPrev==='function'){
-    window.coletarDados=function(){
-      const base=collectPrev.apply(this,arguments)||{};
-      return {...base,wishlistData,nextWishlistId};
-    };
-  }
+  if(typeof collectPrev==='function')window.coletarDados=function(){const base=collectPrev.apply(this,arguments)||{};return {...base,wishlistData,nextWishlistId};};
   const applyPrev=window.applyData;
-  if(typeof applyPrev==='function'){
-    window.applyData=function(d){
-      applyPrev.apply(this,arguments);
-      wishlistData=Array.isArray(d?.wishlistData)?d.wishlistData:[];
-      nextWishlistId=Number(d?.nextWishlistId)||Math.max(1,...wishlistData.map(i=>Number(String(i.id||'').replace(/\D/g,''))||0))+1;
-      renderWishlist();
-    };
-  }
-
-  injectNav(); injectSection(); ensureNavigation(); renderWishlist();
-  document.addEventListener('DOMContentLoaded',()=>{injectNav();injectSection();ensureNavigation();renderWishlist();});
+  if(typeof applyPrev==='function')window.applyData=function(d){
+    applyPrev.apply(this,arguments);
+    wishlistData=Array.isArray(d?.wishlistData)?d.wishlistData.map(normalizeItem):[];
+    nextWishlistId=Number(d?.nextWishlistId)||Math.max(1,...wishlistData.map(i=>Number(String(i.id).replace(/\D/g,''))||0))+1;
+    window.renderWishlist();
+  };
+  injectNav();injectSection();ensureNavigation();window.renderWishlist();
+  document.addEventListener('DOMContentLoaded',()=>{injectNav();injectSection();ensureNavigation();window.renderWishlist();});
 })();
 </script>
-
 
 <!-- PATCH FINAL — melhora visual do campo "Dia" e botões de exclusão -->
 <style id="patch-final-dia-e-excluir-painelfin">
