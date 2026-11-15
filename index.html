@@ -13961,5 +13961,411 @@ body { width:100%; min-width:0; }
 }
 </style>
 
+<!-- PAINELFIN: MERCADO / CHECKLIST MENSAL -->
+<style id="pf-mercado-v1-css">
+#sec-mercado{--mc-accent:#8d5abb;--mc-soft:color-mix(in srgb,var(--mc-accent) 7%,var(--s1,#fff));--mc-stroke:var(--bd,#e5dcec);--mc-text:var(--tx,#302640);--mc-muted:var(--mu,#80758e);color:var(--mc-text);max-width:100%;min-width:0}
+#sec-mercado *,#sec-mercado *::before,#sec-mercado *::after{box-sizing:border-box}
+#sec-mercado button,#sec-mercado input,#sec-mercado select,#sec-mercado textarea{font-family:inherit}
+#sec-mercado button{cursor:pointer}
+#sec-mercado .mc-top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;margin:0 0 17px}
+#sec-mercado .mc-title{display:flex;gap:11px;align-items:center}
+#sec-mercado .mc-title-icon{width:47px;height:47px;display:grid;place-items:center;border-radius:14px;background:linear-gradient(145deg,#b88cda,#8256b4);font-size:23px;box-shadow:0 5px 15px #9565bc32}
+#sec-mercado .mc-title h2{font:800 26px/1.15 'Space Grotesk',Inter,Arial,sans-serif;letter-spacing:-.045em;margin:0}
+#sec-mercado .mc-title p{font-size:11px;color:var(--mc-muted);margin:4px 0 0;line-height:1.4}
+#sec-mercado .mc-top-actions{display:flex;gap:7px;flex-wrap:wrap}
+#sec-mercado .mc-btn{display:inline-flex;gap:6px;align-items:center;justify-content:center;min-height:36px;padding:8px 12px;border:1px solid var(--mc-stroke);border-radius:9px;background:var(--s1,#fff);color:var(--mc-text);font-size:11px;font-weight:760;white-space:nowrap;transition:background .15s,border-color .15s}
+#sec-mercado .mc-btn:hover{border-color:#bb94d5;background:var(--mc-soft)}
+#sec-mercado .mc-btn.primary{background:linear-gradient(120deg,#9867c7,#8250ae);color:#fff;border-color:#8151b2}
+#sec-mercado .mc-btn.primary:hover{filter:brightness(1.08)}
+#sec-mercado .mc-btn.danger{color:#be5069;border-color:#f0c6cf}
+#sec-mercado .mc-btn:focus-visible,#sec-mercado input:focus-visible,#sec-mercado select:focus-visible,#sec-mercado textarea:focus-visible{outline:2px solid #9561c2;outline-offset:2px}
+#sec-mercado .mc-period-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:13px 15px;background:var(--s1,#fff);border:1px solid var(--mc-stroke);border-radius:13px;margin-bottom:13px}
+#sec-mercado .mc-period{display:flex;align-items:center;gap:7px}
+#sec-mercado .mc-month-name{font-size:16px;font-family:'Space Grotesk',Inter,Arial,sans-serif;font-weight:800;min-width:180px;text-align:center;letter-spacing:-.015em}
+#sec-mercado .mc-period small{color:var(--mc-muted)}
+#sec-mercado .mc-icon-btn{background:var(--mc-soft);border:1px solid var(--mc-stroke);border-radius:8px;width:33px;height:33px;display:inline-grid;place-items:center;color:var(--mc-text);font-size:18px;font-weight:800;padding:0}
+#sec-mercado .mc-icon-btn:hover{background:#e8d9f6}
+#sec-mercado .mc-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+#sec-mercado .mc-stat{background:var(--s1,#fff);border:1px solid var(--mc-stroke);border-radius:12px;padding:13px 14px;min-width:0;box-shadow:0 2px 7px #4a24600a}
+#sec-mercado .mc-stat .name{color:var(--mc-muted);font-weight:700;font-size:10px;margin-bottom:7px}
+#sec-mercado .mc-stat .value{font:850 20px/1.1 'Space Grotesk',Inter,Arial,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--mc-text)}
+#sec-mercado .mc-stat .hint{font-size:10px;color:var(--mc-muted);margin-top:7px}
+#sec-mercado .mc-progress-outer{border:1px solid var(--mc-stroke);border-radius:11px;padding:12px 14px;background:var(--s1,#fff);margin-bottom:13px}
+#sec-mercado .mc-progress-head{display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:11px;color:var(--mc-muted);margin-bottom:9px}
+#sec-mercado .mc-progress-head b{color:var(--mc-text)}
+#sec-mercado .mc-progress-track{height:10px;border-radius:50px;background:var(--mc-stroke);overflow:hidden}
+#sec-mercado .mc-progress-fill{height:100%;border-radius:50px;background:linear-gradient(90deg,#c5a4e5,#9a68c5);transition:width .2s}
+#sec-mercado .mc-segments{display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap}
+#sec-mercado .mc-segment{background:transparent;border:1px solid var(--mc-stroke);color:var(--mc-muted);border-radius:9px;padding:9px 13px;font-weight:800;font-size:11px}
+#sec-mercado .mc-segment.active{color:var(--mc-accent);background:var(--mc-soft);border-color:#c4a1db}
+#sec-mercado .mc-panel{background:var(--s1,#fff);border:1px solid var(--mc-stroke);border-radius:13px;padding:14px;margin-bottom:13px}
+#sec-mercado .mc-controls{display:grid;grid-template-columns:minmax(150px,1.6fr) repeat(3,minmax(120px,1fr));gap:9px;align-items:end}
+#sec-mercado .mc-field{min-width:0;display:flex;flex-direction:column;gap:5px}
+#sec-mercado .mc-field>label{font-size:9px;color:var(--mc-muted);text-transform:uppercase;letter-spacing:.075em;font-weight:850}
+#sec-mercado .mc-in,#sec-mercado .mc-sel{min-height:36px;width:100%;border-radius:8px;border:1px solid var(--mc-stroke);background:var(--s2,#f9f6fc);color:var(--mc-text);padding:7px 9px;font-size:12px;outline:none;min-width:0}
+#sec-mercado .mc-in[type=number]{appearance:textfield}
+#sec-mercado .mc-quick-filters{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:11px}
+#sec-mercado .mc-filter-chip{border:1px solid var(--mc-stroke);border-radius:999px;background:var(--s2,#f9f6fc);color:var(--mc-muted);font-size:10px;font-weight:750;padding:6px 10px}
+#sec-mercado .mc-filter-chip.on{background:var(--mc-soft);color:var(--mc-accent);border-color:#c4a1db}
+#sec-mercado .mc-filter-note{font-size:10px;color:var(--mc-muted);margin-left:auto}
+#sec-mercado .mc-category{border:1px solid var(--mc-stroke);border-radius:13px;overflow:hidden;margin-bottom:11px;background:var(--s1,#fff)}
+#sec-mercado .mc-category-head{display:flex;align-items:center;gap:10px;justify-content:space-between;padding:12px 14px;background:var(--mc-soft);border-bottom:1px solid var(--mc-stroke)}
+#sec-mercado .mc-category-title{display:flex;align-items:center;gap:9px;min-width:0;color:var(--mc-text);font-size:13px;font-weight:850}
+#sec-mercado .mc-category-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:var(--mc-muted);font-size:10px}
+#sec-mercado .mc-category-body{padding:4px 11px}
+#sec-mercado .mc-item{display:grid;grid-template-columns:38px minmax(150px,1.5fr) minmax(115px,.8fr) minmax(110px,.74fr) minmax(95px,.7fr) 34px;gap:11px;align-items:center;min-height:69px;padding:9px 4px;border-bottom:1px solid var(--mc-stroke)}
+#sec-mercado .mc-item:last-child{border-bottom:0}
+#sec-mercado .mc-item.done{opacity:.72}
+#sec-mercado .mc-check{display:grid;place-items:center;position:relative;cursor:pointer;width:36px;height:36px}
+#sec-mercado .mc-check input{appearance:none;width:26px;height:26px;border:2px solid #c5aadb;border-radius:8px;background:var(--s1,#fff);cursor:pointer;margin:0}
+#sec-mercado .mc-check input:checked{background:#8855b6;border-color:#8855b6}
+#sec-mercado .mc-check input:checked:after{content:'✓';display:block;text-align:center;color:#fff;font-size:19px;line-height:20px;font-weight:900}
+#sec-mercado .mc-item-name{font-size:12px;font-weight:800;color:var(--mc-text);line-height:1.3;word-break:break-word}
+#sec-mercado .mc-item.done .mc-item-name{text-decoration:line-through;text-decoration-color:#ac93bc}
+#sec-mercado .mc-item-sub{display:block;color:var(--mc-muted);font-size:10px;margin-top:4px;font-weight:500}
+#sec-mercado .mc-qty{display:flex;gap:5px;min-width:0;align-items:center}
+#sec-mercado .mc-qty .mc-in{width:58px;min-width:0;padding:7px}
+#sec-mercado .mc-qty .mc-sel{min-width:57px;flex:1;padding:7px 4px}
+#sec-mercado .mc-item-price{display:flex;align-items:center;gap:5px;min-width:0;color:var(--mc-muted);font-size:10px}
+#sec-mercado .mc-item-price input{min-width:0;flex:1;padding:7px 6px}
+#sec-mercado .mc-item-total{font-weight:850;font-size:12px;color:var(--mc-text);text-align:right}
+#sec-mercado .mc-item-total small{display:block;font-weight:500;color:var(--mc-muted);font-size:9px;margin-top:4px}
+#sec-mercado .mc-item-menu{background:transparent;border:1px solid var(--mc-stroke);border-radius:8px;width:32px;height:32px;display:grid;place-items:center;color:var(--mc-muted);font-size:17px;padding:0}
+#sec-mercado .mc-paid{grid-column:2/-1;display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:0 0 6px 0;color:var(--mc-muted);font-size:10px}
+#sec-mercado .mc-paid .mc-in{width:126px;min-height:32px}
+#sec-mercado .mc-empty{padding:35px 15px;text-align:center;border:1px dashed var(--mc-stroke);border-radius:13px;color:var(--mc-muted);font-size:12px;background:var(--s1,#fff)}
+#sec-mercado .mc-empty b{display:block;color:var(--mc-text);font-size:15px;margin:5px}
+#sec-mercado .mc-add-grid{display:grid;grid-template-columns:minmax(170px,1.5fr) minmax(135px,1fr) 85px 80px minmax(95px,.8fr) auto;gap:9px;align-items:end}
+#sec-mercado .mc-line-title{font-family:'Space Grotesk',Inter,Arial,sans-serif;font-weight:850;font-size:16px;margin:0 0 12px}
+#sec-mercado .mc-checkline{display:flex;gap:6px;align-items:center;font-size:11px;color:var(--mc-text);padding:10px 0}
+#sec-mercado .mc-checkline input{accent-color:#9562c4;width:16px;height:16px}
+#sec-mercado .mc-template-info{border:1px solid var(--mc-stroke);background:var(--mc-soft);padding:11px 12px;border-radius:10px;font-size:11px;line-height:1.5;color:var(--mc-muted);margin-bottom:13px}
+#sec-mercado .mc-template-row{display:grid;grid-template-columns:30px minmax(130px,1.6fr) minmax(100px,1fr) 79px 73px 91px 34px;gap:8px;align-items:center;padding:8px 3px;border-bottom:1px solid var(--mc-stroke)}
+#sec-mercado .mc-template-row:last-child{border-bottom:0}
+#sec-mercado .mc-template-row .mc-in,#sec-mercado .mc-template-row .mc-sel{padding:6px;min-height:34px}
+#sec-mercado .mc-template-row .mc-on{accent-color:#9562c4;height:18px;width:18px}
+#sec-mercado .mc-template-row .mc-template-name{font-weight:750;font-size:12px;word-break:break-word}
+#sec-mercado .mc-help{color:var(--mc-muted);font-size:10px;line-height:1.5;margin:9px 0 0}
+#sec-mercado .mc-foot{font-size:10px;color:var(--mc-muted);margin:13px 1px;line-height:1.55}
+#sec-mercado .mc-modal[hidden]{display:none!important}
+#sec-mercado .mc-modal{position:fixed;z-index:25000;inset:0;background:#23152c85;backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:17px}
+#sec-mercado .mc-dialog{width:min(460px,100%);background:var(--s1,#fff);color:var(--mc-text);border:1px solid var(--mc-stroke);border-radius:16px;box-shadow:0 15px 45px #2b183649;padding:19px;max-height:90vh;overflow-y:auto}
+#sec-mercado .mc-dialog h3{font:850 18px 'Space Grotesk',Inter,Arial,sans-serif;margin:0 0 5px}
+#sec-mercado .mc-dialog-sub{font-size:11px;color:var(--mc-muted);margin-bottom:15px}
+#sec-mercado .mc-dialog-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+#sec-mercado .mc-dialog-grid .wide{grid-column:1/-1}
+#sec-mercado .mc-dialog-buttons{display:flex;justify-content:flex-end;gap:7px;margin-top:16px;flex-wrap:wrap}
+@media(max-width:1250px){#sec-mercado .mc-item{grid-template-columns:38px minmax(125px,1fr) minmax(110px,.8fr) minmax(100px,.7fr) 85px 34px;gap:7px}#sec-mercado .mc-template-row{grid-template-columns:28px 1.4fr 1fr 67px 66px 78px 32px;gap:6px}}
+@media(max-width:850px){#sec-mercado .mc-stats{grid-template-columns:repeat(2,minmax(0,1fr))}#sec-mercado .mc-controls{grid-template-columns:1fr 1fr}#sec-mercado .mc-controls .mc-field:first-child{grid-column:1/-1}#sec-mercado .mc-item{grid-template-columns:35px minmax(130px,1fr) minmax(100px,.75fr) 38px;gap:7px}#sec-mercado .mc-item-price{grid-column:3;grid-row:2}#sec-mercado .mc-item-total{grid-column:2;grid-row:2;text-align:left}#sec-mercado .mc-item-menu{grid-column:4;grid-row:1}#sec-mercado .mc-qty{grid-column:3;grid-row:1}#sec-mercado .mc-paid{grid-column:2/-1}#sec-mercado .mc-add-grid{grid-template-columns:1fr 1fr 1fr}#sec-mercado .mc-add-grid .mc-field:first-child{grid-column:1/-1}#sec-mercado .mc-add-grid .mc-btn{grid-column:1/-1}#sec-mercado .mc-template-row{grid-template-columns:27px minmax(100px,1fr) 84px 33px}#sec-mercado .mc-template-row [data-mcb="template-cat"]{grid-column:2}#sec-mercado .mc-template-row [data-mcb="template-qty"]{grid-column:3}#sec-mercado .mc-template-row [data-mcb="template-unit"]{grid-column:2}#sec-mercado .mc-template-row [data-mcb="template-price"]{grid-column:3}#sec-mercado .mc-template-row .mc-item-menu{grid-column:4;grid-row:1}}
+@media(max-width:490px){#sec-mercado .mc-title h2{font-size:21px}#sec-mercado .mc-title-icon{height:39px;width:39px;font-size:19px}#sec-mercado .mc-stat{padding:11px}#sec-mercado .mc-stat .value{font-size:17px}#sec-mercado .mc-period-row{padding:10px}#sec-mercado .mc-period{width:100%;justify-content:center}#sec-mercado .mc-period small{display:none}#sec-mercado .mc-month-name{min-width:140px;font-size:14px}#sec-mercado .mc-top-actions{width:100%}#sec-mercado .mc-top-actions .mc-btn{flex:1}#sec-mercado .mc-item{grid-template-columns:32px minmax(100px,1fr) 34px;gap:6px}#sec-mercado .mc-item .mc-qty{grid-column:2;grid-row:2}#sec-mercado .mc-item-price{grid-column:2;grid-row:3}#sec-mercado .mc-item-total{grid-column:2;grid-row:4}#sec-mercado .mc-item-menu{grid-column:3;grid-row:1}#sec-mercado .mc-paid{grid-column:2/-1}#sec-mercado .mc-controls{grid-template-columns:1fr 1fr}#sec-mercado .mc-template-row{grid-template-columns:26px minmax(92px,1fr) 75px 32px}#sec-mercado .mc-template-row .mc-template-name{font-size:11px}#sec-mercado .mc-category-head{padding:10px}#sec-mercado .mc-category-meta{font-size:9px}#sec-mercado .mc-dialog-grid{grid-template-columns:1fr}}
+</style>
+<script id="pf-mercado-v1-js">
+(()=>{'use strict';
+  const el=(id)=>document.getElementById(id);
+  const esc=(str)=>String(str??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const money=(n)=>(Number(n)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+  const number=(n)=>{const v=Number(String(n??'').replace(',','.'));return Number.isFinite(v)?Math.max(0,v):0};
+  const names=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const cats={'Hortifruti':'🥬','Proteínas':'🥩','Laticínios e frios':'🥛','Mercearia':'🍚','Padaria':'🥖','Congelados':'🧊','Bebidas':'🧃','Limpeza':'🧼','Higiene':'🧴','Casa e outros':'🏠'};
+  const units=['un','kg','g','L','mL','pct','cx','dz','rolo','frasco'];
+  const defaultMonth=()=>{const t=new Date();return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}`};
+  const freshId=()=>`m${Date.now().toString(36)}${Math.random().toString(36).slice(2,8)}`;
+  const addMonth=(k,d)=>{const [y,m]=k.split('-').map(Number);const t=new Date(y,m-1+d,1);return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}`};
+  const labelMonth=(k)=>{const [y,m]=k.split('-').map(Number);return `${names[(m||1)-1]||'Mês'} de ${y}`};
+  // Não há preços pré-inventados. Os preços começam vazios e podem ser informados por unidade.
+  const defaultRows=[
+    ['Hortifruti','Banana',1,'kg'],['Hortifruti','Maçã',1,'kg'],['Hortifruti','Tomate',1,'kg'],['Hortifruti','Batata',2,'kg'],['Hortifruti','Cebola',1,'kg'],['Hortifruti','Alho',1,'pct'],['Hortifruti','Cenoura',1,'kg'],['Hortifruti','Alface',2,'un'],['Hortifruti','Limão',6,'un'],['Hortifruti','Laranja',1,'kg'],['Hortifruti','Mamão',2,'un'],
+    ['Proteínas','Peito de frango',2,'kg'],['Proteínas','Carne moída',1,'kg'],['Proteínas','Carne bovina',1,'kg'],['Proteínas','Ovos',1,'dz'],
+    ['Laticínios e frios','Leite',4,'L'],['Laticínios e frios','Queijo',1,'pct'],['Laticínios e frios','Iogurte',4,'un'],['Laticínios e frios','Manteiga',1,'un'],['Laticínios e frios','Requeijão',1,'un'],
+    ['Mercearia','Arroz',1,'pct'],['Mercearia','Feijão',2,'kg'],['Mercearia','Macarrão',2,'pct'],['Mercearia','Molho de tomate',3,'un'],['Mercearia','Óleo',1,'un'],['Mercearia','Azeite',1,'un'],['Mercearia','Café',1,'pct'],['Mercearia','Açúcar',1,'kg'],['Mercearia','Sal',1,'kg'],['Mercearia','Aveia',1,'pct'],['Mercearia','Farinha de trigo',1,'kg'],['Mercearia','Milho e ervilha',2,'un'],
+    ['Padaria','Pão de forma',2,'pct'],['Padaria','Pão francês',10,'un'],['Padaria','Biscoito',2,'pct'],
+    ['Congelados','Legumes congelados',1,'pct'],
+    ['Bebidas','Água mineral',1,'pct'],['Bebidas','Suco',2,'L'],
+    ['Limpeza','Detergente',3,'un'],['Limpeza','Sabão em pó',1,'pct'],['Limpeza','Amaciante',1,'un'],['Limpeza','Água sanitária',1,'L'],['Limpeza','Desinfetante',1,'L'],['Limpeza','Esponja',2,'un'],['Limpeza','Saco de lixo',1,'pct'],['Limpeza','Papel-toalha',2,'rolo'],
+    ['Higiene','Papel higiênico',1,'pct'],['Higiene','Sabonete',4,'un'],['Higiene','Shampoo',1,'un'],['Higiene','Condicionador',1,'un'],['Higiene','Creme dental',2,'un'],['Higiene','Desodorante',2,'un'],['Higiene','Fio dental',1,'un'],
+    ['Casa e outros','Papel-alumínio',1,'rolo'],['Casa e outros','Filtro de café',1,'pct'],['Casa e outros','Guardanapo',1,'pct']
+  ];
+  const makeDefault=()=>({versao:1,catalogo:defaultRows.map(([cat,nome,qtd,unidade])=>({id:freshId(),cat,nome,qtd,unidade,preco:0,ativo:true})),meses:{}});
+  const normalCat=(v)=>Object.hasOwn(cats,v)?v:'Casa e outros';
+  function normalize(input){
+    if(!input||typeof input!=='object')return makeDefault();
+    const catalogo=Array.isArray(input.catalogo)?input.catalogo.filter(x=>x&&typeof x==='object').map(x=>({...x,id:String(x.id||freshId()),nome:String(x.nome||'Produto'),cat:normalCat(x.cat),qtd:number(x.qtd)||1,unidade:units.includes(x.unidade)?x.unidade:'un',preco:number(x.preco),ativo:x.ativo!==false})):makeDefault().catalogo;
+    const meses={};
+    if(input.meses&&typeof input.meses==='object') for(const [k,v] of Object.entries(input.meses)){
+      if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(k)||!v||!Array.isArray(v.itens))continue;
+      meses[k]={criadoEm:String(v.criadoEm||''),itens:v.itens.filter(x=>x&&typeof x==='object').map(x=>({...x,id:String(x.id||freshId()),nome:String(x.nome||'Produto'),cat:normalCat(x.cat),qtd:number(x.qtd)||1,unidade:units.includes(x.unidade)?x.unidade:'un',preco:number(x.preco),comprado:!!x.comprado,valorPago:x.valorPago==null?null:number(x.valorPago),nota:String(x.nota||'').slice(0,250)}))};
+    }
+    return {versao:1,catalogo,meses};
+  }
+  let data=makeDefault();
+  const ui={month:defaultMonth(),tab:'lista',status:'pendentes',search:'',cat:'',order:'categoria',templateSearch:'',templateCat:''};
+  const inMonth=()=>{
+    if(!data.meses[ui.month]) data.meses[ui.month]={criadoEm:new Date().toISOString(),itens:data.catalogo.filter(x=>x.ativo).map(x=>({id:freshId(),origemId:x.id,nome:x.nome,cat:x.cat,qtd:x.qtd,unidade:x.unidade,preco:x.preco,comprado:false,valorPago:null,nota:''}))};
+    return data.meses[ui.month].itens;
+  };
+  const getItem=id=>inMonth().find(x=>x.id===id);
+  let saveTimer=null;
+  function saveSoon(){
+    clearTimeout(saveTimer);saveTimer=setTimeout(()=>{
+      const on=!!document.body.dataset.pfUid&&document.getElementById('app-shell')?.style.display!=='none';
+      if(on&&typeof window.salvarFirestore==='function')window.salvarFirestore();
+    },2200);
+  }
+  function notify(msg,error=false){if(typeof window.showToast==='function')window.showToast(msg,error);}
+  function createNav(){
+    if(el('nav-mercado'))return;
+    const parent=el('nav-geral');if(!parent)return;
+    const b=document.createElement('button');b.className='nav-item';b.id='nav-mercado';b.type='button';b.innerHTML='<span class="nav-icon">🛒</span><span>Mercado</span><span class="nav-status" id="dot-mercado"></span>';
+    b.addEventListener('click',()=>{if(typeof window.goTo==='function')window.goTo('mercado');window.renderMercado()});
+    const wishlist=el('nav-wishlist');
+    if(wishlist)wishlist.after(b);else if(el('nav-investir'))parent.insertBefore(b,el('nav-investir'));else parent.appendChild(b);
+  }
+  function field(id,label,control){return `<div class="mc-field"><label for="${id}">${label}</label>${control}</div>`}
+  const catOptions=(selected='',all=false)=>`${all?'<option value="">Todas as categorias</option>':''}${Object.keys(cats).map(k=>`<option value="${esc(k)}" ${selected===k?'selected':''}>${cats[k]} ${esc(k)}</option>`).join('')}`;
+  const unitOptions=(selected='un')=>units.map(k=>`<option value="${k}" ${k===selected?'selected':''}>${k}</option>`).join('');
+  function createSection(){
+    if(el('sec-mercado'))return;
+    const sec=document.createElement('div');sec.className='page-section';sec.id='sec-mercado';
+    sec.innerHTML=`<div class="mc-top"><div class="mc-title"><span class="mc-title-icon">🛒</span><div><h2>Lista de mercado</h2><p>Uma lista pronta para começar e flexível para cada mês.</p></div></div>
+        <div class="mc-top-actions"><button type="button" class="mc-btn" data-mca="copy">♻ Copiar mês anterior</button><button type="button" class="mc-btn" data-mca="share">↗ Copiar lista</button><button type="button" class="mc-btn primary" data-mca="save">💾 Salvar</button></div></div>
+      <div class="mc-period-row"><div class="mc-period"><button type="button" class="mc-icon-btn" data-mca="prev" aria-label="Mês anterior">‹</button><span class="mc-month-name" id="mc-month-label"></span><button type="button" class="mc-icon-btn" data-mca="next" aria-label="Mês seguinte">›</button></div><div class="mc-period"><small>Seu histórico mensal fica separado.</small><button type="button" class="mc-btn" data-mca="today">📅 Mês atual</button></div></div>
+      <div class="mc-stats" id="mc-stats"></div><div class="mc-progress-outer"><div class="mc-progress-head"><b id="mc-progress-text">0 de 0 produtos</b><span id="mc-progress-percent">0%</span></div><div class="mc-progress-track"><div class="mc-progress-fill" id="mc-progress-fill"></div></div></div>
+      <div class="mc-segments" role="tablist" aria-label="Área do mercado"><button type="button" role="tab" class="mc-segment active" data-mca="tab" data-value="lista">☑ Minha compra do mês</button><button type="button" role="tab" class="mc-segment" data-mca="tab" data-value="modelo">⚙️ Lista-base / todos os meses</button></div>
+      <div id="mc-month-content">
+        <div class="mc-panel"><div class="mc-controls">
+          ${field('mc-search','Encontrar produto','<input id="mc-search" class="mc-in" type="search" placeholder="🔎 Ex.: arroz, detergente...">')}
+          ${field('mc-filter-status','Mostrar','<select id="mc-filter-status" class="mc-sel"><option value="pendentes">Falta comprar</option><option value="todos">Todos os produtos</option><option value="comprados">Já comprados</option></select>')}
+          ${field('mc-filter-cat','Categoria',`<select id="mc-filter-cat" class="mc-sel">${catOptions('',true)}</select>`)}
+          ${field('mc-filter-order','Organizar por','<select id="mc-filter-order" class="mc-sel"><option value="categoria">Categoria</option><option value="az">Nome A–Z</option><option value="maiscaro">Maior total</option><option value="barato">Menor total</option></select>')}
+        </div><div class="mc-quick-filters"><button type="button" data-mca="quick" data-value="pendentes" class="mc-filter-chip on">🛍️ Faltando</button><button type="button" data-mca="quick" data-value="comprados" class="mc-filter-chip">✅ Comprados</button><button type="button" data-mca="quick" data-value="todos" class="mc-filter-chip">📋 Tudo</button><span class="mc-filter-note" id="mc-found"></span></div></div>
+        <div id="mc-items"></div>
+        <div class="mc-panel"><h3 class="mc-line-title">＋ Adicionar à compra deste mês</h3><form id="mc-add-form" class="mc-add-grid">
+          ${field('mc-new-name','Produto','<input id="mc-new-name" class="mc-in" maxlength="110" required placeholder="Ex.: granola">')}
+          ${field('mc-new-cat','Categoria',`<select id="mc-new-cat" class="mc-sel">${catOptions('Mercearia')}</select>`)}
+          ${field('mc-new-qty','Quantidade','<input id="mc-new-qty" class="mc-in" type="number" min="0.01" step="0.01" value="1" required>')}
+          ${field('mc-new-unit','Unidade',`<select id="mc-new-unit" class="mc-sel">${unitOptions('un')}</select>`)}
+          ${field('mc-new-price','Preço/un. R$','<input id="mc-new-price" class="mc-in" type="number" min="0" step="0.01" placeholder="Opcional">')}
+          <button type="submit" class="mc-btn primary">＋ Adicionar</button>
+        </form><label class="mc-checkline"><input id="mc-new-recurring" type="checkbox" checked> Também adicionar à lista-base (para os próximos meses)</label><p class="mc-help">Produtos adicionados ao mês podem ser removidos sem afetar o modelo; marque a opção acima para que apareçam automaticamente nos próximos meses.</p></div>
+      </div>
+      <div id="mc-template-content" hidden><div class="mc-template-info"><b>Seu modelo permanente.</b> Os produtos marcados entram automaticamente em cada novo mês. Edite quantidade, unidade ou preço padrão aqui. Os meses anteriores continuam com suas listas e checklists próprios.</div>
+        <div class="mc-panel"><h3 class="mc-line-title">Editar sua lista-base</h3><div class="mc-controls" style="grid-template-columns:minmax(180px,1fr) minmax(160px,1fr);margin-bottom:9px">${field('mc-template-search','Buscar','<input id="mc-template-search" class="mc-in" type="search" placeholder="Pesquisar produtos...">')}${field('mc-template-cat','Categoria',`<select id="mc-template-cat" class="mc-sel">${catOptions('',true)}</select>`)}</div><div id="mc-template-rows"></div></div>
+        <div class="mc-panel"><h3 class="mc-line-title">＋ Produto fixo para os próximos meses</h3><form id="mc-template-form" class="mc-add-grid">
+          ${field('mc-tname','Produto','<input id="mc-tname" class="mc-in" maxlength="110" placeholder="Ex.: granola" required>')}
+          ${field('mc-tcat','Categoria',`<select id="mc-tcat" class="mc-sel">${catOptions('Mercearia')}</select>`)}
+          ${field('mc-tqty','Quantidade','<input id="mc-tqty" class="mc-in" type="number" min="0.01" step="0.01" value="1" required>')}
+          ${field('mc-tunit','Unidade',`<select id="mc-tunit" class="mc-sel">${unitOptions('un')}</select>`)}
+          ${field('mc-tprice','Preço/un. R$','<input id="mc-tprice" class="mc-in" type="number" min="0" step="0.01" placeholder="Opcional">')}
+          <button type="submit" class="mc-btn primary">＋ Adicionar</button>
+        </form></div>
+      </div>
+      <p class="mc-foot">💡 <b>Valores:</b> os preços são opcionais e ficam zerados até você preencher. O total previsto soma quantidade × preço estimado. O gasto real considera apenas os valores pagos que você registrar. Esta guia não cria despesas financeiras automaticamente.</p>
+      <div class="mc-modal" id="mc-modal" hidden><div class="mc-dialog" role="dialog" aria-modal="true" aria-labelledby="mc-dialog-title"><h3 id="mc-dialog-title">Editar produto</h3><div class="mc-dialog-sub">Mude as informações desta compra sem alterar a lista-base.</div><form id="mc-edit-form"><input id="mc-edit-id" type="hidden"><div class="mc-dialog-grid">
+        <div class="mc-field wide"><label for="mc-edit-name">Nome *</label><input id="mc-edit-name" class="mc-in" maxlength="110" required></div>
+        <div class="mc-field wide"><label for="mc-edit-cat">Categoria</label><select id="mc-edit-cat" class="mc-sel">${catOptions('Mercearia')}</select></div>
+        <div class="mc-field"><label for="mc-edit-qty">Quantidade</label><input id="mc-edit-qty" class="mc-in" type="number" min="0.01" step="0.01" required></div>
+        <div class="mc-field"><label for="mc-edit-unit">Unidade</label><select id="mc-edit-unit" class="mc-sel">${unitOptions('un')}</select></div>
+        <div class="mc-field wide"><label for="mc-edit-price">Preço por unidade R$</label><input id="mc-edit-price" class="mc-in" type="number" step="0.01" min="0"></div>
+        <div class="mc-field wide"><label for="mc-edit-note">Observação</label><textarea id="mc-edit-note" class="mc-in" rows="3" maxlength="250" placeholder="Marca, tamanho, local da compra..."></textarea></div>
+      </div><div class="mc-dialog-buttons"><button type="button" class="mc-btn danger" data-mca="remove-item">🗑 Tirar do mês</button><button type="button" class="mc-btn" data-mca="close">Cancelar</button><button type="submit" class="mc-btn primary">Salvar</button></div></form></div></div>`;
+    const wishlist=el('sec-wishlist');if(wishlist?.parentNode)wishlist.after(sec);else if(el('sec-investir')?.parentNode)el('sec-investir').before(sec);else document.querySelector('.content')?.appendChild(sec);
+    bindSection(sec);
+  }
+  function ensureNavigation(){
+    try {if(typeof SECS_G!=='undefined'&&!SECS_G.includes('sec-mercado'))SECS_G.push('sec-mercado');}catch(e){}
+    try {if(typeof TITLES_G!=='undefined')TITLES_G.mercado='Lista de mercado';}catch(e){}
+  }
+  const filtered=()=>{
+    let rows=inMonth().filter(x=>{
+      if(ui.status==='pendentes'&&x.comprado)return false;
+      if(ui.status==='comprados'&&!x.comprado)return false;
+      if(ui.cat&&x.cat!==ui.cat)return false;
+      return !ui.search||`${x.nome} ${x.cat} ${x.nota||''}`.toLocaleLowerCase('pt-BR').includes(ui.search.toLocaleLowerCase('pt-BR'));
+    });
+    const order=(a,b)=>a.nome.localeCompare(b.nome,'pt-BR');
+    if(ui.order==='az') rows.sort(order);
+    else if(ui.order==='maiscaro')rows.sort((a,b)=>number(b.qtd)*number(b.preco)-number(a.qtd)*number(a.preco)||order(a,b));
+    else if(ui.order==='barato')rows.sort((a,b)=>number(a.qtd)*number(a.preco)-number(b.qtd)*number(b.preco)||order(a,b));
+    else rows.sort((a,b)=>Object.keys(cats).indexOf(a.cat)-Object.keys(cats).indexOf(b.cat)||order(a,b));
+    return rows;
+  };
+  function renderStats(){
+    const all=inMonth(),done=all.filter(x=>x.comprado),expected=all.reduce((a,x)=>a+number(x.qtd)*number(x.preco),0),paid=done.reduce((a,x)=>a+number(x.valorPago),0);
+    const priced=all.filter(x=>number(x.preco)>0).length;
+    const stats=[['Produtos',`${done.length} / ${all.length}`,'comprados do mês'],['Faltam comprar',String(all.length-done.length),'produtos pendentes'],['Custo previsto',money(expected),`${priced} produtos com preço`],['Gasto registrado',money(paid),`${done.filter(x=>x.valorPago!==null).length} valores preenchidos`]];
+    el('mc-stats').innerHTML=stats.map(([title,value,description])=>`<div class="mc-stat"><div class="name">${title}</div><div class="value" title="${esc(value)}">${esc(value)}</div><div class="hint">${esc(description)}</div></div>`).join('');
+    const pct=all.length?Math.round(done.length/all.length*100):0;
+    el('mc-progress-text').textContent=`${done.length} de ${all.length} produtos comprados`;
+    el('mc-progress-percent').textContent=`${pct}% concluído`;
+    el('mc-progress-fill').style.width=pct+'%';
+  }
+  function itemHTML(x){
+    const paid=x.valorPago===null?'':number(x.valorPago);
+    const unitPrice=number(x.preco),total=unitPrice*number(x.qtd);
+    return `<div class="mc-item ${x.comprado?'done':''}" data-item="${esc(x.id)}">
+      <label class="mc-check" title="${x.comprado?'Desmarcar compra':'Marcar como comprado'}"><input type="checkbox" data-mcb="check" data-id="${esc(x.id)}" aria-label="${x.comprado?'Desmarcar':'Comprar'} ${esc(x.nome)}" ${x.comprado?'checked':''}></label>
+      <div><span class="mc-item-name">${esc(x.nome)}</span><span class="mc-item-sub">${cats[x.cat]||'📦'} ${esc(x.cat)}${x.nota?' • 📝 '+esc(x.nota):''}</span></div>
+      <div class="mc-qty"><input type="number" class="mc-in" min="0.01" step="0.01" value="${number(x.qtd)}" data-mcb="qty" data-id="${esc(x.id)}" aria-label="Quantidade de ${esc(x.nome)}"><select class="mc-sel" data-mcb="unit" data-id="${esc(x.id)}" aria-label="Unidade de ${esc(x.nome)}">${unitOptions(x.unidade)}</select></div>
+      <div class="mc-item-price"><span>R$</span><input class="mc-in" type="number" min="0" step="0.01" value="${unitPrice||''}" placeholder="0,00" data-mcb="price" data-id="${esc(x.id)}" aria-label="Preço por unidade de ${esc(x.nome)}"></div>
+      <div class="mc-item-total">${unitPrice>0?money(total):'<span style="color:var(--mc-muted)">—</span>'}<small>previsto</small></div>
+      <button type="button" class="mc-item-menu" data-mca="edit" data-id="${esc(x.id)}" title="Editar ou remover" aria-label="Editar ou remover ${esc(x.nome)}">⋯</button>
+      ${x.comprado?`<div class="mc-paid">💳 Valor total pago na compra: <input type="number" step="0.01" min="0" class="mc-in" placeholder="R$ pago" value="${paid}" data-mcb="paid" data-id="${esc(x.id)}" aria-label="Valor pago de ${esc(x.nome)}"><span>Opcional, para acompanhar gasto real</span></div>`:''}
+    </div>`;
+  }
+  function renderItems(){
+    const rows=filtered();el('mc-found').textContent=`${rows.length} produto${rows.length===1?'':'s'} na seleção`;
+    if(!rows.length){el('mc-items').innerHTML='<div class="mc-empty">🎉 <b>Nenhum produto aqui</b>Experimente outro filtro ou adicione um novo produto.</div>';return;}
+    const groups={};
+    rows.forEach(x=>{(groups[x.cat]??=[]).push(x)});
+    const order=Object.keys(groups).sort((a,b)=>Object.keys(cats).indexOf(a)-Object.keys(cats).indexOf(b));
+    el('mc-items').innerHTML=order.map(cat=>{
+      const items=groups[cat],n=items.filter(x=>x.comprado).length,subtotal=items.reduce((s,x)=>s+number(x.qtd)*number(x.preco),0);
+      return `<section class="mc-category"><div class="mc-category-head"><div class="mc-category-title"><span>${cats[cat]||'📦'}</span>${esc(cat)}</div><div class="mc-category-meta"><span>${n} de ${items.length} feitos</span><span>${money(subtotal)}</span></div></div><div class="mc-category-body">${items.map(itemHTML).join('')}</div></section>`;
+    }).join('');
+  }
+  function renderTemplate(){
+    const q=ui.templateSearch.toLocaleLowerCase('pt-BR');
+    const arr=data.catalogo.filter(x=>(!ui.templateCat||x.cat===ui.templateCat)&&(!q||x.nome.toLocaleLowerCase('pt-BR').includes(q))).sort((a,b)=>Object.keys(cats).indexOf(a.cat)-Object.keys(cats).indexOf(b.cat)||a.nome.localeCompare(b.nome,'pt-BR'));
+    el('mc-template-rows').innerHTML=arr.length?arr.map(x=>`<div class="mc-template-row" data-base="${esc(x.id)}">
+      <input class="mc-on" data-mcb="template-on" data-id="${esc(x.id)}" type="checkbox" ${x.ativo?'checked':''} aria-label="Incluir ${esc(x.nome)} nos meses seguintes">
+      <span class="mc-template-name">${esc(x.nome)}</span>
+      <select class="mc-sel" data-mcb="template-cat" data-id="${esc(x.id)}" aria-label="Categoria de ${esc(x.nome)}">${catOptions(x.cat)}</select>
+      <input type="number" class="mc-in" step="0.01" min="0.01" data-mcb="template-qty" data-id="${esc(x.id)}" value="${number(x.qtd)}" aria-label="Quantidade padrão de ${esc(x.nome)}">
+      <select class="mc-sel" data-mcb="template-unit" data-id="${esc(x.id)}" aria-label="Unidade padrão de ${esc(x.nome)}">${unitOptions(x.unidade)}</select>
+      <input type="number" class="mc-in" min="0" step="0.01" data-mcb="template-price" data-id="${esc(x.id)}" value="${number(x.preco)||''}" placeholder="R$ 0" aria-label="Preço padrão de ${esc(x.nome)}">
+      <button type="button" class="mc-item-menu" data-mca="delete-template" data-id="${esc(x.id)}" title="Remover da lista-base" aria-label="Remover ${esc(x.nome)} da lista-base">×</button>
+      </div>`).join(''):'<div class="mc-empty"><b>Não encontrei produtos.</b>Limpe a busca ou acrescente um novo item abaixo.</div>';
+  }
+  function syncUi(){
+    el('mc-month-label').textContent=labelMonth(ui.month);
+    const template=ui.tab==='modelo';el('mc-month-content').hidden=template;el('mc-template-content').hidden=!template;
+    document.querySelectorAll('#sec-mercado [data-mca="tab"]').forEach(b=>{b.classList.toggle('active',b.dataset.value===ui.tab);b.setAttribute('aria-selected',String(b.dataset.value===ui.tab))});
+    el('mc-search').value=ui.search;el('mc-filter-cat').value=ui.cat;el('mc-filter-status').value=ui.status;el('mc-filter-order').value=ui.order;
+    document.querySelectorAll('#sec-mercado [data-mca="quick"]').forEach(b=>b.classList.toggle('on',b.dataset.value===ui.status));
+    el('mc-template-search').value=ui.templateSearch;el('mc-template-cat').value=ui.templateCat;
+    renderStats();if(template)renderTemplate();else renderItems();
+  }
+  function updateProduct(id,field,value){
+    const x=getItem(id);if(!x)return;
+    if(field==='qtd'){x.qtd=Math.max(.01,number(value));}
+    else if(field==='preco'){x.preco=number(value)}
+    else if(field==='unidade'&&units.includes(value)){x.unidade=value}
+    else if(field==='valorPago'){x.valorPago=value===''?null:number(value)}
+    else if(field==='comprado'){x.comprado=!!value;if(!x.comprado)x.valorPago=null}
+    saveSoon();renderStats();
+    // Campos numéricos são atualizados em change/blur, nunca por tecla, para não perder o foco.
+    renderItems();
+  }
+  function updateTemplate(id,field,value){
+    const x=data.catalogo.find(x=>x.id===id);if(!x)return;
+    if(field==='ativo')x.ativo=!!value;
+    else if(field==='qtd')x.qtd=Math.max(.01,number(value));
+    else if(field==='preco')x.preco=number(value);
+    else if(field==='cat')x.cat=normalCat(value);
+    else if(field==='unidade')x.unidade=units.includes(value)?value:x.unidade;
+    saveSoon();renderTemplate();
+  }
+  function addProduct(form,kind){
+    const isTemplate=kind==='template';
+    const prefix=isTemplate?'mc-t':'mc-new-';
+    const val=k=>el(prefix+k)?.value;
+    const name=(val(isTemplate?'name':'name')||'').trim();if(!name){notify('Informe o produto.',true);return}
+    const cat=normalCat(val('cat')),qtd=Math.max(.01,number(val('qty'))),unidade=units.includes(val('unit'))?val('unit'):'un',preco=number(val('price'));
+    const makeBase=()=>({id:freshId(),nome:name,cat,qtd,unidade,preco,ativo:true});
+    if(isTemplate){data.catalogo.push(makeBase());renderTemplate()}
+    else {
+      let origemId='';
+      if(el('mc-new-recurring').checked){const m=makeBase();data.catalogo.push(m);origemId=m.id}
+      inMonth().push({id:freshId(),origemId,nome:name,cat,qtd,unidade,preco,comprado:false,valorPago:null,nota:''});
+      ui.status='pendentes';ui.search='';ui.cat='';syncUi();
+    }
+    form.reset();if(!isTemplate)el('mc-new-recurring').checked=true;saveSoon();notify('Produto adicionado!');
+  }
+  function openEdit(id){
+    const x=getItem(id);if(!x)return;
+    el('mc-edit-id').value=x.id;el('mc-edit-name').value=x.nome;el('mc-edit-cat').value=x.cat;el('mc-edit-qty').value=x.qtd;el('mc-edit-unit').value=x.unidade;el('mc-edit-price').value=x.preco||'';el('mc-edit-note').value=x.nota||'';
+    el('mc-modal').hidden=false;setTimeout(()=>el('mc-edit-name')?.focus(),10);
+  }
+  function closeEdit(){el('mc-modal').hidden=true}
+  function editSubmit(){
+    const x=getItem(el('mc-edit-id').value);if(!x)return;
+    const name=el('mc-edit-name').value.trim();if(!name)return;
+    Object.assign(x,{nome:name,cat:normalCat(el('mc-edit-cat').value),qtd:Math.max(.01,number(el('mc-edit-qty').value)),unidade:el('mc-edit-unit').value,preco:number(el('mc-edit-price').value),nota:el('mc-edit-note').value.trim().slice(0,250)});
+    closeEdit();syncUi();saveSoon();notify('Produto atualizado.');
+  }
+  function copyPrevious(){
+    const prevKey=addMonth(ui.month,-1),prev=data.meses[prevKey];
+    if(!prev?.itens?.length){notify(`Não há compras registradas em ${labelMonth(prevKey)}.`,true);return}
+    if(!confirm(`Copiar os ${prev.itens.length} produtos de ${labelMonth(prevKey)} para ${labelMonth(ui.month)}?\n\nIsso substitui a lista do mês escolhido, desmarcando os produtos comprados. O mês anterior continuará intacto.`))return;
+    data.meses[ui.month]={criadoEm:new Date().toISOString(),itens:prev.itens.map(x=>({...x,id:freshId(),comprado:false,valorPago:null}))};
+    ui.tab='lista';ui.status='pendentes';syncUi();saveSoon();notify('Mês anterior copiado sem as marcações.');
+  }
+  function textList(){
+    const rows=inMonth().filter(x=>!x.comprado);
+    const groups={};rows.forEach(x=>(groups[x.cat]??=[]).push(x));
+    return [`🛒 MERCADO — ${labelMonth(ui.month)}`,`${rows.length} itens para comprar`,'',...Object.keys(cats).flatMap(cat=>groups[cat]?.length?[`${cats[cat]} ${cat.toUpperCase()}`,...groups[cat].map(x=>`☐ ${x.nome} — ${x.qtd} ${x.unidade}${x.nota?' ('+x.nota+')':''}`),'']:[])].join('\n');
+  }
+  async function copyText(){
+    const t=textList();try{await navigator.clipboard.writeText(t);notify('Lista de pendentes copiada!')}catch(_){
+      const area=document.createElement('textarea');area.value=t;document.body.appendChild(area);area.select();const ok=document.execCommand('copy');area.remove();notify(ok?'Lista copiada!':'Não foi possível copiar.',!ok)
+    }
+  }
+  function handleAction(action,target){
+    const id=target.dataset.id;
+    if(action==='prev'||action==='next'){ui.month=addMonth(ui.month,action==='prev'?-1:1);syncUi();return}
+    if(action==='today'){ui.month=defaultMonth();syncUi();return}
+    if(action==='tab'){ui.tab=target.dataset.value;syncUi();return}
+    if(action==='quick'){ui.status=target.dataset.value;syncUi();return}
+    if(action==='copy'){copyPrevious();return}
+    if(action==='share'){copyText();return}
+    if(action==='save'){clearTimeout(saveTimer);if(typeof window.salvarFirestore==='function')window.salvarFirestore();return}
+    if(action==='edit'){openEdit(id);return}
+    if(action==='close'){closeEdit();return}
+    if(action==='remove-item'){
+      const x=getItem(el('mc-edit-id').value);if(!x)return;
+      if(!confirm(`Tirar "${x.nome}" somente da lista de ${labelMonth(ui.month)}?`))return;
+      data.meses[ui.month].itens=data.meses[ui.month].itens.filter(i=>i.id!==x.id);closeEdit();syncUi();saveSoon();return;
+    }
+    if(action==='delete-template'){
+      const x=data.catalogo.find(x=>x.id===id);if(!x)return;
+      if(!confirm(`Remover "${x.nome}" da lista-base?\n\nOs meses existentes não serão alterados.`))return;
+      data.catalogo=data.catalogo.filter(i=>i.id!==id);renderTemplate();saveSoon();return;
+    }
+  }
+  function bindSection(sec){
+    sec.addEventListener('click',e=>{
+      const target=e.target.closest('[data-mca]');if(target)handleAction(target.dataset.mca,target);
+      if(e.target===el('mc-modal'))closeEdit();
+    });
+    sec.addEventListener('input',e=>{
+      const t=e.target;
+      if(t.id==='mc-search'){ui.search=t.value;renderItems()}
+      if(t.id==='mc-template-search'){ui.templateSearch=t.value;renderTemplate()}
+    });
+    sec.addEventListener('change',e=>{
+      const t=e.target;
+      if(t.id==='mc-filter-status'){ui.status=t.value;syncUi()}
+      else if(t.id==='mc-filter-cat'){ui.cat=t.value;syncUi()}
+      else if(t.id==='mc-filter-order'){ui.order=t.value;syncUi()}
+      else if(t.id==='mc-template-cat'){ui.templateCat=t.value;syncUi()}
+      const kind=t.dataset.mcb,id=t.dataset.id;
+      if(['check','qty','unit','price','paid'].includes(kind))updateProduct(id,{check:'comprado',qty:'qtd',unit:'unidade',price:'preco',paid:'valorPago'}[kind],kind==='check'?t.checked:t.value);
+      if(kind?.startsWith('template-'))updateTemplate(id,{ 'template-on':'ativo','template-cat':'cat','template-qty':'qtd','template-unit':'unidade','template-price':'preco'}[kind],kind==='template-on'?t.checked:t.value);
+    });
+    el('mc-add-form').addEventListener('submit',e=>{e.preventDefault();addProduct(e.target,'month')});
+    el('mc-template-form').addEventListener('submit',e=>{e.preventDefault();addProduct(e.target,'template')});
+    el('mc-edit-form').addEventListener('submit',e=>{e.preventDefault();editSubmit()});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&el('mc-modal')&&!el('mc-modal').hidden)closeEdit()});
+  }
+  window.renderMercado=()=>{createNav();createSection();ensureNavigation();syncUi()};
+  const oldCollect=window.coletarDados;
+  if(typeof oldCollect==='function')window.coletarDados=function(){return {...oldCollect.apply(this,arguments),mercadoData:data}};
+  const oldApply=window.applyData;
+  if(typeof oldApply==='function')window.applyData=function(d){oldApply.apply(this,arguments);data=normalize(d?.mercadoData);if(el('sec-mercado'))syncUi()};
+  window.renderMercado();
+  document.addEventListener('DOMContentLoaded',window.renderMercado);
+})();
+</script>
+
 </body>
 </html>
